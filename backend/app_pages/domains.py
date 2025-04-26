@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 from db import fetch_domains, add_domain, update_domain, delete_domain
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+from streamlit_js_eval import streamlit_js_eval
+import streamlit.components.v1 as components
+
+from dataframe_with_button import static_dataframe
+from dataframe_with_button import editable_dataframe
 
 
 def domains_page():
@@ -80,43 +84,115 @@ def domains_page():
         )
 
         df_data = {
+            "Id": [],
             "Domain": [],
             "Redirect HTTPS": [],
             "Catch 404": [],
             "Default action": [],
             "Group": [],
             "Status": [],
-            "": []
+            # "": []
         }
 
         for i, domain in enumerate(domains):
             domain_id = domain.get('id')
             domain_link = domain.get("domain", "")
+            df_data["Id"].append(domain_id)
             df_data["Domain"].append(domain_link)
             df_data["Redirect HTTPS"].append(domain.get("redirect_https", False))
             df_data["Catch 404"].append(domain.get("handle_404", False))
             df_data["Default action"].append(domain.get("default_company", ""))
             df_data["Group"].append(domain.get("group_name", ""))
             df_data["Status"].append(domain.get("status", ""))
-            df_data[""].append(f"<button href='?delete_id={domain_id}' onclick='return confirm(\"Are you sure want delete {domain_link}?\")' href='?delete_id={domain_id}' class='st-button st-button-danger' id='del_{i}'>Delete</button>&nbsp;&nbsp;&nbsp;<button href='?edit_id={domain_id}' class='st-button st-button-primary' id='edit_{i}'>Edit</button>")
+            # df_data[""].append(f"""<a href='?mybutton=true'><button href='?delete_id={domain_id}' class='st-button st-button-danger' id='del_{i}'>Delete</button></a>&nbsp;&nbsp;&nbsp;<button href='?edit_id={domain_id}' class='st-button st-button-primary' id='edit_{i}'>Edit</button>""")
 
         # Создание DataFrame
         df = pd.DataFrame(df_data)
-
+        result = static_dataframe(df, clickable_column="Id")
+        st.dataframe(df)
+        # Вывод результата клика
+        if result:
+            st.success(f"Ты нажал на строку с Id: {result}")
         # Отображение таблицы
-        st.markdown(df.to_html(classes="styled-table", index=False, escape=False), unsafe_allow_html=True)
+        # st.markdown(result, unsafe_allow_html=True)
 
-        # Поймать параметры из URL
-        # query_params = st.experimental_get_query_params()
+
+
+        if st.query_params.get("mybutton"):
+            st.success("Нажал кнопку!")
+
+        query_params = st.query_params
+        if "delete_id" in query_params:
+            st.warning(f"Удалить домен с id {query_params['delete_id']}")
+
+        if "edit_id" in query_params:
+            st.info(f"Редактировать домен с id {query_params['edit_id']}")
+
+        ###############
+        ###############
+        ###############
+        ###############
+        ###############
+
+        # # Пример доменов
+        # domains = [
+        #     {"id": 1, "domain": "google.com", "status": "Active"},
+        #     {"id": 2, "domain": "facebook.com", "status": "Active"},
+        #     {"id": 3, "domain": "twitter.com", "status": "Inactive"},
+        # ]
         #
-        # # Получить значение параметра delete_id
-        # delete_id = query_params.get("delete_id", [None])[0]
-        # if delete_id:
-        #     st.success("Delete ID: " + str(delete_id))
+        # st.markdown("## Таблица доменов")
+        #
+        # # Заголовки таблицы
+        # header_cols = st.columns([4, 2, 2, 2])  # ширина колонок
+        # header_cols[0].markdown("**Домен**")
+        # header_cols[1].markdown("**Статус**")
+        # header_cols[2].markdown("**Редактировать**")
+        # header_cols[3].markdown("**Удалить**")
+        #
+        # # Отрисовка строк
+        # for domain in domains:
+        #     domain_id = domain["id"]
+        #     domain_link = domain["domain"]
+        #     domain_status = domain["status"]
+        #
+        #     row_cols = st.columns([4, 2, 2, 2])
+        #
+        #     row_cols[0].write(domain_link)
+        #     row_cols[1].write(domain_status)
+        #
+        #     with row_cols[2]:
+        #         if st.button("Edit", key=f"edit_{domain_id}"):
+        #             st.info(f"Редактируем {domain_link}")
+        #
+        #     with row_cols[3]:
+        #         if st.button("Delete", key=f"delete_{domain_id}"):
+        #             st.warning(f"Удаляем {domain_link}")
 
+        df = pd.DataFrame({
+            "BATCH_ID": ["item1", "item2", "item3"],
+            "Name": ["Apple", "Banana", "Cherry"],
+            "Price": [1.2, 0.8, 2.5],
+            "IN_STOCK": [True, False, True],
+            "EMAIL": ["abc@gmail.com", "cde@k.com", "abc@gmail.com"]
+        })
 
+        st.title("DataFrame with Buttons")
 
+        # Генерируем HTML-кнопки через static_dataframe
+        html_code = static_dataframe(df, clickable_column="BATCH_ID")
 
+        # Выводим через markdown, разрешая HTML
+        st.markdown(html_code, unsafe_allow_html=True)
+
+        # Если клик был
+        # if clicked:
+        #     st.success(f"Clicked: {clicked}")
+#######################
+#######################
+#######################
+#######################
+#######################
 
     # Редактирование записи
     if 'edit_domain_id' in st.session_state and st.session_state.edit_domain_id:
