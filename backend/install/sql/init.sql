@@ -78,6 +78,19 @@ CREATE TABLE postbacks (
     raw_data JSONB
 );
 
+CREATE TABLE domains (
+    id SERIAL PRIMARY KEY,
+    domain VARCHAR(255) UNIQUE NOT NULL,                  -- адрес домена
+    redirect_https BOOLEAN DEFAULT TRUE,                  -- перенаправлять ли на https
+    handle_404 VARCHAR(50) DEFAULT 'error',                -- 'error' или 'redirect_to_company'
+    default_company VARCHAR(255),                         -- компания по умолчанию
+    group_name VARCHAR(255),                               -- группа домена
+    status VARCHAR(50) DEFAULT 'pending',                  -- статус ('pending', 'ok', 'error')
+    created_at TIMESTAMP DEFAULT NOW(),                    -- дата создания
+    updated_at TIMESTAMP DEFAULT NOW()                     -- дата обновления
+);
+
+
 -- Создание индексов для скорости
 CREATE INDEX idx_visits_project_id ON visits (project_id);
 CREATE INDEX idx_visits_created_at ON visits (created_at);
