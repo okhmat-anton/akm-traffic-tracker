@@ -23,10 +23,12 @@ st.session_state.logged_in = check_auto_login()
 
 if st.session_state.logged_in:
 
-    st.markdown(f"<h4>Welcome, {st.session_state.username} ({st.session_state.role})</h4>", unsafe_allow_html=True)
-
-    if st.button("Logout", key="logout"):
-        logout()
+    col1, col2 = st.columns([9, 1])
+    with col1:
+        st.markdown(f"<h4>Welcome, {st.session_state.username} ({st.session_state.role})</h4>", unsafe_allow_html=True)
+    with col2:
+        if st.button("Logout", key="logout"):
+            logout()
 
     tabs = st.tabs(["Dashboard",
                     "Campaigns",
