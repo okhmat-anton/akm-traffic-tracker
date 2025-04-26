@@ -1,4 +1,7 @@
 import streamlit as st
+
+st.set_page_config(page_title="Tracker Panel", page_icon="⚙️", layout="wide")
+
 from auth import login_page
 from app_pages.about import about_page
 from app_pages.affiliates import affiliates_page
@@ -11,17 +14,19 @@ from app_pages.settings import settings_page
 from app_pages.campaigns import campaigns_page
 from app_pages.sources import sources_page
 from app_pages.users import users_page
-from auth import check_auto_login
+from auth import check_auto_login, logout
 
 if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
+    st.session_state.logged_in = True
 
-check_auto_login()
+st.session_state.logged_in = check_auto_login()
 
 if st.session_state.logged_in:
-    st.set_page_config(page_title="Admin Panel", page_icon="⚙️", layout="wide")
 
     st.markdown(f"<h4>Welcome, {st.session_state.username} ({st.session_state.role})</h4>", unsafe_allow_html=True)
+
+    if st.button("Logout", key="logout"):
+        logout()
 
     tabs = st.tabs(["Dashboard",
                     "Campaigns",

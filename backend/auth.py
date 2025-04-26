@@ -47,41 +47,40 @@ def check_auto_login():
                     st.session_state.role = "admin"
                 else:
                     st.session_state.role = "user"
-                st.rerun()
-            else:
-                logout()
-        else:
-            logout()
+                return True
+
+    return False
 
 
 def login_page():
-    st.title("Login")
+    col1, col2, col3 = st.columns([4, 2, 4])
+    with col2:
+        st.title("Login")
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
 
-    if st.button("Login"):
-        user = get_user(username)
-        if user:
-            db_username, db_password_hash = user
-            if db_password_hash == hash_password(password):
-                st.success(f"Welcome, {db_username}!")
-                st.session_state.logged_in = True
-                st.session_state.username = db_username
-                # cookies.set_cookie("username", db_username, max_age_days=365)
-                # cookies.set_cookie("password_hash", hash_password(password), max_age_days=365)
-                cookies["username"] = db_username
-                cookies["password_hash"] = hash_password(password)
-                cookies.save()
-                if db_username == "tracker_admin":
-                    st.session_state.role = "admin"
+        if st.button("Login"):
+            user = get_user(username)
+            if user:
+                db_username, db_password_hash = user
+                if db_password_hash == hash_password(password):
+                    st.success(f"Welcome, {db_username}!")
+                    st.session_state.logged_in = True
+                    st.session_state.username = db_username
+                    cookies["username"] = db_username
+                    cookies["password_hash"] = hash_password(password)
+                    cookies.save()
+                    if db_username == "tracker_admin":
+                        st.session_state.role = "admin"
+                    else:
+                        st.session_state.role = "user"
+                    st.session_state.logged_in = True
+                    st.rerun()
                 else:
-                    st.session_state.role = "user"
-                st.rerun()
+                    st.error("Incorrect password")
             else:
-                st.error("Incorrect password")
-        else:
-            st.error("User not found")
+                st.error("User not found")
 
 
 def logout():
@@ -89,5 +88,7 @@ def logout():
     st.session_state.username = None
     st.session_state.role = None
 
-    cookies.delete("username")
+    cookies["username"] = ""
+    cookies["password_hash"] = ""
+    cookies.save()
     st.rerun()
