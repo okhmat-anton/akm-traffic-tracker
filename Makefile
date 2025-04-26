@@ -1,5 +1,6 @@
 install-db:
-	python3 install.py
+	docker exec tracker_backend pip install --no-cache-dir -r /app/install/requirements.txt
+	docker exec tracker_backend python3 /app/install/install.py
 
 install:
 	cp nginx/nginx.prod.conf nginx/default.conf

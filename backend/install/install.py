@@ -3,13 +3,13 @@ import os
 import shutil
 import sys
 
-DB_HOST = "localhost"
+DB_HOST = "tracker_postgres"
 DB_PORT = "5432"
 DB_NAME = "db"
 DB_USER = "user"
 DB_PASSWORD = "password"
 
-INIT_SQL_FILE = "sql/init.sql"
+INIT_SQL_FILE = "/app/install/sql/init.sql"
 
 
 def connect_db():
