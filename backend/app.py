@@ -1,70 +1,36 @@
-import streamlit as st
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
+from fastapi.responses import FileResponse
 
-st.set_page_config(page_title="Tracker Panel", page_icon="⚙️", layout="wide")
+app = FastAPI()
 
-from auth import login_page
-from app_pages.about import about_page
-from app_pages.affiliates import affiliates_page
-from app_pages.dashboard import dashboard_page
-from app_pages.domains import domains_page
-from app_pages.landings import landings_page
-from app_pages.offers import offers_page
-from app_pages.reports import reports_page
-from app_pages.settings import settings_page
-from app_pages.campaigns import campaigns_page
-from app_pages.sources import sources_page
-from app_pages.users import users_page
-from auth import check_auto_login, logout
+# Базовая директория проекта
+BASE_DIR = Path(__file__).resolve().parent
 
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = True
+# Настройки темы
+THEMES_DIR = BASE_DIR / "themes"
+THEME_NAME = "main"
+THEME_DIR = THEMES_DIR / THEME_NAME
 
-st.session_state.logged_in = check_auto_login()
+print(THEME_DIR)
+# Подключение статики (картинки, стили, скрипты)
+app.mount("/img", StaticFiles(directory=THEME_DIR / "img"), name="img")
+app.mount("/css", StaticFiles(directory=THEME_DIR / "css"), name="css")
 
-if st.session_state.logged_in:
+# Настройка шаблонов (Jinja2)
+templates = Jinja2Templates(directory=THEME_DIR)
 
-    col1, col2 = st.columns([9, 1])
-    with col1:
-        st.markdown(f"<h4>Welcome, {st.session_state.username} ({st.session_state.role})</h4>", unsafe_allow_html=True)
-    with col2:
-        if st.button("Logout", key="logout"):
-            logout()
 
-    tabs = st.tabs(["Dashboard",
-                    "Campaigns",
-                    "Landing Pages",
-                    "Affiliate Networks",
-                    "Offers",
-                    "Sources",
-                    "Reports",
-                    "Domains",
-                    "Settings",
-                    "Users",
-                    "About",
-                ])
-
-    with tabs[0]:
-        dashboard_page()
-    with tabs[1]:
-        campaigns_page()
-    with tabs[2]:
-        landings_page()
-    with tabs[3]:
-        affiliates_page()
-    with tabs[4]:
-        offers_page()
-    with tabs[5]:
-        sources_page()
-    with tabs[6]:
-        reports_page()
-    with tabs[7]:
-        domains_page()
-    with tabs[8]:
-        settings_page()
-    with tabs[9]:
-        users_page()
-    with tabs[10]:
-        about_page()
-
-else:
-    login_page()
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(THEME_DIR / "favicon.ico")
+# Главная страница
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request, page: str = "pages/auth.html"):
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "page_to_include": page
+    })

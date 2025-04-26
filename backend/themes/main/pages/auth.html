@@ -1,0 +1,62 @@
+<!-- auth.html -->
+
+<!-- Шаблон компонента -->
+<script type="text/x-template" id="auth-template">
+  <v-row align="center" justify="center" style="min-height: 100vh;">
+    <v-col cols="12" sm="8" md="4">
+      <v-card outlined>
+        <v-card-title class="headline justify-center">
+          Вход
+        </v-card-title>
+
+        <v-card-text>
+          <v-form @submit.prevent="login">
+            <v-text-field
+              label="Логин"
+              v-model="username"
+              outlined
+              required
+            ></v-text-field>
+
+            <v-text-field
+              label="Пароль"
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              outlined
+              required
+              append-icon="mdi-eye"
+              @click:append="showPassword = !showPassword"
+            ></v-text-field>
+
+            <v-btn color="primary" class="mt-4" block outlined type="submit">
+              Войти
+            </v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+</script>
+
+<!-- Скрипт регистрации компонента -->
+<script>
+Vue.component('auth-component', {
+  template: '#auth-template',
+  data() {
+    return {
+      username: '',
+      password: '',
+      showPassword: false,
+    };
+  },
+  methods: {
+    login() {
+      if (this.username === 'admin' && this.password === 'admin') {
+        alert('Welcome!');
+      } else {
+        alert('Wrong password');
+      }
+    }
+  }
+});
+</script>

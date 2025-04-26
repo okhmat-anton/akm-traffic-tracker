@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FastAPI + Vue2 + Vuetify2</title>
+
+  <base href="/backend/">
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Vuetify CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+
+  <link href="css/style.css" rel="stylesheet">
+
+  <!-- Vue 2 -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+
+  <!-- Vuetify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
+</head>
+<body>
+
+  <div id="app">
+    <v-app>
+      <v-main>
+        <v-container>
+
+          {% include page_to_include %}
+          <auth-component></auth-component>
+
+        </v-container>
+      </v-main>
+    </v-app>
+  </div>
+<script>
+
+new Vue({
+  el: '#app',
+  vuetify: new Vuetify({
+    theme: {
+      dark: true, // 🔥 Включить тёмную тему
+    }
+  })
+});
+</script>
+
+</body>
+</html>
