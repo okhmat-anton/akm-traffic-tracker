@@ -1,20 +1,22 @@
 import streamlit as st
-import psycopg2
-import pandas as pd
+from auth import login_page, get_cookie, get_user
 
-DB_CONFIG = {
-    'dbname': 'mydb',
-    'user': 'myuser',
-    'password': 'mypassword',
-    'host': 'postgres'
-}
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
 
-def load_data():
-    conn = psycopg2.connect(**DB_CONFIG)
-    df = pd.read_sql("SELECT * FROM clicks", conn)
-    conn.close()
-    return df
+# Автологин через куки
+cookie_username = get_cookie("username")
+cookie_password_hash = get_cookie("password_hash")
+if cookie_username and cookie_password_hash:
+    user = get_user(cookie_username)
+    if user:
+        db_username, db_password_hash = user
+        if db_password_hash == cookie_password_hash:
+            st.session_state.logged_in = True
+            st.session_state.username = db_username
 
-st.title("Клики пользователей")
-data = load_data()
-st.dataframe(data)
+# Вывод интерфейса
+if st.session_state.logged_in:
+    st.write(f"You are logged in as {st.session_state.username}")
+else:
+    login_page()
