@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from db import fetch_domains, add_domain, update_domain, delete_domain
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 
 def domains_page():
@@ -86,19 +85,20 @@ def domains_page():
             "Default action": [],
             "Group": [],
             "Status": [],
-            "": []
+            " ": [],  # Delete buttons
+            "  ": [],  # Edit buttons
         }
 
         for i, domain in enumerate(domains):
             domain_id = domain.get('id')
-            domain_link = domain.get("domain", "")
-            df_data["Domain"].append(domain_link)
+            df_data["Domain"].append(domain.get("domain", ""))
             df_data["Redirect HTTPS"].append(domain.get("redirect_https", False))
             df_data["Catch 404"].append(domain.get("handle_404", False))
             df_data["Default action"].append(domain.get("default_company", ""))
             df_data["Group"].append(domain.get("group_name", ""))
             df_data["Status"].append(domain.get("status", ""))
-            df_data[""].append(f"<button href='?delete_id={domain_id}' onclick='return confirm(\"Are you sure want delete {domain_link}?\")' href='?delete_id={domain_id}' class='st-button st-button-danger' id='del_{i}'>Delete</button>&nbsp;&nbsp;&nbsp;<button href='?edit_id={domain_id}' class='st-button st-button-primary' id='edit_{i}'>Edit</button>")
+            df_data[" "].append(f"<button href='?delete_id={domain_id}' class='st-button st-button-danger' id='del_{i}'>Delete</button>")
+            df_data["  "].append(f"<button href='?edit_id={domain_id}' class='st-button st-button-primary' id='edit_{i}'>Edit</button>")
 
         # Создание DataFrame
         df = pd.DataFrame(df_data)
@@ -106,14 +106,51 @@ def domains_page():
         # Отображение таблицы
         st.markdown(df.to_html(classes="styled-table", index=False, escape=False), unsafe_allow_html=True)
 
-        # Поймать параметры из URL
-        # query_params = st.experimental_get_query_params()
-        #
-        # # Получить значение параметра delete_id
-        # delete_id = query_params.get("delete_id", [None])[0]
-        # if delete_id:
-        #     st.success("Delete ID: " + str(delete_id))
 
+        ###################################
+        ###################################
+
+        st.markdown('<div class="table-container">', unsafe_allow_html=True)
+
+        # Шапка таблицы
+        st.markdown('<div class="table-header">', unsafe_allow_html=True)
+
+        # Заголовок таблицы
+        columns = st.columns((2, 1, 1, 2, 2, 1, 1, 1))  # Распределение ширины колонок
+        columns[0].write("Domain")
+        columns[1].write("Redirect HTTPS")
+        columns[2].write("Catch 404")
+        columns[3].write("Default Company")
+        columns[4].write("Group")
+        columns[5].write("Status")
+        columns[6].write("Edit")
+        columns[7].write("Delete")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Сами данные
+        for domain in domains:
+            domain_id = domain["id"]
+            st.markdown('<div class="table-row">', unsafe_allow_html=True)
+            cols = st.columns((2, 1, 1, 2, 2, 1, 1, 1))
+            cols[0].write(domain["domain"])
+            cols[1].write("✅" if domain["redirect_https"] else "❌")
+            cols[2].write("✅" if domain["handle_404"] else "❌")
+            cols[3].write(domain["default_company"])
+            cols[4].write(domain["group_name"])
+            cols[5].write(domain["status"])
+
+            if cols[6].button('Edit', key=f"edit_{domain_id}"):
+                st.session_state.edit_domain_id = domain_id
+                st.rerun()
+
+            if cols[7].button('Delete', key=f"delete_{domain_id}"):
+                st.session_state.delete_domain_id = domain_id
+                st.rerun()
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 
