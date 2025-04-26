@@ -1,12 +1,17 @@
+install-db:
+	python3 install.py
+
 install:
-	ln -sf ./nginx/nginx.prod.conf ./nginx/default.conf
+	cp nginx/nginx.prod.conf nginx/default.conf
 	docker-compose up --build -d
 	make certificate
+	make install-db
 
 install-local:
-	ln -sf ./nginx/nginx.dev.conf ./nginx/default.conf
+	cp nginx/nginx.dev.conf nginx/default.conf
 	make generate-local-cert
 	docker-compose up --build -d
+	make install-db
 
 generate-local-cert:
 	mkdir -p ssl
@@ -26,3 +31,6 @@ restart:
 
 logs:
 	docker-compose logs -f
+
+reload-nginx:
+	docker exec tracker_nginx nginx -s reload
