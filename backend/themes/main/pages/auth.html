@@ -6,20 +6,20 @@
     <v-col cols="12" sm="8" md="4">
       <v-card outlined>
         <v-card-title class="headline justify-center">
-          Вход
+          Wecome
         </v-card-title>
 
         <v-card-text>
           <v-form @submit.prevent="login">
             <v-text-field
-              label="Логин"
+              label="Username"
               v-model="username"
               outlined
               required
             ></v-text-field>
 
             <v-text-field
-              label="Пароль"
+              label="Password"
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               outlined
@@ -29,7 +29,7 @@
             ></v-text-field>
 
             <v-btn color="primary" class="mt-4" block outlined type="submit">
-              Войти
+              Login
             </v-btn>
           </v-form>
         </v-card-text>

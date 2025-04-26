@@ -23,14 +23,41 @@ app.mount("/css", StaticFiles(directory=THEME_DIR / "css"), name="css")
 # Настройка шаблонов (Jinja2)
 templates = Jinja2Templates(directory=THEME_DIR)
 
-
+###############################################
+################### STATIC ####################
+###############################################
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse(THEME_DIR / "favicon.ico")
-# Главная страница
+
+
+###############################################
+################### PAGES #####################
+###############################################
+
+
+ALLOWED_PAGES = {"auth", "profile", "dashboard", "feed"}
+
+
+from typing import Optional
+from auth import is_authenticated, router as auth_router
+from app_pages.domains import router as domains_router  # Импортируем router
+
+# Подключаем router
+app.include_router(domains_router, prefix="/api/domains", tags=["Domains"])
+
+# Router
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, page: str = "pages/auth.html"):
+@app.get("/{page}", response_class=HTMLResponse)
+async def serve_page(request: Request, page: Optional[str] = None):
+    if page is None:
+        page = "auth"
+    if page == "auth" and is_authenticated(request):
+        page = "dashboard"
+    if page not in ALLOWED_PAGES or not is_authenticated(request):
+        page = "auth"  # Или можно вернуть 404
+    page_file = f"pages/{page}.html"
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "page_to_include": page
+        "page_to_include": page_file
     })
