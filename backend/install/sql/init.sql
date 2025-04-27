@@ -104,7 +104,7 @@ INSERT INTO users (username, email, password_hash, is_admin, active)
 VALUES (
     'tracker_admin',
     'admin@example.com',
-    '01a19e62a9d37723eb94af002a3782a4', /* akm_ + admin */
+    '5dfc9a6ef90c0908795b917ae279e90a', /* akm_ + admin */
     TRUE,
     TRUE
 );

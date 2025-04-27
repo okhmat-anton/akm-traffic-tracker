@@ -1,9 +1,10 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
+
+from models.user import User
 
 DATABASE_URL = "postgresql+psycopg2://user:password@tracker_postgres/db"
 
@@ -19,14 +20,8 @@ def get_db():
     finally:
         db.close()
 
-def get_user(username):
-    conn = connect_db()
-    cur = conn.cursor()
-    cur.execute("SELECT username, password_hash FROM users WHERE username = %s", (username,))
-    user = cur.fetchone()
-    cur.close()
-    conn.close()
-    return user
+def get_user(db: Session, username: str):
+    return db.query(User).filter(User.username == username).first()
 
 
 def fetch_domains():

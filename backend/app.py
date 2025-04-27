@@ -54,6 +54,7 @@ from auth import is_authenticated, router as auth_router
 from app_pages.domains import router as domains_router  # Импортируем router
 
 # Подключаем router
+app.include_router(auth_router, prefix="/api", tags=["Auth"])
 app.include_router(domains_router, prefix="/api/domains", tags=["Domains"])
 
 # Router

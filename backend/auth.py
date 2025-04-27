@@ -7,7 +7,7 @@ from fastapi import Request
 from jose import jwt, JWTError
 from typing import Optional
 from hashlib import md5
-from db import get_db, get_user
+from db import get_db, get_user, SessionLocal
 from hashlib import md5
 from datetime import datetime, timedelta
 
@@ -20,6 +20,7 @@ SECRET_KEY = "your-super-secret-key-for-jwt"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 2400
 pass_salt = 'akm_'
+
 
 # Генерация токена
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -52,6 +53,7 @@ fake_users_db = {
     }
 }
 
+
 # ====== Проверка авторизации ======
 def is_authenticated(request: Request) -> bool:
     token = request.cookies.get("session_token")
@@ -59,25 +61,25 @@ def is_authenticated(request: Request) -> bool:
         return False
 
     try:
+        # Декодируем JWT токен
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
-        password_hash = payload.get("password_hash")
 
-        if not username or not password_hash:
+        if not username:
             return False
 
-        user = fake_users_db.get(username)
-        if not user:
+        db: Session = SessionLocal()
+        user = get_user(db, username)
+        db.close()
+        if user:
+            return True
+        else:
             return False
 
-        # Сравниваем хеши паролей
-        if user["password_hash"] != password_hash:
-            return False
-
-        return True
 
     except JWTError:
         return False
+
 
 # ====== POST /login ======
 @router.post("/login")
@@ -90,7 +92,7 @@ async def login(request: Request, response: Response, login_data: LoginRequest, 
     hashed_password = md5((pass_salt + login_data.password).encode()).hexdigest()
 
     if user.password_hash != hashed_password:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials 2")
 
     # Генерируем токен
     token_data = {"sub": user.username}
@@ -101,11 +103,13 @@ async def login(request: Request, response: Response, login_data: LoginRequest, 
 
     return {"message": "Login successful"}
 
+
 # ====== POST /logout ======
 @router.post("/logout")
 async def logout(response: Response):
     response.delete_cookie(key="session_token")
     return {"message": "Logged out"}
+
 
 # ====== GET /status ======
 @router.get("/status")

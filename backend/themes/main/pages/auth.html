@@ -1,12 +1,9 @@
-<!-- auth.html -->
-
-<!-- Шаблон компонента -->
 <script type="text/x-template" id="auth-template">
   <v-row align="center" justify="center" style="min-height: 100vh;">
     <v-col cols="12" sm="8" md="4">
       <v-card outlined>
         <v-card-title class="headline justify-center">
-          Wecome
+          Welcome
         </v-card-title>
 
         <v-card-text>
@@ -38,7 +35,9 @@
   </v-row>
 </script>
 
+<!-- ================== -->
 <!-- Скрипт регистрации компонента -->
+<!-- ================== -->
 <script>
 Vue.component('auth-component', {
   template: '#auth-template',
@@ -50,11 +49,33 @@ Vue.component('auth-component', {
     };
   },
   methods: {
-    login() {
-      if (this.username === 'admin' && this.password === 'admin') {
-        alert('Welcome!');
-      } else {
-        alert('Wrong password');
+    async login() {
+      try {
+        const response = await fetch('/backend/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: this.username,
+            password: this.password
+          }),
+          credentials: 'include' // ОБЯЗАТЕЛЬНО! Чтобы куки передавались
+        });
+
+        if (!response.ok) {
+          throw new Error('Login failed');
+        }
+
+        const data = await response.json();
+        console.log('Login success:', data);
+
+        // Редирект на /backend/dashboard
+        window.location.href = '/backend/dashboard';
+
+      } catch (error) {
+        console.error('Error during login:', error);
+        alert('Wrong username or password!');
       }
     }
   }
