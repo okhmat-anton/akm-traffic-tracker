@@ -1,22 +1,14 @@
-<template id="dashboard-template">
+<script type="text/x-template" id="dashboard-template">
     <v-container>
         <v-tabs
-                v-model="tab"
-                grow
-                height="48"
-                class="custom-tabs"
+          v-model="tab"
+          height="48"
+          slider-color="white"
+          show-arrows
+          next-icon="mdi-arrow-right-bold-box-outline"
+          prev-icon="mdi-arrow-left-bold-box-outline"
         >
-            <v-tab>Dashboard</v-tab>
-            <v-tab>Campaigns</v-tab>
-            <v-tab>Landing Pages</v-tab>
-            <v-tab>Affiliate Network</v-tab>
-            <v-tab>Offers</v-tab>
-            <v-tab>Sources</v-tab>
-            <v-tab>Reports</v-tab>
-            <v-tab>Domains</v-tab>
-            <v-tab>Settings</v-tab>
-            <v-tab>Users</v-tab>
-            <v-tab>About</v-tab>
+          <v-tab v-for="item in tabs" :key="item" v-text="item"></v-tab>
         </v-tabs>
 
         <v-tabs-items v-model="tab">
@@ -58,15 +50,30 @@
 
         </v-tabs-items>
     </v-container>
-</template>
+</script>
 
-<script>
+<script type="application/javascript">
     Vue.component('dashboard-component', {
         template: '#dashboard-template',
         data() {
             return {
                 tab: 0, // Active tab
+                tabs: [
+                    "Dashboard",
+                    "Campaigns",
+                    "Landing Pages",
+                    "Affiliate Network",
+                    "Offers",
+                    "Sources",
+                    "Reports",
+                    "Domains",
+                    "Settings",
+                    "Users",
+                    "About"
+                ]
             }
         }
     });
 </script>
+
+<dashboard-component></dashboard-component>

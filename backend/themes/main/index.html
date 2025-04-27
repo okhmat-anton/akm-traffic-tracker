@@ -12,10 +12,10 @@
   <link href="/backend/backend/css/style.css" rel="stylesheet">
 
   <!-- Vue 2 -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js" type="application/javascript"></script>
 
   <!-- Vuetify JS -->
-  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js" type="application/javascript"></script>
 
 </head>
 <body>
@@ -26,13 +26,12 @@
         <v-container>
 
           {% include page_to_include %}
-          <auth-component></auth-component>
 
         </v-container>
       </v-main>
     </v-app>
   </div>
-<script>
+<script type="application/javascript">
 
 new Vue({
   el: '#app',
