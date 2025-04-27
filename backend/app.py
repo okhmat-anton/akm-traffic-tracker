@@ -70,5 +70,8 @@ async def serve_page(request: Request, page: Optional[str] = None):
     page_file = f"pages/{page}.html"
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "page_to_include": page_file
+        "page_to_include": page_file,
+        "page": page,
+        "is_authenticated": is_authenticated(request),
+        "page_component": '<'+page+'-component></'+page+'-component>',
     })

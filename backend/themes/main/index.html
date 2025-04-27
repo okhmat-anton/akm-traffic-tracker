@@ -20,13 +20,17 @@
 </head>
 <body>
 
+  {% if is_authenticated %}
+    {% include "templates/about.html" %}
+    {% include "templates/domains.html" %}
+  {% endif %}
+
+          {% include page_to_include %}
   <div id="app">
     <v-app>
       <v-main>
         <v-container  fluid class="pa-0">
-
-          {% include page_to_include %}
-
+          {{ page_component | safe }}
         </v-container>
       </v-main>
     </v-app>

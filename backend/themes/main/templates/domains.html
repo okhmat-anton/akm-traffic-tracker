@@ -1,27 +1,13 @@
 <script type="text/x-template" id="domains-template">
     <v-container>
-        HELLO
         <v-data-table
                 :headers="headers"
                 :items="domains"
-                item-value="id"
-                dense
+                :loading="loadingDomains"
+                hide-default-header
+                hide-default-footer
                 class="elevation-1"
-        >
-            <template v-slot:item="{ item }">
-                <tr>
-                    <td>{{ item.id }}</td>
-                    <td>{{ item.domain }}</td>
-                    <td>{{ item.redirect_https }}</td>
-                    <td>{{ item.handle_404 }}</td>
-                    <td>{{ item.default_company }}</td>
-                    <td>{{ item.group_name }}</td>
-                    <td>{{ item.status }}</td>
-                    <td>{{ item.created_at }}</td>
-                    <td>{{ item.updated_at }}</td>
-                </tr>
-            </template>
-        </v-data-table>
+        ></v-data-table>
     </v-container>
 </script>
 
@@ -31,6 +17,7 @@
         data() {
             return {
                 newDomain: '',
+                loadingDomains: false,
                 domains: [
                     {
                         id: 1,
@@ -69,14 +56,13 @@
             };
         },
         mounted() {
-            console.log('init init init init init init')
-            // this.loadDomains();
-            // this.$root.$on('load-domains', this.loadDomains);
+            this.loadDomains();
+            this.$root.$on('load-domains', this.loadDomains);
         },
         methods: {
             async loadDomains() {
-                console.log('loadDomains')
                 try {
+                    this.loadingDomains = true;
                     const response = await fetch('/backend/api/domains/', {
                         credentials: 'include'
                     });
@@ -86,6 +72,7 @@
                     }
 
                     this.domains = await response.json();
+                    this.loadingDomains = false;
                 } catch (error) {
                     console.error('Error loading domains:', error);
                 }

@@ -94,7 +94,7 @@
                 <v-card flat>
                     <v-card-text>
                         <h3>Domains</h3>
-                        {% include "templates/domains.html" %}
+                        <domains-component></domains-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
@@ -118,7 +118,7 @@
                 <v-card flat>
                     <v-card-text>
                         <h3>About</h3>
-                        <p>Application configuration options.</p>
+                        <about-component></about-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
@@ -170,5 +170,3 @@
         }
     });
 </script>
-
-<dashboard-component></dashboard-component>
