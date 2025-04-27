@@ -16,7 +16,7 @@ services:
 
   src:
     build:
-      context: ./src
+      context: ./frontend
     container_name: tracker_src
     restart: always
     expose:
@@ -29,7 +29,7 @@ services:
       - DB_USER=user
       - DB_PASSWORD=password
     volumes:
-      - ./src:/app
+      - ./frontend:/app
     command: [
       "uvicorn",
       "app:app",
