@@ -1,14 +1,33 @@
 <script type="text/x-template" id="dashboard-template">
-    <v-container>
+    <v-container fluid>
+
+        <v-row class="align-center mb-2">
+            <v-col>
+                <h1 style="font-size: 20px; font-weight: 600; margin: 0;">
+                    Welcome, tracker_admin (admin)
+                </h1>
+            </v-col>
+
+            <v-col class="d-flex justify-end">
+                <v-btn
+                        color="error"
+                        outlined
+                        small
+                        @click="logout"
+                >
+                    Logout
+                </v-btn>
+            </v-col>
+        </v-row>
         <v-tabs
-          v-model="tab"
-          height="48"
-          slider-color="white"
-          show-arrows
-          next-icon="mdi-arrow-right-bold-box-outline"
-          prev-icon="mdi-arrow-left-bold-box-outline"
+                v-model="tab"
+                height="48"
+                slider-color="white"
+                show-arrows
+                next-icon="mdi-arrow-right-bold-box-outline"
+                prev-icon="mdi-arrow-left-bold-box-outline"
         >
-          <v-tab v-for="item in tabs" :key="item" v-text="item"></v-tab>
+            <v-tab v-for="item in tabs" :key="item" v-text="item" style="font-size: 12px;"></v-tab>
         </v-tabs>
 
         <v-tabs-items v-model="tab">
@@ -70,7 +89,23 @@
                     "Settings",
                     "Users",
                     "About"
-                ]
+                ],
+
+            }
+        },
+        methods: {
+            async logout() {
+                console.log('Logout clicked');
+                // Удаляем куку с токеном
+                document.cookie = "session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                console.log("session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";");
+                document.cookie = "session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
+                // await fetch('/backend/api/logout', {
+                //   method: 'POST',
+                //   credentials: 'include'
+                // });
+                // Редирект на страницу авторизации
+                // window.location.href = '/backend/auth';
             }
         }
     });
