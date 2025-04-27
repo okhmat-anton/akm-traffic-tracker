@@ -43,7 +43,7 @@
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>User Profile</h3>
+                        <h3>Campaigns</h3>
                         <p>Here is user-related information.</p>
                     </v-card-text>
                 </v-card>
@@ -52,12 +52,68 @@
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Settings</h3>
+                        <h3>Landing Pages</h3>
                         <p>Application configuration options.</p>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
 
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Affiliate Network</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Offers</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Sources</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Reports</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Domains</h3>
+                        {% include "templates/domains.html" %}
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Settings</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Users</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
@@ -93,19 +149,23 @@
 
             }
         },
+        watch: {
+            tab(newTab) {
+                if (this.tab === 7) { // Если Domains вкладка
+                    console.log('Domains tab selected');
+                    this.$root.$emit('load-domains');
+                }
+            }
+        },
         methods: {
             async logout() {
-                console.log('Logout clicked');
-                // Удаляем куку с токеном
-                document.cookie = "session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                console.log("session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";");
                 document.cookie = "session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
-                // await fetch('/backend/api/logout', {
-                //   method: 'POST',
-                //   credentials: 'include'
-                // });
+                await fetch('/backend/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
                 // Редирект на страницу авторизации
-                // window.location.href = '/backend/auth';
+                window.location.href = '/backend/auth';
             }
         }
     });

@@ -1,6 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
+
+from db import fetch_domains, get_db
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -10,9 +13,25 @@ class Domain(BaseModel):
     description: Optional[str] = None
 
 # ====== GET / ======
-@router.get("/")
-async def list_domains():
-    return {"message": "List of all domains"}
+@router.get("/", response_model=list)
+async def get_domains(db: Session = Depends(get_db)):
+    domains = fetch_domains(db)
+    print("domains", domains)
+    # Преобразуем список ORM объектов в список обычных словарей
+    return [
+        {
+            "id": domain.id,
+            "domain": domain.domain,
+            "redirect_https": domain.redirect_https,
+            "handle_404": domain.handle_404,
+            "default_company": domain.default_company,
+            "group_name": domain.group_name,
+            "status": domain.status,
+            "created_at": domain.created_at.isoformat() if domain.created_at else None,
+            "updated_at": domain.updated_at.isoformat() if domain.updated_at else None,
+        }
+        for domain in domains
+    ]
 
 # ====== POST / ======
 @router.post("/")

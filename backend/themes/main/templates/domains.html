@@ -1,0 +1,110 @@
+<script type="text/x-template" id="domains-template">
+    <v-container>
+        HELLO
+        <v-data-table
+                :headers="headers"
+                :items="domains"
+                item-value="id"
+                dense
+                class="elevation-1"
+        >
+            <template v-slot:item="{ item }">
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.domain }}</td>
+                    <td>{{ item.redirect_https }}</td>
+                    <td>{{ item.handle_404 }}</td>
+                    <td>{{ item.default_company }}</td>
+                    <td>{{ item.group_name }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.created_at }}</td>
+                    <td>{{ item.updated_at }}</td>
+                </tr>
+            </template>
+        </v-data-table>
+    </v-container>
+</script>
+
+<script type="application/javascript">
+    Vue.component('domains-component', {
+        template: '#domains-template',
+        data() {
+            return {
+                newDomain: '',
+                domains: [
+                    {
+                        id: 1,
+                        domain: "example.com",
+                        redirect_https: true,
+                        handle_404: "error",
+                        default_company: "Company A",
+                        group_name: "Group 1",
+                        status: "ok",
+                        created_at: "2025-04-26T21:30:00",
+                        updated_at: "2025-04-26T21:40:00",
+                    },
+                    {
+                        id: 2,
+                        domain: "test.com",
+                        redirect_https: false,
+                        handle_404: "redirect_to_company",
+                        default_company: "Company B",
+                        group_name: "Group 2",
+                        status: "pending",
+                        created_at: "2025-04-25T20:20:00",
+                        updated_at: "2025-04-25T20:25:00",
+                    },
+                ],
+                headers: [
+                    {text: 'ID', value: 'id'},
+                    {text: 'Domain', value: 'domain'},
+                    {text: 'Redirect HTTPS', value: 'redirect_https'},
+                    {text: 'Handle 404', value: 'handle_404'},
+                    {text: 'Default Company', value: 'default_company'},
+                    {text: 'Group Name', value: 'group_name'},
+                    {text: 'Status', value: 'status'},
+                    {text: 'Created At', value: 'created_at'},
+                    {text: 'Updated At', value: 'updated_at'},
+                ],
+            };
+        },
+        mounted() {
+            console.log('init init init init init init')
+            // this.loadDomains();
+            // this.$root.$on('load-domains', this.loadDomains);
+        },
+        methods: {
+            async loadDomains() {
+                console.log('loadDomains')
+                try {
+                    const response = await fetch('/backend/api/domains/', {
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch domains');
+                    }
+
+                    this.domains = await response.json();
+                } catch (error) {
+                    console.error('Error loading domains:', error);
+                }
+            },
+            async addDomain() {
+                if (!this.newDomain.trim()) return;
+                await fetch('/backend/api/domains/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({domain: this.newDomain.trim()}),
+                    credentials: 'include'
+                });
+                this.newDomain = '';
+                this.loadDomains();
+            }
+        }
+    });
+
+</script>
+
+<!-- Вставка компонента -->
+<domains-component></domains-component>
