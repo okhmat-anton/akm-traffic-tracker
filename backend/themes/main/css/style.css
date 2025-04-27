@@ -8,3 +8,13 @@ body {
   padding: 10px 20px;
   border-radius: 8px;
 }
+
+
+.custom-tabs {
+  font-size: 12px; /* Уменьшаем шрифт табов */
+}
+
+.custom-tabs .v-tab {
+  min-width: auto; /* Чтобы табы могли ужиматься */
+  padding: 0 8px; /* Меньше отступов */
+}

@@ -1,67 +1,72 @@
 <template id="dashboard-template">
-  <v-container>
-    <v-tabs v-model="tab" grow>
-      <v-tab>Dashboard</v-tab>
-      <v-tab>Campaigns</v-tab>
-      <v-tab>Landing Pages</v-tab>
-      <v-tab>Affiliate Network</v-tab>
-      <v-tab>Offers</v-tab>
-      <v-tab>Sources</v-tab>
-      <v-tab>Reports</v-tab>
-      <v-tab>Domains</v-tab>
-      <v-tab>Settings</v-tab>
-      <v-tab>Users</v-tab>
-      <v-tab>About</v-tab>
-    </v-tabs>
+    <v-container>
+        <v-tabs
+                v-model="tab"
+                grow
+                height="48"
+                class="custom-tabs"
+        >
+            <v-tab>Dashboard</v-tab>
+            <v-tab>Campaigns</v-tab>
+            <v-tab>Landing Pages</v-tab>
+            <v-tab>Affiliate Network</v-tab>
+            <v-tab>Offers</v-tab>
+            <v-tab>Sources</v-tab>
+            <v-tab>Reports</v-tab>
+            <v-tab>Domains</v-tab>
+            <v-tab>Settings</v-tab>
+            <v-tab>Users</v-tab>
+            <v-tab>About</v-tab>
+        </v-tabs>
 
-    <v-tabs-items v-model="tab">
-      <v-tab-item>
-        <v-card flat>
-          <v-card-text>
-            <h3>Welcome to Dashboard</h3>
-            <p>This is the main overview.</p>
-          </v-card-text>
-        </v-card>
-      </v-tab-item>
+        <v-tabs-items v-model="tab">
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Welcome to Dashboard</h3>
+                        <p>This is the main overview.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
 
-      <v-tab-item>
-        <v-card flat>
-          <v-card-text>
-            <h3>User Profile</h3>
-            <p>Here is user-related information.</p>
-          </v-card-text>
-        </v-card>
-      </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>User Profile</h3>
+                        <p>Here is user-related information.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
 
-      <v-tab-item>
-        <v-card flat>
-          <v-card-text>
-            <h3>Settings</h3>
-            <p>Application configuration options.</p>
-          </v-card-text>
-        </v-card>
-      </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>Settings</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
 
-      <v-tab-item>
-        <v-card flat>
-          <v-card-text>
-            <h3>About</h3>
-            <p>Application configuration options.</p>
-          </v-card-text>
-        </v-card>
-      </v-tab-item>
+            <v-tab-item>
+                <v-card flat>
+                    <v-card-text>
+                        <h3>About</h3>
+                        <p>Application configuration options.</p>
+                    </v-card-text>
+                </v-card>
+            </v-tab-item>
 
-    </v-tabs-items>
-  </v-container>
+        </v-tabs-items>
+    </v-container>
 </template>
 
 <script>
-Vue.component('dashboard-component', {
-  template: '#dashboard-template',
-  data() {
-    return {
-      tab: 0, // Active tab
-    }
-  }
-});
+    Vue.component('dashboard-component', {
+        template: '#dashboard-template',
+        data() {
+            return {
+                tab: 0, // Active tab
+            }
+        }
+    });
 </script>

@@ -24,11 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent
 THEMES_DIR = BASE_DIR / "themes"
 THEME_NAME = "main"
 THEME_DIR = THEMES_DIR / THEME_NAME
-
-print(THEME_DIR)
+CSS_DIR = THEME_DIR / "css"
+print('CSS_DIR', CSS_DIR)
 # Подключение статики (картинки, стили, скрипты)
 app.mount("/img", StaticFiles(directory=THEME_DIR / "img"), name="img")
-app.mount("/css", StaticFiles(directory=THEME_DIR / "css"), name="css")
+app.mount("/css", StaticFiles(directory=CSS_DIR), name="css")
 
 # Настройка шаблонов (Jinja2)
 templates = Jinja2Templates(directory=THEME_DIR)
