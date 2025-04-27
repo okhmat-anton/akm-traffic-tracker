@@ -1,13 +1,23 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-def connect_db():
-    return psycopg2.connect(
-        host="tracker_postgres",
-        database="db",
-        user="user",
-        password="password"
-    )
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+DATABASE_URL = "postgresql+psycopg2://user:password@tracker_postgres/db"
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+# Функция подключения к базе
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def get_user(username):
     conn = connect_db()

@@ -1,9 +1,34 @@
 # app_pages/auth.py
-
-from fastapi import APIRouter, Request, Response, HTTPException, status
+from fastapi import APIRouter, Request, Response, HTTPException, status, Depends
 from pydantic import BaseModel
 
+from sqlalchemy.orm import Session
+from fastapi import Request
+from jose import jwt, JWTError
+from typing import Optional
+from hashlib import md5
+from db import get_db, get_user
+from hashlib import md5
+from datetime import datetime, timedelta
+
+from models.user import User
+
 router = APIRouter()
+
+# Конфигурация JWT
+SECRET_KEY = "your-super-secret-key-for-jwt"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_HOURS = 2400
+pass_salt = 'akm_'
+
+# Генерация токена
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS))
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
 
 # Модель для передачи логина и пароля
 class LoginRequest(BaseModel):
@@ -11,16 +36,70 @@ class LoginRequest(BaseModel):
     password: str
 
 
-def is_authenticated(request: Request):
-    return False
+# Секретный ключ для подписи токенов
+SECRET_KEY = "your-super-secret-key"
+ALGORITHM = "HS256"
+
+# Фейковая база пользователей
+fake_users_db = {
+    "admin": {
+        "username": "admin",
+        "password_hash": md5("akm_admin".encode()).hexdigest()
+    },
+    "user1": {
+        "username": "user1",
+        "password_hash": md5("akm_user".encode()).hexdigest()
+    }
+}
+
+# ====== Проверка авторизации ======
+def is_authenticated(request: Request) -> bool:
+    token = request.cookies.get("session_token")
+    if not token:
+        return False
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        password_hash = payload.get("password_hash")
+
+        if not username or not password_hash:
+            return False
+
+        user = fake_users_db.get(username)
+        if not user:
+            return False
+
+        # Сравниваем хеши паролей
+        if user["password_hash"] != password_hash:
+            return False
+
+        return True
+
+    except JWTError:
+        return False
 
 # ====== POST /login ======
 @router.post("/login")
-async def login(request: Request, response: Response, login_data: LoginRequest):
-    if login_data.username == "admin" and login_data.password == "admin":
-        response.set_cookie(key="session_token", value="valid_token", httponly=True)
-        return {"message": "Login successful"}
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+async def login(request: Request, response: Response, login_data: LoginRequest, db: Session = Depends(get_db)):
+    user = get_user(db, login_data.username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Хешируем пароль как "akm" + password
+    hashed_password = md5((pass_salt + login_data.password).encode()).hexdigest()
+
+    if user.password_hash != hashed_password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Генерируем токен
+    token_data = {"sub": user.username}
+    token = create_access_token(data=token_data)
+
+    # Сохраняем токен в куках
+    response.set_cookie(key="session_token", value=token, httponly=True)
+
+    return {"message": "Login successful"}
 
 # ====== POST /logout ======
 @router.post("/logout")

@@ -5,7 +5,17 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from fastapi.responses import FileResponse
 
-app = FastAPI()
+app = FastAPI(
+    title="APP API",
+    description="API Documentation",
+    version="1.0.0",
+    docs_url="/api_docs",        # Swagger UI
+    redoc_url="/api_redoc",      # ReDoc (альтернативная документация)
+    openapi_url="/api_openapi.json",  # Схема OpenAPI)
+    root_path="/backend"  # если сервер за прокси на пути /backend
+)
+
+# app = FastAPI() # for production
 
 # Базовая директория проекта
 BASE_DIR = Path(__file__).resolve().parent
