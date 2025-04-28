@@ -72,6 +72,7 @@ async def serve_page(request: Request, page: Optional[str] = None):
         "request": request,
         "page_to_include": page_file,
         "page": page,
+        "THEME_NAME": THEME_NAME,
         "is_authenticated": is_authenticated(request),
-        "page_component": '<'+page+'-component></'+page+'-component>',
+        "page_component": '<'+page+'-page-component></'+page+'-page-component>',
     })

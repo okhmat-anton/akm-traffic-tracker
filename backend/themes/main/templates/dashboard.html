@@ -1,0 +1,278 @@
+{% raw %}
+<script type="text/x-template" id="dashboard-template">
+    <v-container fluid>
+        <h2>Dashboard</h2>
+
+        <v-row dense class="mt-4">
+            <v-col
+                    v-for="metric in metrics"
+                    :key="metric.title"
+                    cols="12"
+                    sm="6"
+                    md="2"
+            >
+                <v-card class="pa-3"
+                        :color="metric.color"
+                >
+                    <v-card-text class="text-center">
+                        <div class="text-h5">{{ metric.title }}</div>
+                        <div class="text-h3 font-weight-bold mt-2">{{ metric.value }}</div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+        <v-row class="mt-4">
+            <v-col></v-col>
+            <v-col cols="2">
+                <v-menu
+                        v-model="date_menu2"
+                        :close-on-content-click="false"
+                        :nudge-right="40"
+                        transition="scale-transition"
+                        offset-y
+                        min-width="auto"
+                >
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-text-field
+                                v-model="dateRangeText"
+                                label="Date range"
+                                prepend-icon="mdi-calendar"
+                                readonly
+                                v-bind="attrs"
+                                v-on="on"
+                                range
+                                readonly
+                                outlined
+                                dense
+                        ></v-text-field>
+                    </template>
+                    <v-date-picker
+                            v-model="date_range"
+                            @input="menu2 = false"
+                            range
+                    ></v-date-picker>
+                </v-menu>
+            </v-col>
+            <v-col cols="2">
+                <v-select
+                        :items="['Hours', 'Days', 'Weeks', 'Months']"
+                        label="Detalization"
+                        v-model="detailLevel"
+                        outlined
+                        dense
+                ></v-select>
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col cols="12">
+                <v-card>
+                    <apexchart
+                            height="500"
+                            type="area"
+                            :options="mainChart.chartOptions"
+                            :series="mainChart.series"
+                    ></apexchart>
+                </v-card>
+            </v-col>
+        </v-row>
+        <v-row>
+            <v-col cols="8">
+                <v-card>
+                    <v-data-table
+                            :headers="headers"
+                            :items="desserts"
+                            :items-per-page="5"
+                            class="elevation-1"
+                    ></v-data-table>
+                </v-card>
+            </v-col>
+            <v-col cols="4">
+                <v-card>
+                    <v-data-table
+                            :headers="headers"
+                            :items="desserts"
+                            :items-per-page="5"
+                            class="elevation-1"
+                    ></v-data-table>
+                </v-card>
+            </v-col>
+        </v-row>
+    </v-container>
+</script>
+
+<script type="application/javascript">
+    Vue.component('dashboard-component', {
+        template: '#dashboard-template',
+        data() {
+            return {
+                date_menu2: false,
+                date_range: ['2019-09-10', '2019-09-20'],
+                metrics: [
+                    {title: 'Clicks', value: 12345, color: 'blue darken-2'},
+                    {title: 'Unique Clicks', value: 6789, color: 'indigo darken-2'},
+                    {title: 'Conversions', value: 456, color: 'deep-purple darken-2'},
+                    {title: 'Cost', value: '$1234', color: 'red darken-2'},
+                    {title: 'Revenue', value: '$5678', color: 'green darken-2'},
+                    {title: 'ROI', value: '120%', color: 'teal darken-2'}
+                ],
+                detailLevel: 'Days',
+                mainChart: {
+                    series: [
+                        {
+                            name: 'Clicks',
+                            data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
+                        },
+                        {
+                            name: 'Conversions',
+                            data: [2, 10, 8, 15, 12, 18, 20, 25, 30]
+                        },
+                        {
+                            name: 'Unique Clicks',
+                            data: [5, 20, 15, 30, 25, 35, 45, 60, 90]
+                        },
+
+                    ],
+                    chartOptions: {
+                        chart: {
+                            background: 'None',
+                            id: 'basic-line',
+                            stacked: false,
+                            toolbar: {
+                                show: true
+                            },
+                            zoom: {
+                                enabled: false
+                            }
+                        },
+                        dataLabels: {
+                            enabled: false
+                        },
+                        stroke: {
+                            curve: 'monotoneCubic'
+                        },
+                        theme: {
+                            mode: 'dark'
+                        },
+                        xaxis: {
+                            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+                            // type: 'datetime'
+                        },
+                        yaxis: {
+                            labels: {
+                                style: {
+                                    colors: '#ffffff'
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            horizontalAlign: 'left'
+                        },
+                    }
+                },
+                headers: [
+                    {
+                        text: 'Dessert (100g serving)',
+                        align: 'start',
+                        sortable: false,
+                        value: 'name',
+                    },
+                    {text: 'Calories', value: 'calories'},
+                    {text: 'Fat (g)', value: 'fat'},
+                    {text: 'Carbs (g)', value: 'carbs'},
+                    {text: 'Protein (g)', value: 'protein'},
+                    {text: 'Iron (%)', value: 'iron'},
+                ],
+                desserts: [
+                    {
+                        name: 'Frozen Yogurt',
+                        calories: 159,
+                        fat: 6.0,
+                        carbs: 24,
+                        protein: 4.0,
+                        iron: 1,
+                    },
+                    {
+                        name: 'Ice cream sandwich',
+                        calories: 237,
+                        fat: 9.0,
+                        carbs: 37,
+                        protein: 4.3,
+                        iron: 1,
+                    },
+                    {
+                        name: 'Eclair',
+                        calories: 262,
+                        fat: 16.0,
+                        carbs: 23,
+                        protein: 6.0,
+                        iron: 7,
+                    },
+                    {
+                        name: 'Cupcake',
+                        calories: 305,
+                        fat: 3.7,
+                        carbs: 67,
+                        protein: 4.3,
+                        iron: 8,
+                    },
+                    {
+                        name: 'Gingerbread',
+                        calories: 356,
+                        fat: 16.0,
+                        carbs: 49,
+                        protein: 3.9,
+                        iron: 16,
+                    },
+                    {
+                        name: 'Jelly bean',
+                        calories: 375,
+                        fat: 0.0,
+                        carbs: 94,
+                        protein: 0.0,
+                        iron: 0,
+                    },
+                    {
+                        name: 'Lollipop',
+                        calories: 392,
+                        fat: 0.2,
+                        carbs: 98,
+                        protein: 0,
+                        iron: 2,
+                    },
+                    {
+                        name: 'Honeycomb',
+                        calories: 408,
+                        fat: 3.2,
+                        carbs: 87,
+                        protein: 6.5,
+                        iron: 45,
+                    },
+                    {
+                        name: 'Donut',
+                        calories: 452,
+                        fat: 25.0,
+                        carbs: 51,
+                        protein: 4.9,
+                        iron: 22,
+                    },
+                    {
+                        name: 'KitKat',
+                        calories: 518,
+                        fat: 26.0,
+                        carbs: 65,
+                        protein: 7,
+                        iron: 6,
+                    },
+                ],
+
+            }
+        },
+        computed: {
+            dateRangeText() {
+                return this.date_range.join(' ~ ')
+            },
+        },
+    });
+</script>
+{% endraw %}

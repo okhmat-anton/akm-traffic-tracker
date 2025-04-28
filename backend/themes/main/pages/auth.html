@@ -1,4 +1,4 @@
-<script type="text/x-template" id="auth-template">
+<script type="text/x-template" id="auth-page-template">
   <v-row align="center" justify="center" style="min-height: 100vh;">
     <v-col cols="12" sm="8" md="4">
       <v-card outlined>
@@ -39,8 +39,8 @@
 <!-- Скрипт регистрации компонента -->
 <!-- ================== -->
 <script type="application/javascript">
-Vue.component('auth-component', {
-  template: '#auth-template',
+Vue.component('auth-page-component', {
+  template: '#auth-page-template',
   data() {
     return {
       username: '',

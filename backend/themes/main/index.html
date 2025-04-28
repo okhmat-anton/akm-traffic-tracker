@@ -1,50 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AKM TRACKER</title>
+    <meta charset="UTF-8">
+    <title>AKM TRACKER</title>
 
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-  <!-- Vuetify CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <!-- Vuetify CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
 
-  <link href="/backend/backend/css/style.css" rel="stylesheet">
+    <link href="/backend/backend/css/style.css" rel="stylesheet">
 
-  <!-- Vue 2 -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js" type="application/javascript"></script>
+    <!-- Vue 2 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js" type="application/javascript"></script>
 
-  <!-- Vuetify JS -->
-  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js" type="application/javascript"></script>
-
+    <!-- Vuetify JS -->
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js" type="application/javascript"></script>
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-apexcharts"></script>
 </head>
 <body>
 
-  {% if is_authenticated %}
-    {% include "templates/about.html" %}
-    {% include "templates/domains.html" %}
-  {% endif %}
+{% if is_authenticated %}
 
-          {% include page_to_include %}
-  <div id="app">
+{% include "templates/about.html" %}
+{% include "templates/dashboard.html" %}
+{% include "templates/domains.html" %}
+
+{% endif %}
+
+{% include page_to_include %}
+<div id="app">
     <v-app>
-      <v-main>
-        <v-container  fluid class="pa-0">
-          {{ page_component | safe }}
-        </v-container>
-      </v-main>
+        <v-main>
+            <v-container fluid class="pa-0">
+                {{ page_component | safe }}
+            </v-container>
+        </v-main>
     </v-app>
-  </div>
+</div>
 <script type="application/javascript">
 
-new Vue({
-  el: '#app',
-  vuetify: new Vuetify({
-    theme: {
-      dark: true, // 🔥 Включить тёмную тему
-    }
-  })
-});
+    Vue.component('apexchart', VueApexCharts);
+    new Vue({
+        el: '#app',
+        vuetify: new Vuetify({
+            theme: {
+                dark: true,
+            }
+        })
+    });
+
 </script>
 
 </body>
