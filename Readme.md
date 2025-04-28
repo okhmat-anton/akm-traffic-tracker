@@ -29,16 +29,16 @@
 
 ## 📖 About the Project
 
-This project is a modern web application with a clean separation between the backend and frontend:
+This is free opensource copy of Keitaro Tracker https://keitaro.io:
 
-- **Backend:** FastAPI — a high-performance asynchronous API server.
-- **Frontend:** Vue 2 + Vuetify — a Material Design UI framework for Vue.js.
+- **Frontend:** FastAPI — a high-performance asynchronous API server.
+- **Backend:** Vue 2 + Vuetify — a Material Design UI framework for Vue.js.
 
 Key features:
-- Rapid development and deployment.
-- Clean and modular API architecture.
-- Responsive UI compatible with both desktop and mobile.
-- Scalable codebase.
+- Collecting metric data from different sources with deep analytics.
+- Landing pages storage with PHP support.
+- Ability to make custom routes for different domains and countries.
+- All other features that have Keitaro platform
 
 ---
 
@@ -71,43 +71,36 @@ git clone https://github.com/your-username/your-project.git
 cd your-project
 ```
 
-### Install Backend Dependencies
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Install Frontend Dependencies
-
-```bash
-cd frontend
-npm install
-```
-
----
-
 ## 🚀 Running the Project
 
-### Run Backend Locally
+### Install
 
 ```bash
-cd backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+make install
 ```
 
-### Run Frontend Locally
+### Restart
 
 ```bash
-cd frontend
-npm run serve
+make restart
+```
+
+### Super admin user login 
+
+```bash
+login tracker_user 
+password admin 
+```
+
+### Run Locally
+
+```bash
+make install-local
 ```
 
 By default:
-- API will be available at `http://localhost:8000`
-- Frontend will be available at `http://localhost:8080`
+- API will be available at `https://localhost`
+- Dashboard will be available at `https://localhost/backend`
 
 ---
 
