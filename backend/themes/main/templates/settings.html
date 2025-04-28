@@ -1,0 +1,146 @@
+{% raw %}
+<script type="text/x-template" id="settings-template">
+    <v-container fluid>
+        <h2>Settings</h2>
+        <v-container fluid class="mt-4">
+
+            <v-row>
+                <v-col cols="12" md="6">
+                    <v-card dark flat>
+                        <v-card-title>General Settings</v-card-title>
+                        <v-card-text>
+                            <v-text-field
+                                    label="Tracker Domain"
+                                    v-model="settings.domain"
+                                    outlined
+                                    dense
+                            ></v-text-field>
+
+                            <v-select
+                                    label="Currency"
+                                    :items="currencies"
+                                    v-model="settings.currency"
+                                    outlined
+                                    dense
+                            ></v-select>
+
+                            <v-select
+                                    label="Timezone"
+                                    :items="timezones"
+                                    v-model="settings.timezone"
+                                    outlined
+                                    dense
+                            ></v-select>
+
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+
+                <!--                <v-col cols="12" md="6">-->
+                <!--                    <v-card dark flat class="pa-4">-->
+                <!--                        <v-card-title>Advanced Settings</v-card-title>-->
+                <!--                        <v-card-text>-->
+
+                <!--                            <v-text-field-->
+                <!--                                    label="API Access Token"-->
+                <!--                                    v-model="settings.apiToken"-->
+                <!--                                    outlined-->
+                <!--                                    dense-->
+                <!--                                    append-icon="mdi-refresh"-->
+                <!--                                    @click:append="generateToken"-->
+                <!--                            ></v-text-field>-->
+
+                <!--                            <v-switch-->
+                <!--                                    label="Enable Request Logging"-->
+                <!--                                    v-model="settings.enableLogging"-->
+                <!--                                    inset-->
+                <!--                                    dense-->
+                <!--                            ></v-switch>-->
+
+                <!--                        </v-card-text>-->
+                <!--                    </v-card>-->
+                <!--                </v-col>-->
+                <!-- Блок маппинга переменных -->
+                <v-col cols="12">
+                    <v-card dark flat>
+                        <v-card-title>Matching Variables (Sub IDs)</v-card-title>
+                        <v-card-text>
+                            <v-row dense v-for="(mapping, index) in subIdMapping" :key="index" align="center">
+                                <v-col cols="3">
+                                    <v-text-field
+                                            :label="'sub_id_' + (index + 1)"
+                                            v-model="mapping.sub"
+                                            readonly
+                                            outlined
+                                            dense
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="9">
+                                    <v-text-field
+                                            label="Variable Name"
+                                            v-model="mapping.name"
+                                            outlined
+                                            dense
+                                    ></v-text-field>
+                                </v-col>
+                            </v-row>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+
+            <v-row justify="center" class="mt-4">
+                <v-btn
+                        color="success"
+                        @click="saveSettings"
+                        outlined
+                >
+                    Save Settings
+                </v-btn>
+            </v-row>
+
+        </v-container>
+    </v-container>
+</script>
+
+<script type="application/javascript">
+    Vue.component('settings-component', {
+        template: '#settings-template',
+        data() {
+            return {
+                settings: {
+                    domain: 'tracker.example.com',
+                    currency: 'USD',
+                    timezone: 'UTC',
+                    autoUpdateReports: true,
+                    apiToken: 'a1b2c3d4e5f6',
+                    enableLogging: false,
+                },
+                subIdMapping: [
+                    {sub: 'sub_id_1', name: ''},
+                    {sub: 'sub_id_2', name: ''},
+                    {sub: 'sub_id_3', name: ''},
+                    {sub: 'sub_id_4', name: ''},
+                    {sub: 'sub_id_5', name: ''},
+                    {sub: 'sub_id_6', name: ''},
+                    {sub: 'sub_id_7', name: ''},
+                    {sub: 'sub_id_8', name: ''},
+                    {sub: 'sub_id_9', name: ''},
+                    {sub: 'sub_id_10', name: ''},
+                ],
+                currencies: ['USD', 'EUR', 'GBP', 'JPY'],
+                timezones: ['UTC', 'America/New_York', 'Europe/Berlin', 'Asia/Tokyo'],
+            };
+        },
+        methods: {
+            saveSettings() {
+                console.log('Settings saved:', this.settings);
+                alert('Settings have been saved (mock).');
+            },
+            generateToken() {
+                this.settings.apiToken = Math.random().toString(36).substring(2, 12);
+            }
+        }
+    });
+</script>
+{% endraw %}

@@ -1,5 +1,5 @@
 <script type="text/x-template" id="dashboard-page-template">
-    <v-container fluid>
+    <v-container fluid style="height: 100%;" >
 
         <v-row class="align-center mb-2">
             <v-col>
@@ -30,7 +30,7 @@
             <v-tab v-for="item in tabs" :key="item" v-text="item" style="font-size: 12px;"></v-tab>
         </v-tabs>
 
-        <v-tabs-items v-model="tab">
+        <v-tabs-items v-model="tab" style="min-height: calc(100% - 100px); overflow-y: auto;">
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
@@ -42,8 +42,7 @@
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Campaigns</h3>
-                        <p>Here is user-related information.</p>
+                        <campaigns-component></campaigns-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
@@ -51,8 +50,7 @@
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Landing Pages</h3>
-                        <p>Application configuration options.</p>
+                        <landings-component></landings-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
@@ -60,32 +58,28 @@
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Affiliate Network</h3>
-                        <p>Application configuration options.</p>
+                        <affiliates-component></affiliates-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Offers</h3>
-                        <p>Application configuration options.</p>
+                        <offers-component></offers-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Sources</h3>
-                        <p>Application configuration options.</p>
+                        <sources-component></sources-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Reports</h3>
-                        <p>Application configuration options.</p>
+                        <reports-component></reports-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
@@ -99,23 +93,20 @@
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Settings</h3>
-                        <p>Application configuration options.</p>
+                        <settings-component></settings-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Users</h3>
-                        <p>Application configuration options.</p>
+                        <users-component></users-component>
                     </v-card-text>
                 </v-card>
             </v-tab-item>
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
-                        <h3>Documentation</h3>
                         <about-component></about-component>
                     </v-card-text>
                 </v-card>
@@ -135,7 +126,7 @@
                     "Dashboard",
                     "Campaigns",
                     "Landing Pages",
-                    "Affiliate Network",
+                    "Affiliate Networks",
                     "Offers",
                     "Sources",
                     "Reports",

@@ -26,6 +26,14 @@
 
 {% include "templates/about.html" %}
 {% include "templates/dashboard.html" %}
+{% include "templates/campaigns.html" %}
+{% include "templates/landings.html" %}
+{% include "templates/affiliates.html" %}
+{% include "templates/offers.html" %}
+{% include "templates/reports.html" %}
+{% include "templates/sources.html" %}
+{% include "templates/users.html" %}
+{% include "templates/settings.html" %}
 {% include "templates/domains.html" %}
 
 {% endif %}
@@ -33,8 +41,8 @@
 {% include page_to_include %}
 <div id="app">
     <v-app>
-        <v-main>
-            <v-container fluid class="pa-0">
+        <v-main class="fill-height">
+            <v-container fluid class="pa-0" style="height: 100%">
                 {{ page_component | safe }}
             </v-container>
         </v-main>

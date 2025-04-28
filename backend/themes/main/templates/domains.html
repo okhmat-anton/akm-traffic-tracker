@@ -1,13 +1,14 @@
 <script type="text/x-template" id="domains-template">
-    <v-container>
-        <h3>Domains</h3>
+    <v-container fluid>
+        <h2>Domains</h2>
         <v-data-table
                 :headers="headers"
                 :items="domains"
                 :loading="loadingDomains"
                 hide-default-header
                 hide-default-footer
-                class="elevation-1"
+                dense
+                class="elevation-1 mt-4"
         ></v-data-table>
     </v-container>
 </script>
