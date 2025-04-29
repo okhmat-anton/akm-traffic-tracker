@@ -14,10 +14,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  src:
+  frontend:
     build:
       context: ./frontend
-    container_name: tracker_src
+    container_name: tracker_frontend
     restart: always
     expose:
       - "8000"
@@ -62,6 +62,15 @@ services:
       "--reload"
     ]
 
+  php:
+    image: php:8.1-fpm
+    container_name: tracker_php
+    restart: always
+    expose:
+      - "9000"
+    volumes:
+      - ./frontend/landings:/var/www/landings
+
   nginx:
     build:
       context: ./nginx
@@ -75,9 +84,11 @@ services:
       - ./ssl:/etc/nginx/ssl
       - ./certbot-etc:/etc/letsencrypt
       - ./certbot-var:/var/www/certbot
+      - ./frontend/landings:/var/www/landings
     depends_on:
-      - src
+      - frontend
       - backend
+      - php
 
 volumes:
   postgres_data:
