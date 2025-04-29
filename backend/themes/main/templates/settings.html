@@ -68,22 +68,32 @@
                             <v-row dense v-for="(mapping, index) in subIdMapping" :key="index" align="center">
                                 <v-col cols="3">
                                     <v-text-field
-                                            :label="'sub_id_' + (index + 1)"
-                                            v-model="mapping.sub"
-                                            readonly
+                                            :label="mapping.name"
+                                            v-model="mapping.name"
+                                            :readonly="!mapping.editable_name"
                                             outlined
                                             dense
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="9">
+                                <v-col cols="3">
+                                    <v-text-field
+                                            :label="mapping.parameter"
+                                            v-model="mapping.parameter"
+                                            :readonly="!mapping.editable_name"
+                                            outlined
+                                            dense
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="6">
                                     <v-text-field
                                             label="Variable Name"
-                                            v-model="mapping.name"
+                                            v-model="mapping.token"
                                             outlined
                                             dense
                                     ></v-text-field>
                                 </v-col>
                             </v-row>
+
                         </v-card-text>
                     </v-card>
                 </v-col>
@@ -109,7 +119,7 @@
         data() {
             return {
                 settings: {
-                    domain: 'tracker.example.com',
+                    domain: '',
                     currency: 'USD',
                     timezone: 'UTC',
                     autoUpdateReports: true,
@@ -117,26 +127,46 @@
                     enableLogging: false,
                 },
                 subIdMapping: [
-                    {sub: 'sub_id_1', name: ''},
-                    {sub: 'sub_id_2', name: ''},
-                    {sub: 'sub_id_3', name: ''},
-                    {sub: 'sub_id_4', name: ''},
-                    {sub: 'sub_id_5', name: ''},
-                    {sub: 'sub_id_6', name: ''},
-                    {sub: 'sub_id_7', name: ''},
-                    {sub: 'sub_id_8', name: ''},
-                    {sub: 'sub_id_9', name: ''},
-                    {sub: 'sub_id_10', name: ''},
                 ],
                 currencies: ['USD', 'EUR', 'GBP', 'JPY'],
                 timezones: ['UTC', 'America/New_York', 'Europe/Berlin', 'Asia/Tokyo'],
             };
         },
+        mounted() {
+            this.loadSettings();
+            this.$root.$on('load-settings', this.loadSettings);
+        },
         methods: {
-            saveSettings() {
-                console.log('Settings saved:', this.settings);
-                alert('Settings have been saved (mock).');
+            loadSettings() {
+                fetch("/backend/api/settings/", {
+                    credentials: "include"
+                })
+                    .then((r) => r.json())
+                    .then((data) => {
+                        if (data.settings) this.settings = data.settings;
+                        if (data.subIdMapping) this.subIdMapping = data.subIdMapping;
+                    });
             },
+            saveSettings() {
+                const payload = {
+                    settings: this.settings,
+                    subIdMapping: this.subIdMapping
+                };
+                fetch("/backend/api/settings/", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    credentials: "include",
+                    body: JSON.stringify(payload)
+                })
+                    .then((r) => r.json())
+                    .then((data) => {
+                        this.$root.$emit("show-message", {type: "success", text: "Settings saved"});
+                    })
+                    .catch((err) => {
+                        this.$root.$emit("show-message", {type: "error", text: err.message});
+                    });
+            },
+
             generateToken() {
                 this.settings.apiToken = Math.random().toString(36).substring(2, 12);
             }

@@ -105,6 +105,45 @@ CREATE TABLE landings (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS settings (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    value TEXT NOT NULL
+);
+
+-- Добавим начальные данные
+INSERT INTO settings (name, value) VALUES
+('settings', '{
+  "domain": "",
+  "currency": "USD",
+  "timezone": "UTC",
+  "autoUpdateReports": true,
+  "apiToken": "a1b2c3d4e5f6",
+  "enableLogging": false
+}') ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO settings (name, value) VALUES
+('subIdMapping', '[
+  {"name":"Keyword","parameter":"keyword","token":"","editable_name":false},
+  {"name":"Cost","parameter":"cost","token":"","editable_name":false},
+  {"name":"Currency","parameter":"currency","token":"","editable_name":false},
+  {"name":"External ID","parameter":"external_id","token":"","editable_name":false},
+  {"name":"Creative ID","parameter":"utm_creative","token":"{{ad.name}}","editable_name":false},
+  {"name":"AD Campaign ID","parameter":"utm_campaign","token":"{{campaign.name}}","editable_name":false},
+  {"name":"Keyword","parameter":"keyword","token":"","editable_name":false},
+  {"name":"Site","parameter":"utm_source","token":"{{site_source_name}}","editable_name":false},
+  {"name":"Sub id 1","parameter":"sub_id_1","token":"","editable_name":true},
+  {"name":"Sub id 2","parameter":"sub_id_2","token":"","editable_name":true},
+  {"name":"Sub id 3","parameter":"sub_id_3","token":"","editable_name":true},
+  {"name":"Sub id 4","parameter":"sub_id_4","token":"","editable_name":true},
+  {"name":"Sub id 5","parameter":"sub_id_5","token":"","editable_name":true},
+  {"name":"Sub id 6","parameter":"sub_id_6","token":"","editable_name":true},
+  {"name":"Sub id 7","parameter":"sub_id_7","token":"","editable_name":true},
+  {"name":"Sub id 8","parameter":"sub_id_8","token":"","editable_name":true},
+  {"name":"Sub id 9","parameter":"sub_id_9","token":"","editable_name":true},
+  {"name":"Sub id 10","parameter":"sub_id_10","token":"","editable_name":true}
+]') ON CONFLICT (name) DO NOTHING;
+
 -- Создание индексов для скорости
 CREATE INDEX idx_visits_project_id ON visits (project_id);
 CREATE INDEX idx_visits_created_at ON visits (created_at);

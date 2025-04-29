@@ -148,6 +148,10 @@
                     console.log('Domains tab selected');
                     this.$root.$emit('load-domains');
                 }
+                if (this.tab === 8) { // Если Domains вкладка
+                    console.log('Settings tab selected');
+                    this.$root.$emit('load-settings');
+                }
             }
         },
         methods: {
