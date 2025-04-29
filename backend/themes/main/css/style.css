@@ -1,3 +1,7 @@
 body {
   /*background-color: #f5f5f5;*/
 }
+
+.red { background-color: #f44336; }
+.green { background-color: #4caf50; }
+.blue { background-color: #2196f3; }

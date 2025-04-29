@@ -1,3 +1,5 @@
+CREATE TYPE landing_mood AS ENUM ('link', 'mirror', 'local_file');
+
 -- Создание таблицы пользователей
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -93,9 +95,11 @@ CREATE TABLE domains (
 CREATE TABLE landings (
     id SERIAL PRIMARY KEY,
     folder VARCHAR(255) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    tags TEXT,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+    name VARCHAR(255) NOT NULL UNIQUE,
+    link VARCHAR(255),
+    type landing_mood,                  -- type ('link', 'mirror', 'file')
+    tags VARCHAR(255),
+    created_at TIMESTAMP DEFAULT now()
 );
 
 -- Создание индексов для скорости

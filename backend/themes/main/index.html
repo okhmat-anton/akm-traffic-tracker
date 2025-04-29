@@ -6,21 +6,66 @@
 
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+
     <!-- Vuetify CSS -->
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
 
-    <link href="/backend/backend/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
     <!-- Vue 2 -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js" type="application/javascript"></script>
 
     <!-- Vuetify JS -->
     <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js" type="application/javascript"></script>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-apexcharts"></script>
+
+
+    <link href="/backend/backend/css/style.css" rel="stylesheet">
 </head>
 <body>
+{% raw %}
+<script>
+    Vue.component('toast-list-component', {
+        template: `<div></div>`,
+        data() {
+            return {
+                toasts: []
+            };
+        },
+        mounted() {
+            this.$root.$on('show-message', (payload) => {
+                Toastify({
+                    text: payload.text || 'Something happened',
+                    className: payload.type || 'info',
+                    gravity: "top", // `top` or `bottom`
+                    position: "right", // `left`, `center` or `right`
+                    stopOnFocus: true, // Prevents dismissing of toast on hover
+                    duration: 3000,
+                    style: {
+                        background: this.getColor(payload.type),
+                    },
+                }).showToast();
+            });
+        },
+        methods: {
+            getColor(type) {
+                return {
+                    success: 'linear-gradient(to right, #00b09b, #96c93d)',
+                    error: 'linear-gradient(to right, #FF512F, #DD2476)',
+                    info: 'linear-gradient(to right, #00c6ff, #0072ff)',
+                    warning: 'linear-gradient(to right, #FF9800, #FF5722)',
+                }[type] || 'linear-gradient(to right, #00c6ff, #0072ff)';
+            },
+        }
+    });
+</script>
+
+{% endraw %}
 
 {% if is_authenticated %}
 
@@ -46,6 +91,7 @@
                 {{ page_component | safe }}
             </v-container>
         </v-main>
+        <toast-list-component></toast-list-component>
     </v-app>
 </div>
 <script type="application/javascript">

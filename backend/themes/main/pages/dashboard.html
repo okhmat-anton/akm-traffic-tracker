@@ -140,6 +140,10 @@
         },
         watch: {
             tab(newTab) {
+                if (this.tab === 2) { // Если Domains вкладка
+                    console.log('Landings tab selected');
+                    this.$root.$emit('load-landings');
+                }
                 if (this.tab === 7) { // Если Domains вкладка
                     console.log('Domains tab selected');
                     this.$root.$emit('load-domains');
