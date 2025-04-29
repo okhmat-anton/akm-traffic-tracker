@@ -122,8 +122,8 @@ backend/
   │   ├── domain.py
   │   ├── ...
   ├── themes/
-  │   ├── main/
-  ├── main.py
+  │   ├── default/
+  ├── app.py
   ├── auth.py
   └── Dockerfile
   └── requirements.txt

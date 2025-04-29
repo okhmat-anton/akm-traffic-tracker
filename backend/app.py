@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 # Настройки темы
 THEMES_DIR = BASE_DIR / "themes"
-THEME_NAME = "main"
+THEME_NAME = "default"
 THEME_DIR = THEMES_DIR / THEME_NAME
 CSS_DIR = THEME_DIR / "css"
 print('CSS_DIR', CSS_DIR)
