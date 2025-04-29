@@ -5,3 +5,4 @@ jinja2
 python-jose
 sqlalchemy
 python-multipart
+pydantic[email]

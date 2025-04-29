@@ -83,6 +83,7 @@
                     </v-card-text>
                 </v-card>
             </v-tab-item>
+            {% if is_authenticated_user_type == 'admin' %}
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
@@ -104,6 +105,7 @@
                     </v-card-text>
                 </v-card>
             </v-tab-item>
+            {% endif %}
             <v-tab-item>
                 <v-card flat>
                     <v-card-text>
@@ -130,9 +132,11 @@
                     "Offers",
                     "Sources",
                     "Reports",
+{% if is_authenticated_user_type == 'admin' %}
                     "Domains",
                     "Settings",
                     "Users",
+{% endif %}
                     "Documentattion"
                 ],
 
@@ -151,6 +155,10 @@
                 if (this.tab === 8) { // Если Domains вкладка
                     console.log('Settings tab selected');
                     this.$root.$emit('load-settings');
+                }
+                if (this.tab === 9) { // Если Domains вкладка
+                    console.log('Users tab selected');
+                    this.$root.$emit('load-users');
                 }
             }
         },

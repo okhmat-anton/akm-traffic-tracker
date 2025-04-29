@@ -53,21 +53,24 @@ from typing import Optional
 from auth import is_authenticated, router as auth_router
 from app_pages.domains import router as domains_router  # Импортируем router
 from app_pages.settings import router as settings_router  # Импортируем router
+from app_pages.users import router as users_router  # Импортируем router
 
 # Подключаем router
 app.include_router(auth_router, prefix="/api", tags=["Auth"])
 app.include_router(domains_router, prefix="/api/domains", tags=["Domains"])
 app.include_router(settings_router, prefix="/api/settings", tags=["Settings"])
+app.include_router(users_router, prefix="/api/users", tags=["Users"])
 
 # Router
 @app.get("/", response_class=HTMLResponse)
 @app.get("/{page}", response_class=HTMLResponse)
 async def serve_page(request: Request, page: Optional[str] = None):
+    user_type = is_authenticated(request);
     if page is None:
         page = "auth"
-    if page == "auth" and is_authenticated(request):
+    if page == "auth" and user_type:
         page = "dashboard"
-    if page not in ALLOWED_PAGES or not is_authenticated(request):
+    if page not in ALLOWED_PAGES or not user_type:
         page = "auth"  # Или можно вернуть 404
     page_file = f"pages/{page}.html"
     return templates.TemplateResponse("index.html", {
@@ -75,6 +78,6 @@ async def serve_page(request: Request, page: Optional[str] = None):
         "page_to_include": page_file,
         "page": page,
         "THEME_NAME": THEME_NAME,
-        "is_authenticated": is_authenticated(request),
+        "is_authenticated_user_type": user_type,
         "page_component": '<'+page+'-page-component></'+page+'-page-component>',
     })

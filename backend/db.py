@@ -4,7 +4,7 @@ from psycopg2.extras import RealDictCursor
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from models.user import User
+from models.user import UserORM
 
 DATABASE_URL = "postgresql+psycopg2://user:password@tracker_postgres/db"
 
@@ -21,4 +21,4 @@ def get_db():
         db.close()
 
 def get_user(db: Session, username: str):
-    return db.query(User).filter(User.username == username).first()
+    return db.query(UserORM).filter(UserORM.username == username).first()

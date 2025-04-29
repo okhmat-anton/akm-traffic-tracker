@@ -82,20 +82,20 @@
 
 {% endraw %}
 
-{% if is_authenticated %}
-
-{% include "templates/about.html" %}
-{% include "templates/dashboard.html" %}
-{% include "templates/campaigns.html" %}
-{% include "templates/landings.html" %}
-{% include "templates/affiliates.html" %}
-{% include "templates/offers.html" %}
-{% include "templates/reports.html" %}
-{% include "templates/sources.html" %}
-{% include "templates/users.html" %}
-{% include "templates/settings.html" %}
-{% include "templates/domains.html" %}
-
+{% if is_authenticated_user_type %}
+    {% include "templates/about.html" %}
+    {% include "templates/dashboard.html" %}
+    {% include "templates/campaigns.html" %}
+    {% include "templates/landings.html" %}
+    {% include "templates/affiliates.html" %}
+    {% include "templates/offers.html" %}
+    {% include "templates/reports.html" %}
+    {% include "templates/sources.html" %}
+    {% if is_authenticated_user_type == 'admin' %}
+        {% include "templates/users.html" %}
+        {% include "templates/settings.html" %}
+        {% include "templates/domains.html" %}
+    {% endif %}
 {% endif %}
 
 {% include page_to_include %}

@@ -3,16 +3,111 @@
     <v-container fluid>
         <h2>Users</h2>
 
+        <v-row dense class="mt-4">
+            <v-col>
+                <v-btn color="primary" dark @click="openCreate">
+                    Add User
+                </v-btn>
+            </v-col>
+        </v-row>
+
+        <v-dialog v-model="dialog" max-width="500px">
+            <v-card dark>
+                <v-card-title>
+                    <span class="text-h6">{{ isEdit ? 'Edit User' : 'Add User' }}</span>
+                </v-card-title>
+
+                <v-card-text>
+
+                    <v-text-field
+                            label="Username"
+                            v-model="form.username"
+                            outlined
+                            dense
+                            :disabled="isEdit"
+                    ></v-text-field>
+
+                    <v-text-field
+                            label="Email"
+                            v-model="form.email"
+                            outlined
+                            dense
+                    ></v-text-field>
+
+                    <v-text-field
+                            label="Password"
+                            v-model="form.password"
+                            type="password"
+                            outlined
+                            dense
+                            :rules="[v => !isEdit || v.length > 0 || 'Password is required']"
+                            :hint="isEdit ? 'Leave blank to keep existing password' : ''"
+                    ></v-text-field>
+
+                    <v-text-field
+                            v-if="!isEdit || form.password"
+                            label="Confirm Password"
+                            v-model="form.confirmPassword"
+                            type="password"
+                            outlined
+                            dense
+                            :rules="[v => v === form.password || 'Passwords do not match']"
+                    ></v-text-field>
+
+                    <v-switch
+                            label="Active"
+                            v-model="form.active"
+                            inset
+                            dense
+                    ></v-switch>
+
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="grey" text @click="close">Cancel</v-btn>
+                    <v-btn color="success" text @click="save">Save</v-btn>
+                </v-card-actions>
+
+            </v-card>
+        </v-dialog>
+
 
         <v-row dense class="mt-4">
             <v-col>
                 <v-card>
                     <v-data-table
                             :headers="headers"
-                            :items="desserts"
+                            :items="users"
                             :items-per-page="5"
                             class="elevation-1"
-                    ></v-data-table>
+                    >
+
+                        <template v-slot:item.created_at="{ item }">
+                            {{ $formatDate(item.created_at) }}
+                        </template>
+                        <template v-slot:item.updated_at="{ item }">
+                            {{ $formatDate(item.updated_at) }}
+                        </template>
+                        <template v-slot:item.actions="{ item }">
+                            <v-btn
+                                    color="orange"
+                                    small
+                                    outlined
+                                    @click="openEdit(item)"
+                            >
+                                Edit
+                            </v-btn>
+                            <v-btn
+                                    color="red"
+                                    small
+                                    outlined
+                                    @click="deleteDomain(item)"
+                            >
+                                Delete
+                            </v-btn>
+                        </template>
+                    </v-data-table>
                 </v-card>
             </v-col>
         </v-row>
@@ -24,101 +119,25 @@
         template: '#users-template',
         data() {
             return {
+                isEdit: false,
+                dialog: false,
                 headers: [
-                    {
-                        text: 'Dessert (100g serving)',
-                        align: 'start',
-                        sortable: false,
-                        value: 'name',
-                    },
-                    {text: 'Calories', value: 'calories'},
-                    {text: 'Fat (g)', value: 'fat'},
-                    {text: 'Carbs (g)', value: 'carbs'},
-                    {text: 'Protein (g)', value: 'protein'},
-                    {text: 'Iron (%)', value: 'iron'},
+                    {text: 'Username', value: 'username'},
+                    {text: 'Email', value: 'email'},
+                    {text: 'Created', value: 'created_at'},
+                    {text: 'Updated', value: 'updated_at'},
+                    {text: 'Is Admin', value: 'is_admin'},
+                    {text: 'Actions', value: 'actions', sortable: false},
                 ],
-                desserts: [
-                    {
-                        name: 'Frozen Yogurt',
-                        calories: 159,
-                        fat: 6.0,
-                        carbs: 24,
-                        protein: 4.0,
-                        iron: 1,
-                    },
-                    {
-                        name: 'Ice cream sandwich',
-                        calories: 237,
-                        fat: 9.0,
-                        carbs: 37,
-                        protein: 4.3,
-                        iron: 1,
-                    },
-                    {
-                        name: 'Eclair',
-                        calories: 262,
-                        fat: 16.0,
-                        carbs: 23,
-                        protein: 6.0,
-                        iron: 7,
-                    },
-                    {
-                        name: 'Cupcake',
-                        calories: 305,
-                        fat: 3.7,
-                        carbs: 67,
-                        protein: 4.3,
-                        iron: 8,
-                    },
-                    {
-                        name: 'Gingerbread',
-                        calories: 356,
-                        fat: 16.0,
-                        carbs: 49,
-                        protein: 3.9,
-                        iron: 16,
-                    },
-                    {
-                        name: 'Jelly bean',
-                        calories: 375,
-                        fat: 0.0,
-                        carbs: 94,
-                        protein: 0.0,
-                        iron: 0,
-                    },
-                    {
-                        name: 'Lollipop',
-                        calories: 392,
-                        fat: 0.2,
-                        carbs: 98,
-                        protein: 0,
-                        iron: 2,
-                    },
-                    {
-                        name: 'Honeycomb',
-                        calories: 408,
-                        fat: 3.2,
-                        carbs: 87,
-                        protein: 6.5,
-                        iron: 45,
-                    },
-                    {
-                        name: 'Donut',
-                        calories: 452,
-                        fat: 25.0,
-                        carbs: 51,
-                        protein: 4.9,
-                        iron: 22,
-                    },
-                    {
-                        name: 'KitKat',
-                        calories: 518,
-                        fat: 26.0,
-                        carbs: 65,
-                        protein: 7,
-                        iron: 6,
-                    },
-                ],
+                users: [],
+                form: {
+                    id: null,
+                    username: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    active: true
+                }
 
             }
         },
@@ -127,6 +146,155 @@
                 return this.date_range.join(' ~ ')
             },
         },
+        mounted() {
+            this.loadUsers();
+            this.$root.$on('load-users', this.loadUsers);
+        },
+        methods: {
+            loadUsers() {
+                this.loadingUsers = true;
+                fetch("/backend/api/users/", {
+                    method: "GET",
+                    credentials: "include"
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.users = data;
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        this.$root.$emit("show-message", {type: "error", text: err.message});
+                    })
+                    .finally(() => {
+                        this.loadingUsers = false;
+                    });
+            },
+
+            openCreate() {
+                this.isEdit = false;
+                this.dialog = true;
+                this.form = {
+                    id: null,
+                    username: '',
+                    email: '',
+                    password: '',
+                    active: true
+                };
+            },
+
+            openEdit(user) {
+                this.isEdit = true;
+                this.dialog = true;
+                this.form = {
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    password: '',
+                    active: user.active
+                };
+            },
+
+            save() {
+                if (!this.form.username || (!this.isEdit && !this.form.password)) {
+                    this.$root.$emit("show-message", {type: "error", text: "Username and password are required."});
+                    return;
+                }
+                if (!this.form.username || (!this.isEdit && !this.form.password)) {
+                    this.$root.$emit("show-message", {
+                        type: "error",
+                        text: "Username and password are required."
+                    });
+                    return;
+                }
+
+                if (this.form.password && this.form.password !== this.form.confirmPassword) {
+                    this.$root.$emit("show-message", {
+                        type: "error",
+                        text: "Passwords do not match."
+                    });
+                    return;
+                }
+
+                const payload = {
+                    username: this.form.username,
+                    email: this.form.email,
+                    active: this.form.active
+                };
+
+                if (this.form.password) {
+                    payload.password = this.form.password;
+                }
+
+                const method = this.isEdit ? "PATCH" : "POST";
+                const url = this.isEdit
+                    ? `/backend/api/users/${this.form.id}`
+                    : "/backend/api/users/";
+
+                fetch(url, {
+                    method,
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload),
+                    credentials: "include"
+                })
+                    .then(async res => {
+                        const text = await res.text();
+                        if (!res.ok) {
+                            let msg = "Unknown error";
+                            try {
+                                const err = JSON.parse(text);
+                                msg = err.detail || msg;
+                            } catch (e) {
+                                msg = text;
+                            }
+                            throw new Error(msg);
+                        }
+                        this.dialog = false;
+                        this.$root.$emit("show-message", {
+                            type: "success",
+                            text: this.isEdit ? "User updated" : "User created"
+                        });
+                        this.loadUsers();
+                    })
+                    .catch(err => {
+                        this.$root.$emit("show-message", {type: "error", text: err.message});
+                    });
+            },
+
+            deleteUser(user) {
+                if (!confirm(`Delete user ${user.username}?`)) return;
+
+                fetch(`/backend/api/users/${user.id}`, {
+                    method: "DELETE",
+                    credentials: "include"
+                })
+                    .then(async res => {
+                        if (!res.ok) {
+                            const text = await res.text();
+                            let msg = text;
+                            try {
+                                const data = JSON.parse(text);
+                                msg = data.detail || msg;
+                            } catch {
+                            }
+                            throw new Error(msg);
+                        }
+
+                        this.$root.$emit("show-message", {
+                            type: "success",
+                            text: "User deleted"
+                        });
+                        this.loadUsers();
+                    })
+                    .catch(err => {
+                        this.$root.$emit("show-message", {type: "error", text: err.message});
+                    });
+            },
+
+            close() {
+                this.dialog = false;
+            }
+        }
+
     });
 </script>
 {% endraw %}

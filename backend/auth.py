@@ -11,7 +11,7 @@ from db import get_db, get_user, SessionLocal
 from hashlib import md5
 from datetime import datetime, timedelta
 
-from models.user import User
+from models.user import UserORM
 
 router = APIRouter()
 
@@ -55,7 +55,7 @@ fake_users_db = {
 
 
 # ====== Проверка авторизации ======
-def is_authenticated(request: Request) -> bool:
+def is_authenticated(request: Request) -> any:
     token = request.cookies.get("session_token")
     if not token:
         return False
@@ -72,7 +72,17 @@ def is_authenticated(request: Request) -> bool:
         user = get_user(db, username)
         db.close()
         if user:
-            return True
+            if not user.active:
+                return False
+            else:
+                # Проверяем, что токен не просрочен
+                if datetime.fromtimestamp(payload["exp"]) < datetime.utcnow():
+                    return False
+                else:
+                    if user.username == "tracker_admin":
+                        return "admin"
+                    else:
+                        return "user"
         else:
             return False
 
