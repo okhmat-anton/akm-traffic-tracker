@@ -29,7 +29,22 @@
 </head>
 <body>
 {% raw %}
-<script>
+<script type="application/javascript">
+    Vue.prototype.$formatDate = function(dateStr, locale = 'en-US') {
+      if (!dateStr) return '';
+      const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'America/New_York' // или оставить local
+      };
+      return new Date(dateStr).toLocaleString(locale, options);
+    };
+</script>
+<script type="application/javascript">
     Vue.component('toast-list-component', {
         template: `<div></div>`,
         data() {
@@ -95,7 +110,6 @@
     </v-app>
 </div>
 <script type="application/javascript">
-
     Vue.component('apexchart', VueApexCharts);
     new Vue({
         el: '#app',

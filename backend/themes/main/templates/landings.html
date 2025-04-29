@@ -91,6 +91,9 @@
                             :empty-text="!loadingLandings ? 'No data available' : ''"
                     >
 
+                        <template v-slot:item.created_at="{ item }">
+                            {{ $formatDate(item.created_at) }}
+                        </template>
                         <template v-slot:item.folder="{ item }">
                             <a v-if="item.folder"  :href="'/l/' + item.folder" target="_blank">
                                 {{ item.folder }}

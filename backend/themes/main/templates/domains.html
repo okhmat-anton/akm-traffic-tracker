@@ -1,15 +1,122 @@
+{% raw %}
 <script type="text/x-template" id="domains-template">
     <v-container fluid>
         <h2>Domains</h2>
-        <v-data-table
-                :headers="headers"
-                :items="domains"
-                :loading="loadingDomains"
-                hide-default-header
-                hide-default-footer
-                dense
-                class="elevation-1 mt-4"
-        ></v-data-table>
+
+        <v-row dense class="mt-4">
+            <v-col>
+                <v-btn color="primary" dark @click="openCreate">
+                    Add Domain
+                </v-btn>
+            </v-col>
+        </v-row>
+
+
+        <v-dialog v-model="dialog" max-width="500px">
+            <v-card dark>
+                <v-card-title>
+                    <span class="text-h6">{{ isEdit ? 'Edit Domain' : 'Add Domain' }}</span>
+                </v-card-title>
+
+                <v-card-text>
+
+                    <v-text-field
+                            label="Domain (e.g. example.com)"
+                            v-model="form.domain"
+                            outlined
+                            dense
+                    ></v-text-field>
+
+                    <v-switch
+                            label="Redirect to HTTPS"
+                            v-model="form.redirect_https"
+                            inset
+                            dense
+                    ></v-switch>
+
+                    <v-select
+                            label="404 Handling"
+                            :items="[
+                                { text: 'Handle 404 errors', value: 'handle' },
+                                { text: 'Error', value: 'error' }
+                              ]"
+                            v-model="form.handle_404"
+                            outlined
+                            dense
+                    ></v-select>
+
+                    <v-text-field
+                            label="Default Company (optional)"
+                            v-model="form.default_company"
+                            outlined
+                            dense
+                    ></v-text-field>
+
+                    <v-text-field
+                            label="Group Name (optional)"
+                            v-model="form.group_name"
+                            outlined
+                            dense
+                    ></v-text-field>
+
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="grey" text @click="close">Cancel</v-btn>
+                    <v-btn color="success" text @click="save">Save</v-btn>
+                </v-card-actions>
+
+            </v-card>
+        </v-dialog>
+
+
+        <v-row dense class="mt-4">
+            <v-col>
+                <v-card>
+                    <v-data-table
+                            :headers="headers"
+                            :items="domains"
+                            :loading="loadingDomains"
+                            hide-default-header
+                            hide-default-footer
+                            dense
+                            class="elevation-1 mt-4"
+                    >
+                        <template v-slot:item.domain="{ item }">
+                            <a v-if="item.domain" :href="'https://'+item.domain" target="_blank">
+                                https://{{ item.domain }}
+                            </a>
+                        </template>
+                        <template v-slot:item.created_at="{ item }">
+                            {{ $formatDate(item.created_at) }}
+                        </template>
+                        <template v-slot:item.updated_at="{ item }">
+                            {{ $formatDate(item.updated_at) }}
+                        </template>
+                        <template v-slot:item.actions="{ item }">
+                            <v-btn
+                                    color="orange"
+                                    small
+                                    outlined
+                                    @click="openEdit(item)"
+                            >
+                                Edit
+                            </v-btn>
+                            <v-btn
+                                    color="red"
+                                    small
+                                    outlined
+                                    @click="deleteDomain(item)"
+                            >
+                                Delete
+                            </v-btn>
+                        </template>
+                    </v-data-table>
+                </v-card>
+            </v-col>
+        </v-row>
+
     </v-container>
 </script>
 
@@ -18,32 +125,20 @@
         template: '#domains-template',
         data() {
             return {
+                dialog: false,
+                isEdit: false,
+                form: {
+                    id: null,
+                    domain: '',
+                    redirect_https: true,
+                    handle_404: 'error',
+                    default_company: '',
+                    group_name: '',
+                    status: 'pending'
+                },
                 newDomain: '',
                 loadingDomains: false,
-                domains: [
-                    {
-                        id: 1,
-                        domain: "example.com",
-                        redirect_https: true,
-                        handle_404: "error",
-                        default_company: "Company A",
-                        group_name: "Group 1",
-                        status: "ok",
-                        created_at: "2025-04-26T21:30:00",
-                        updated_at: "2025-04-26T21:40:00",
-                    },
-                    {
-                        id: 2,
-                        domain: "test.com",
-                        redirect_https: false,
-                        handle_404: "redirect_to_company",
-                        default_company: "Company B",
-                        group_name: "Group 2",
-                        status: "pending",
-                        created_at: "2025-04-25T20:20:00",
-                        updated_at: "2025-04-25T20:25:00",
-                    },
-                ],
+                domains: [],
                 headers: [
                     {text: 'ID', value: 'id'},
                     {text: 'Domain', value: 'domain'},
@@ -54,6 +149,7 @@
                     {text: 'Status', value: 'status'},
                     {text: 'Created At', value: 'created_at'},
                     {text: 'Updated At', value: 'updated_at'},
+                    {text: 'Actions', value: 'actions'},
                 ],
             };
         },
@@ -62,35 +158,188 @@
             this.$root.$on('load-domains', this.loadDomains);
         },
         methods: {
-            async loadDomains() {
-                try {
-                    this.loadingDomains = true;
-                    const response = await fetch('/backend/api/domains/', {
-                        credentials: 'include'
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch domains');
-                    }
-
-                    this.domains = await response.json();
-                    this.loadingDomains = false;
-                } catch (error) {
-                    console.error('Error loading domains:', error);
-                }
+            openCreate() {
+                this.isEdit = false;
+                this.form = {
+                    id: null,
+                    domain: '',
+                    redirect_https: true,
+                    handle_404: 'error',
+                    default_company: '',
+                    group_name: '',
+                    status: 'pending'
+                };
+                this.dialog = true;
             },
-            async addDomain() {
-                if (!this.newDomain.trim()) return;
-                await fetch('/backend/api/domains/', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({domain: this.newDomain.trim()}),
+
+            openEdit(item) {
+                this.isEdit = true;
+                this.form = {
+                    id: item.id,
+                    domain: item.domain,
+                    redirect_https: item.redirect_https,
+                    handle_404: item.handle_404,
+                    default_company: item.default_company,
+                    group_name: item.group_name
+                };
+                this.dialog = true;
+            },
+
+            close() {
+                this.dialog = false;
+            },
+
+            save() {
+                if (!this.form.domain) {
+                    this.$root.$emit('show-message', {type: 'error', text: 'Domain is required.'});
+                    return;
+                }
+
+                const data = {
+                    domain: this.form.domain,
+                    redirect_https: this.form.redirect_https,
+                    handle_404: this.form.handle_404,
+                    default_company: this.form.default_company || '',
+                    group_name: this.form.group_name || ''
+                };
+
+                const url = this.isEdit
+                    ? `/backend/api/domains/${this.form.id}`
+                    : `/backend/api/domains/`;
+
+                console.log(url)
+                const method = this.isEdit ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data),
                     credentials: 'include'
-                });
-                this.newDomain = '';
-                this.loadDomains();
+                })
+                    .then(async (response) => {
+                        const text = await response.text();
+                        if (!response.ok) {
+                            let message = 'Unknown error';
+                            try {
+                                const errorData = JSON.parse(text);
+                                if (Array.isArray(errorData.detail)) {
+                                    message = errorData.detail.map(d => d.msg).join('; ');
+                                } else if (typeof errorData.detail === 'string') {
+                                    message = errorData.detail;
+                                }
+                            } catch (e) {
+                                message = text;
+                            }
+                            throw new Error(message);
+                        }
+
+                        this.dialog = false;
+                        this.$root.$emit('show-message', {
+                            type: 'success',
+                            text: this.isEdit ? 'Domain updated successfully!' : 'Domain created successfully!'
+                        });
+                        this.loadDomains();
+                    })
+                    .catch((error) => {
+                        console.error('Error saving domain:', error);
+                        this.$root.$emit('show-message', {
+                            type: 'error',
+                            text: error.message
+                        });
+                    });
+            },
+
+
+            loadDomains() {
+                this.loadingDomains = true;
+                fetch('/backend/api/domains/', {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                    .then(async (response) => {
+                        const text = await response.text();
+                        if (!response.ok) {
+                            let message = 'Unknown error loading domains';
+                            try {
+                                const errorData = JSON.parse(text);
+                                if (Array.isArray(errorData.detail)) {
+                                    message = errorData.detail.map(d => d.msg).join('; ');
+                                } else if (typeof errorData.detail === 'string') {
+                                    message = errorData.detail;
+                                }
+                            } catch (e) {
+                                message = text;
+                            }
+                            throw new Error(message);
+                        }
+
+                        let data = [];
+                        try {
+                            data = JSON.parse(text);
+                        } catch (e) {
+                            console.warn('Response is not valid JSON:', text);
+                        }
+
+                        this.domains = data;
+
+                    })
+                    .catch((error) => {
+                        console.error('Error fetching domains:', error);
+                        this.$root.$emit('show-message', {
+                            type: 'error',
+                            text: error.message
+                        });
+                    })
+                    .finally(() => {
+                        this.loadingDomains = false;
+                    });
+            },
+
+            deleteDomain(item) {
+                if (!confirm(`Are you sure you want to delete domain "${item.domain}"?`)) {
+                    return;
+                }
+
+                fetch(`/backend/api/domains/${item.id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                })
+                    .then(async (response) => {
+                        const text = await response.text();
+                        if (!response.ok) {
+                            let message = 'Unknown error deleting domain';
+                            try {
+                                const errorData = JSON.parse(text);
+                                if (Array.isArray(errorData.detail)) {
+                                    message = errorData.detail.map(d => d.msg).join('; ');
+                                } else if (typeof errorData.detail === 'string') {
+                                    message = errorData.detail;
+                                }
+                            } catch (e) {
+                                message = text;
+                            }
+                            throw new Error(message);
+                        }
+
+                        this.$root.$emit('show-message', {
+                            type: 'success',
+                            text: 'Domain deleted successfully!'
+                        });
+                        this.loadDomains();
+                    })
+                    .catch((error) => {
+                        console.error('Error deleting domain:', error);
+                        this.$root.$emit('show-message', {
+                            type: 'error',
+                            text: error.message
+                        });
+                    });
             }
         }
+
     });
 
 </script>
+{% endraw %}
