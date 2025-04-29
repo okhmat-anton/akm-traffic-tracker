@@ -23,6 +23,12 @@ def save_event(event_type: str, css_selector: str):
     cur.close()
     conn.close()
 
+
+from landings import router as landings_router
+
+# Подключаем router
+app.include_router(landings_router, tags=["Landings"])
+
 @app.get("/")
 async def root():
     return {"message": "Tracker API is working."}
@@ -38,3 +44,4 @@ async def track_event(request: Request):
 
     save_event(event_type, css_selector)
     return {"status": "ok"}
+

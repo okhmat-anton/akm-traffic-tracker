@@ -90,6 +90,13 @@ CREATE TABLE domains (
     updated_at TIMESTAMP DEFAULT NOW()                     -- дата обновления
 );
 
+CREATE TABLE landings (
+    id SERIAL PRIMARY KEY,
+    folder VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    tags TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
 
 -- Создание индексов для скорости
 CREATE INDEX idx_visits_project_id ON visits (project_id);
