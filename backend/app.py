@@ -54,12 +54,15 @@ from auth import is_authenticated, router as auth_router
 from app_pages.domains import router as domains_router  # Импортируем router
 from app_pages.settings import router as settings_router  # Импортируем router
 from app_pages.users import router as users_router  # Импортируем router
+from app_pages.sources import router as sources_router
 
 # Подключаем router
 app.include_router(auth_router, prefix="/api", tags=["Auth"])
 app.include_router(domains_router, prefix="/api/domains", tags=["Domains"])
 app.include_router(settings_router, prefix="/api/settings", tags=["Settings"])
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
+app.include_router(sources_router, prefix="/api/sources", tags=["Sources"])
+
 
 # Router
 @app.get("/", response_class=HTMLResponse)

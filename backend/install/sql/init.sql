@@ -105,6 +105,32 @@ CREATE TABLE landings (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE sources (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    traffic_loss FLOAT,
+    s2s_postback VARCHAR(1024),
+    s2s_postback_statuses JSONB,        -- {"sale": true, "lead": false, ...}
+    settings JSONB,                     -- массив из [{"name": ..., "parameter": ..., "token": ..., "editable_name": ...}]
+    additional_settings JSONB,          -- taboola_api_key и др.
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+INSERT INTO sources (name, traffic_loss, s2s_postback, s2s_postback_statuses, settings, additional_settings)
+VALUES
+('Taboola US', 0.05, 'https://example.com/postback?clickid={clickid}',
+ '{"sale": true, "lead": true, "reject": false, "upsell": false}',
+ '[
+  {"name": "Keyword", "parameter": "keyword", "token": "", "editable_name": false},
+  {"name": "Cost", "parameter": "cost", "token": "", "editable_name": false},
+  {"name": "Sub id 1", "parameter": "sub_id_1", "token": "", "editable_name": true},
+  {"name": "Sub id 2", "parameter": "sub_id_2", "token": "", "editable_name": true}
+ ]'::jsonb,
+ '{
+   "taboola_api_key": "taboola-us-key-123"
+ }'::jsonb);
+
 CREATE TABLE IF NOT EXISTS settings (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,

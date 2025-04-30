@@ -144,20 +144,19 @@
         },
         watch: {
             tab(newTab) {
-                if (this.tab === 2) { // Если Domains вкладка
-                    console.log('Landings tab selected');
+                if (this.tab === 2) {
                     this.$root.$emit('load-landings');
                 }
-                if (this.tab === 7) { // Если Domains вкладка
-                    console.log('Domains tab selected');
+                if (this.tab === 5) {
+                    this.$root.$emit('load-sources');
+                }
+                if (this.tab === 7) {
                     this.$root.$emit('load-domains');
                 }
-                if (this.tab === 8) { // Если Domains вкладка
-                    console.log('Settings tab selected');
+                if (this.tab === 8) {
                     this.$root.$emit('load-settings');
                 }
-                if (this.tab === 9) { // Если Domains вкладка
-                    console.log('Users tab selected');
+                if (this.tab === 9) {
                     this.$root.$emit('load-users');
                 }
             }
