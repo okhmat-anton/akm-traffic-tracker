@@ -105,6 +105,27 @@ CREATE TABLE landings (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+
+CREATE TABLE affiliate_networks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    offer_parameters VARCHAR(1024),
+    s2s_postback VARCHAR(1024),
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+-- Добавление демо-сетей
+INSERT INTO affiliate_networks (name, offer_parameters, s2s_postback)
+VALUES
+('AdCombo', 'aff_id={aff_id}&subid={sub_id}', 'https://adcombo.com/postback?cid={clickid}&status={status}')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO affiliate_networks (name, offer_parameters, s2s_postback)
+VALUES
+('ClickDealer', 'aff_sub={subid}&click_id={cid}', 'https://clickdealer.com/pb?cid={cid}&conversion={conversion_status}')
+ON CONFLICT (name) DO NOTHING;
+
 CREATE TABLE sources (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
