@@ -45,12 +45,15 @@
                             dense
                     ></v-select>
 
-                    <v-text-field
-                            label="Default Company (optional)"
-                            v-model="form.default_company"
+                    <v-select
+                            label="Default Campaign"
+                            :items="campaigns"
+                            item-text="name"
+                            item-value="id"
+                            v-model="form.default_campaign_id"
                             outlined
                             dense
-                    ></v-text-field>
+                    ></v-select>
 
                     <v-text-field
                             label="Group Name (optional)"
@@ -78,7 +81,6 @@
                             :headers="headers"
                             :items="domains"
                             :loading="loadingDomains"
-                            hide-default-header
                             hide-default-footer
                             dense
                             class="elevation-1 mt-4"
@@ -87,6 +89,9 @@
                             <a v-if="item.domain" :href="'https://'+item.domain" target="_blank">
                                 https://{{ item.domain }}
                             </a>
+                        </template>
+                        <template v-slot:item.default_campaign_id="{ item }">
+                            {{ campaignName(item.default_campaign_id) }}
                         </template>
                         <template v-slot:item.created_at="{ item }">
                             {{ $formatDate(item.created_at) }}
@@ -132,19 +137,20 @@
                     domain: '',
                     redirect_https: true,
                     handle_404: 'error',
-                    default_company: '',
+                    default_campaign_id: '',
                     group_name: '',
                     status: 'pending'
                 },
                 newDomain: '',
                 loadingDomains: false,
                 domains: [],
+                campaigns: [],
                 headers: [
                     {text: 'ID', value: 'id'},
                     {text: 'Domain', value: 'domain'},
                     {text: 'Redirect HTTPS', value: 'redirect_https'},
                     {text: 'Handle 404', value: 'handle_404'},
-                    {text: 'Default Company', value: 'default_company'},
+                    {text: 'Default Campaign', value: 'default_campaign_id'},
                     {text: 'Group Name', value: 'group_name'},
                     {text: 'Status', value: 'status'},
                     {text: 'Created At', value: 'created_at'},
@@ -158,28 +164,60 @@
             this.$root.$on('load-domains', this.loadDomains);
         },
         methods: {
-            openCreate() {
+            campaignName(id) {
+                const campaign = this.campaigns.find(c => String(c.id) === String(id));
+                return campaign ? campaign.name : '-';
+            },
+            async loadCampaigns() {
+                try {
+                    const response = await fetch('/backend/api/campaigns/', {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    const text = await response.text();
+                    if (!response.ok) {
+                        let message = 'Error loading campaigns';
+                        try {
+                            const errorData = JSON.parse(text);
+                            message = errorData.detail || message;
+                        } catch (e) {
+                            message = text;
+                        }
+                        throw new Error(message);
+                    }
+                    this.campaigns = JSON.parse(text);
+                } catch (error) {
+                    console.error('Error loading campaigns:', error);
+                    this.$root.$emit('show-message', {
+                        type: 'error',
+                        text: error.message
+                    });
+                }
+            },
+            async openCreate() {
+                await this.loadCampaigns();
                 this.isEdit = false;
                 this.form = {
                     id: null,
                     domain: '',
                     redirect_https: true,
                     handle_404: 'error',
-                    default_company: '',
+                    default_campaign_id: '',
                     group_name: '',
                     status: 'pending'
                 };
                 this.dialog = true;
             },
 
-            openEdit(item) {
+            async openEdit(item) {
+                await this.loadCampaigns();
                 this.isEdit = true;
                 this.form = {
                     id: item.id,
                     domain: item.domain,
                     redirect_https: item.redirect_https,
                     handle_404: item.handle_404,
-                    default_company: item.default_company,
+                    default_campaign_id: item.default_campaign_id,
                     group_name: item.group_name
                 };
                 this.dialog = true;
@@ -199,7 +237,7 @@
                     domain: this.form.domain,
                     redirect_https: this.form.redirect_https,
                     handle_404: this.form.handle_404,
-                    default_company: this.form.default_company || '',
+                    default_campaign_id: this.form.default_campaign_id || '',
                     group_name: this.form.group_name || ''
                 };
 
@@ -252,7 +290,8 @@
             },
 
 
-            loadDomains() {
+            async loadDomains() {
+                await this.loadCampaigns();
                 this.loadingDomains = true;
                 fetch('/backend/api/domains/', {
                     method: 'GET',

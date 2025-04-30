@@ -18,30 +18,10 @@ CREATE TABLE users (
     active BOOLEAN DEFAULT TRUE
 );
 
--- Создание таблицы проектов
-CREATE TABLE projects (
-    id SERIAL PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
-    name VARCHAR(255) NOT NULL,
-    default_redirect_url TEXT,
-    settings JSONB
-);
-
--- Связь пользователей и проектов (права доступа)
-CREATE TABLE project_users (
-    id SERIAL PRIMARY KEY,
-    project_id INT REFERENCES projects(id) ON DELETE CASCADE,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    can_edit BOOLEAN DEFAULT FALSE,
-    can_view BOOLEAN DEFAULT TRUE
-);
-
 -- Таблица визитов
 CREATE TABLE visits (
     id SERIAL PRIMARY KEY,
     visit_id UUID NOT NULL UNIQUE,
-    project_id INT REFERENCES projects(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT now(),
     ip VARCHAR(45),
     user_agent TEXT,
@@ -61,42 +41,24 @@ CREATE TABLE visits (
     converted BOOLEAN DEFAULT FALSE
 );
 
--- Таблица правил редиректов
-CREATE TABLE redirect_rules (
-    id SERIAL PRIMARY KEY,
-    project_id INT REFERENCES projects(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT now(),
-    updated_at TIMESTAMP DEFAULT now(),
-    domain TEXT,
-    country_code CHAR(2),
-    is_bot BOOLEAN,
-    target_url TEXT NOT NULL,
-    priority INT DEFAULT 100,
-    active BOOLEAN DEFAULT TRUE
-);
 
--- Таблица постбеков
-CREATE TABLE postbacks (
-    id SERIAL PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT now(),
-    project_id INT REFERENCES projects(id) ON DELETE CASCADE,
-    visit_id UUID,
-    external_id VARCHAR(255),
-    status VARCHAR(50),
-    raw_data JSONB
-);
 
 CREATE TABLE domains (
     id SERIAL PRIMARY KEY,
     domain VARCHAR(255) UNIQUE NOT NULL,                  -- адрес домена
     redirect_https BOOLEAN DEFAULT TRUE,                  -- перенаправлять ли на https
     handle_404 domain_error_handle_mood,                -- 'error' или 'redirect_to_company'
-    default_company VARCHAR(255),                         -- компания по умолчанию
+    default_campaign_id INTEGER,                         -- компания по умолчанию
     group_name VARCHAR(255),                               -- группа домена
     status status_mood,                  -- статус ('pending', 'ok', 'error')
     created_at TIMESTAMP DEFAULT NOW(),                    -- дата создания
     updated_at TIMESTAMP DEFAULT NOW()                     -- дата обновления
 );
+
+-- Add a demo domain
+INSERT INTO domains (domain, redirect_https, handle_404, default_campaign_id, group_name, status, created_at, updated_at)
+VALUES
+('demo.example.com', TRUE, 'error', NULL, 'Demo Group', 'pending', NOW(), NOW());
 
 CREATE TABLE landings (
     id SERIAL PRIMARY KEY,
@@ -108,6 +70,10 @@ CREATE TABLE landings (
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+INSERT INTO landings (folder, name, link, type, tags, created_at, updated_at)
+VALUES
+('demo_folder', 'Demo Landing', 'https://example.com/demo', 'link', 'demo,example', now(), now());
 
 
 CREATE TABLE affiliate_networks (
@@ -136,25 +102,15 @@ CREATE TABLE offers (
     updated_at TIMESTAMP DEFAULT now()
 );
 
-INSERT INTO offers (
-  name, url, affiliate_network_id, countries, payout, currency,
-  status, tokens, tags, notes
-) VALUES (
-  'iPhone Giveaway Tier 1',
-  'https://offer.link?cid={clickid}',
-  1,
-  '[
-    {"code": "US", "priority": 1},
-    {"code": "CA", "priority": 2},
-    {"code": "GB", "priority": 3}
-  ]'::jsonb,
-  10.00,
-  'USD',
-  'active',
-  '{"clickid": "{clickid}"}',
-  ARRAY['sweepstake', 'tier1'],
-  'Top converting English GEOs'
-);
+INSERT INTO offers (name, url, affiliate_network_id, countries, payout, currency, status, tokens, notes, tags)
+VALUES
+('Demo Offer 1', 'https://example.com/offer1',
+ (SELECT id FROM affiliate_networks WHERE name = 'AdCombo'),
+ '[{"code": "US", "priority": 1}, {"code": "CA"}]'::jsonb, 10.00, 'USD', 'active', '{"token1": "value1"}'::jsonb, 'This is a demo offer 1', ARRAY['tag1', 'tag2']),
+('Demo Offer 2', 'https://example.com/offer2',
+ (SELECT id FROM affiliate_networks WHERE name = 'ClickDealer'),
+ '[{"code": "UK", "priority": 1}, {"code": "AU"}]'::jsonb, 15.50, 'USD', 'active', '{"token2": "value2"}'::jsonb, 'This is a demo offer 2', ARRAY['tag3', 'tag4']);
+
 
 -- Добавление демо-сетей
 INSERT INTO affiliate_networks (name, offer_parameters, s2s_postback)
@@ -212,28 +168,6 @@ CREATE TABLE campaigns (
     updated_at TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE campaign_landers (
-    id SERIAL PRIMARY KEY,
-    campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
-    landing_id INTEGER REFERENCES landings(id) ON DELETE CASCADE,
-    weight INTEGER DEFAULT 100
-);
-
-CREATE TABLE campaign_offers (
-    id SERIAL PRIMARY KEY,
-    campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
-    offer_id INTEGER REFERENCES offers(id) ON DELETE CASCADE,
-    weight INTEGER DEFAULT 100
-);
-
-CREATE TABLE campaign_rules (
-    id SERIAL PRIMARY KEY,
-    campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
-    conditions JSONB,               -- replaces geo[], device_types[], languages[]
-    redirect_mode redirect_mode DEFAULT 'random',  -- ENUM type (random, sequential, ...)
-    priority INTEGER DEFAULT 0
-);
-
 
 CREATE TABLE campaign_clicks (
     id SERIAL PRIMARY KEY,
@@ -281,22 +215,6 @@ VALUES
   ('Pixel Tracker - FB', 'tracking-only', 'active', 'random', 'Just logs clicks from Facebook'),
   ('Google Ads Redirect', 'campaign', 'paused', 'sequential', 'Split test for AdWords traffic');
 
-
--- Правила для кампании 1
-INSERT INTO campaign_rules (campaign_id, conditions, redirect_mode, priority)
-VALUES
-  (1, '{"geo": ["US", "CA"], "device_types": ["mobile"], "languages": ["en"]}'::jsonb, 'random', 1),
-  (1, '{"geo": ["GB"], "device_types": ["desktop"], "languages": ["en", "fr"]}'::jsonb, 'sequential', 2);
-
--- Правила для кампании 2
-INSERT INTO campaign_rules (campaign_id, conditions, redirect_mode, priority)
-VALUES
-  (2, '{"geo": ["US"], "device_types": ["mobile"]}'::jsonb, 'random', 1);
-
--- Правила для кампании 3
-INSERT INTO campaign_rules (campaign_id, conditions, redirect_mode, priority)
-VALUES
-  (3, '{"geo": ["DE", "AT"], "device_types": ["mobile", "tablet"], "languages": ["de"]}'::jsonb, 'sequential', 1);
 
 
 

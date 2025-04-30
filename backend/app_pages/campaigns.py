@@ -17,6 +17,7 @@ class CampaignIn(BaseModel):
     redirect_mode: Literal['random', 'sequential', 'weight', 'single'] = 'random'
     traffic_source_id: Optional[int] = None
     domain_id: Optional[int] = None
+    default_campaign_id: Optional[int] = None
     notes: Optional[str] = None
 
 class CampaignOut(CampaignIn):

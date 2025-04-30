@@ -24,7 +24,7 @@ class DomainCreateUpdate(BaseModel):
     domain: str
     redirect_https: Optional[bool] = True
     handle_404: Handle404Enum = Handle404Enum.error
-    default_company: Optional[str] = None
+    default_campaign_id: Optional[int] = None
     group_name: Optional[str] = None
 
 # ====== GET /domains ======
@@ -37,7 +37,7 @@ async def get_domains(db: Session = Depends(get_db)):
             "domain": domain.domain,
             "redirect_https": domain.redirect_https,
             "handle_404": domain.handle_404,
-            "default_company": domain.default_company,
+            "default_campaign_id": domain.default_campaign_id,
             "group_name": domain.group_name,
             "status": domain.status,
             "created_at": domain.created_at.isoformat() if domain.created_at else None,
@@ -54,7 +54,7 @@ async def create_domain(domain: DomainCreateUpdate, db: Session = Depends(get_db
             domain=domain.domain,
             redirect_https=domain.redirect_https,
             handle_404=domain.handle_404,
-            default_company=domain.default_company,
+            default_campaign_id=domain.default_campaign_id,
             group_name=domain.group_name,
             status='pending'  # <-- СТАВИМ всегда 'pending'
         )
