@@ -232,6 +232,16 @@
                                                     <span class="mr-3">Schema: <b>{{ flow.schema }}</b></span>
                                                     <span>Status: <b>{{ flow.enabled ? 'On' : 'Off' }}</b></span>
                                                 </div>
+                                                <div>
+                                                  <span class="mr-3">
+                                                    Landing:
+                                                    <b>{{ landingMap[flow.landing] || '—' }}</b>
+                                                  </span>
+                                                    <span class="mr-3">
+                                                        Offer:
+                                                        <b>{{ offerMap[flow.offer] || '—' }}</b>
+                                                      </span>
+                                                </div>
                                             </v-card-text>
                                         </v-card>
                                     </v-col>
@@ -266,62 +276,65 @@
                                         v-model="flowForm.name"
                                         outlined
                                         dense
-                                        required
-                                />
+                                        required></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <v-select
                                         v-model="flowForm.type"
                                         :items="['forced', 'regular', 'default']"
                                         label="Flow Type"
-                                        outlined dense
-                                />
+                                        outlined dense></v-select>
                             </v-col>
                             <v-col cols="6">
                                 <v-text-field label="Position" v-model="flowForm.position" type="number" outlined
-                                              dense/>
+                                              dense></v-text-field>
                             </v-col>
                             <v-col cols="6">
                                 <v-text-field label="Weight (%)" v-model="flowForm.weight" type="number" outlined
-                                              dense/>
+                                              dense></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <v-select
                                         v-model="flowForm.schema"
                                         :items="['split', 'direct', 'action']"
                                         label="Flow Schema"
-                                        outlined dense
-                                />
+                                        outlined dense></v-select>
                             </v-col>
                             <v-col cols="6">
-                                <v-switch label="Enabled" v-model="flowForm.enabled" inset dense/>
+                                <v-switch label="Enabled" v-model="flowForm.enabled" inset dense></v-switch>
                             </v-col>
                             <v-col cols="6">
-                                <v-switch label="Collect Clicks" v-model="flowForm.collect_clicks" inset dense/>
+                                <v-switch label="Collect Clicks" v-model="flowForm.collect_clicks" inset
+                                          dense></v-switch>
                             </v-col>
                             <v-col cols="12">
-                                <v-textarea
-                                        label="Landers JSON"
-                                        v-model="flowForm.landers"
+                                <v-select
+                                        v-model="flowForm.landing"
+                                        :items="landings"
+                                        item-text="name"
+                                        item-value="id"
+                                        label="Landing Pages"
                                         outlined
-                                        auto-grow dense
-                                />
+                                        dense></v-select>
                             </v-col>
+
                             <v-col cols="12">
-                                <v-textarea
-                                        label="Offers JSON"
-                                        v-model="flowForm.offers"
+                                <v-select
+                                        v-model="flowForm.offer"
+                                        :items="offers"
+                                        item-text="name"
+                                        item-value="id"
+                                        label="Offers"
                                         outlined
-                                        auto-grow dense
-                                />
+                                        dense></v-select>
                             </v-col>
+
                             <v-col cols="12">
                                 <v-textarea
                                         label="Filters JSON"
                                         v-model="flowForm.filters"
                                         outlined
-                                        auto-grow dense
-                                />
+                                        auto-grow dense></v-textarea>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -411,6 +424,8 @@
                 isEdit: false,
                 groups: [],
                 sources: [],
+                offers: [],
+                landings: [],
                 tab: 0,
                 form: {
                     id: null,
@@ -483,8 +498,8 @@
                     schema: 'split',               // 'split', 'direct', 'action'
                     enabled: true,
                     collect_clicks: true,
-                    landers: '',                   // JSON
-                    offers: '',                    // JSON
+                    landing: '',
+                    offer: '',
                     filters: ''                    // JSON
                 },
                 editedFlowIndex: null
@@ -494,12 +509,48 @@
             dateRangeText() {
                 return this.date_range.join(' ~ ')
             },
+            landingMap() {
+                const map = {};
+                this.landings.forEach(l => (map[l.id] = l.name));
+                return map;
+            },
+            offerMap() {
+                const map = {};
+                this.offers.forEach(o => (map[o.id] = o.name));
+                return map;
+            }
         },
         mounted() {
             this.loadCampaigns();
             this.$root.$on('load-campaigns', this.loadCampaigns);
         },
         methods: {
+            loadLandings() {
+                fetch('/landings', {credentials: 'include'})
+                    .then(res => res.json())
+                    .then(data => {
+                        this.landings = data;
+                    });
+            },
+            loadOffers() {
+                fetch('/backend/api/offers/', {credentials: 'include'})
+                    .then(res => res.json())
+                    .then(data => {
+                        this.offers = data;
+                    });
+            },
+            loadDomains() {
+                fetch('/backend/api/domains/', {credentials: 'include'})
+                    .then(res => res.json())
+                    .then(data => {
+                        this.domains = data;
+                    });
+            },
+            preloadData() {
+                this.loadLandings();
+                this.loadOffers();
+                this.loadDomains();
+            },
             moveFlowUp(index) {
                 if (index > 0) {
                     const temp = this.form.flows[index];
@@ -539,7 +590,7 @@
                         schema: 'split',
                         enabled: true,
                         collect_clicks: true,
-                        landers: '',
+                        landings: '',
                         offers: '',
                         filters: ''
                     };
@@ -591,12 +642,15 @@
                 }
             },
             openCreate() {
+                this.preloadData();
                 this.dialog = true;
             },
             openEdit(item) {
+                this.preloadData();
                 this.$root.$emit('open-edit-campaign', item);
             },
             loadCampaigns() {
+                this.preloadData();
                 fetch("/backend/api/campaigns/", {
                     credentials: "include"
                 })

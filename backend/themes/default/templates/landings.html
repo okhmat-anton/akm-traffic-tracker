@@ -186,7 +186,7 @@
         methods: {
             loadLandings() {
                 this.loadingLandings = true;
-                fetch('https://localhost/landings', {
+                fetch('/landings', {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -289,8 +289,8 @@
                 }
 
                 const url = this.isEdit
-                    ? `https://localhost/landing/${this.form.id}`  // PUT запрос
-                    : `https://localhost/landing`;                 // POST запрос
+                    ? `/landing/${this.form.id}`  // PUT запрос
+                    : `/landing`;                 // POST запрос
 
                 fetch(url, {
                     method: this.isEdit ? 'PUT' : 'POST',
@@ -352,7 +352,7 @@
                 }
             },
             deleteLanding(item) {
-                fetch(`https://localhost/landing/${item.id}`, {
+                fetch(`/landing/${item.id}`, {
                     method: 'DELETE',
                     credentials: 'include'
                 })
