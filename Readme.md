@@ -5,7 +5,7 @@
 ![Vuetify](https://img.shields.io/badge/Vuetify-Material--UI-purple)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
 
-# 📚 Project Name
+# 📚 AKM Tracker (Keitaro Clone + tracker functions)
 
 **Description:**  
 > This project is a modern traffic tracking and campaign management platform, similar to Keitaro, built with FastAPI and Vue 2 + Vuetify. It provides powerful features like real-time data analysis, campaign optimization, affiliate tracking, and detailed reporting. The backend is optimized for high performance and scalability, while the frontend delivers a fully responsive, Material Design-based user experience. Perfect for marketing professionals, ad networks, and affiliate managers who need reliable traffic management and advanced analytics.
