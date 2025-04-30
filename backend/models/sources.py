@@ -1,9 +1,7 @@
 # models/sources.py
 
 from sqlalchemy import Column, Integer, String, Float, Text, JSON, TIMESTAMP, func
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from models.base import Base
 
 class SourceORM(Base):
     __tablename__ = "sources"

@@ -2,9 +2,11 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
 
 from models.user import UserORM
+
+Base = declarative_base()
 
 DATABASE_URL = "postgresql+psycopg2://user:password@tracker_postgres/db"
 

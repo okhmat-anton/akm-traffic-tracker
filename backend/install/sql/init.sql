@@ -115,6 +115,43 @@ CREATE TABLE affiliate_networks (
     updated_at TIMESTAMP DEFAULT now()
 );
 
+
+CREATE TABLE offers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    url TEXT NOT NULL,
+    affiliate_network_id INTEGER REFERENCES affiliate_networks(id) ON DELETE SET NULL,
+    countries JSONB,                                        -- [{ "code": "US", "priority": 1 }, { "code": "CA" }]
+    payout NUMERIC(10, 2),
+    currency VARCHAR(10) DEFAULT 'USD',
+    status VARCHAR(20) DEFAULT 'active',
+    tokens JSONB,
+    notes TEXT,
+    tags TEXT[],
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+INSERT INTO offers (
+  name, url, affiliate_network_id, countries, payout, currency,
+  status, tokens, tags, notes
+) VALUES (
+  'iPhone Giveaway Tier 1',
+  'https://offer.link?cid={clickid}',
+  1,
+  '[
+    {"code": "US", "priority": 1},
+    {"code": "CA", "priority": 2},
+    {"code": "GB", "priority": 3}
+  ]'::jsonb,
+  10.00,
+  'USD',
+  'active',
+  '{"clickid": "{clickid}"}',
+  ARRAY['sweepstake', 'tier1'],
+  'Top converting English GEOs'
+);
+
 -- Добавление демо-сетей
 INSERT INTO affiliate_networks (name, offer_parameters, s2s_postback)
 VALUES

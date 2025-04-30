@@ -56,6 +56,10 @@ from app_pages.settings import router as settings_router  # Импортируе
 from app_pages.users import router as users_router  # Импортируем router
 from app_pages.sources import router as sources_router
 from app_pages.affiliates import router as affiliate_router
+from app_pages.offers import router as offers_router
+
+app.include_router(offers_router, prefix="/api/offers", tags=["Offers"])
+
 
 # Подключаем router
 app.include_router(auth_router, prefix="/api", tags=["Auth"])

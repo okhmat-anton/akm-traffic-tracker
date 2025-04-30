@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-from db import get_db
-from models.affiliate_networks import AffiliateNetworkORM
 from typing import List
-
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+
+from db import get_db
+from models.affiliate_networks import AffiliateNetworkORM
+from models.offers import OfferORM  # не забудь импортировать
 
 router = APIRouter()
 
@@ -60,10 +62,20 @@ def update_network(network_id: int, data: AffiliateNetworkIn, db: Session = Depe
 
 @router.delete("/{network_id}")
 def delete_network(network_id: int, db: Session = Depends(get_db)):
+    # Найти сеть
     net = db.query(AffiliateNetworkORM).filter_by(id=network_id).first()
     if not net:
         raise HTTPException(status_code=404, detail="Affiliate network not found")
 
+    # Проверить, есть ли офферы, привязанные к этой сети
+    has_offers = db.query(OfferORM).filter_by(affiliate_network_id=network_id).first()
+    if has_offers:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete affiliate network with linked offers. Delete offers first!"
+        )
+
     db.delete(net)
     db.commit()
     return {"message": "Affiliate network deleted"}
+
