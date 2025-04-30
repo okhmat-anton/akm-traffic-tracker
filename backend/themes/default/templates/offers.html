@@ -6,6 +6,15 @@
 
         <v-row dense class="mt-4">
             <v-col>
+                <v-btn color="primary" dark @click="openCreate">
+                    Add Offer
+                </v-btn>
+            </v-col>
+        </v-row>
+
+
+        <v-row dense class="mt-4">
+            <v-col>
                 <v-card>
                     <v-data-table
                             :headers="headers"
