@@ -11,16 +11,380 @@
             </v-col>
         </v-row>
 
+        <v-dialog v-model="dialog" fullscreen persistent scrollable>
+            <v-card dark class="ma-4 pt-4">
+                <v-row>
+                    <v-col cols="12" class="ma-4">
+
+                        <h3>{{ isEdit ? 'Edit Campaign' : 'New Campaign' }}</h3>
+                        <v-row class="mt-4">
+                            <v-col cols="12" md="7">
+                                <v-tabs v-model="tab" dark>
+                                    <v-tab>General</v-tab>
+                                    <v-tab>Tracking</v-tab>
+                                    <v-tab>Integrations</v-tab>
+                                    <v-tab>Parameters</v-tab>
+                                    <v-tab>S2S Postbacks</v-tab>
+                                    <v-tab>Notes</v-tab>
+                                </v-tabs>
+
+                                <v-tabs-items v-model="tab">
+                                    <!-- GENERAL -->
+                                    <v-tab-item>
+                                        <v-card flat>
+                                            <v-container>
+                                                <v-row dense>
+                                                    <v-col cols="12" md="6">
+                                                        <v-text-field label="Name" v-model="form.name" outlined dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-text-field label="Alias" v-model="form.alias" outlined
+                                                                      dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Status" v-model="form.status" :items="statuses"
+                                                                  outlined
+                                                                  dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Type" v-model="form.type" :items="types"
+                                                                  outlined
+                                                                  dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Redirect Mode" v-model="form.redirect_mode"
+                                                                  :items="redirectModes" outlined dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Domain" v-model="form.domain_id"
+                                                                  :items="domains"
+                                                                  item-text="name" item-value="id" outlined dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Group" v-model="form.group_id" :items="groups"
+                                                                  item-text="name"
+                                                                  item-value="id" outlined dense/>
+                                                    </v-col>
+                                                </v-row>
+                                            </v-container>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <!-- TRACKING -->
+                                    <v-tab-item>
+                                        <v-card flat>
+                                            <v-container>
+                                                <v-row dense>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Traffic Source"
+                                                                  v-model="form.traffic_source_id"
+                                                                  :items="sources" item-text="name" item-value="id"
+                                                                  outlined
+                                                                  dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Cost Model" v-model="form.cost_model"
+                                                                  :items="costModels"
+                                                                  outlined dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-text-field label="Traffic Loss (%)"
+                                                                      v-model="form.traffic_loss_percent"
+                                                                      type="number" outlined dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Uniqueness Method"
+                                                                  v-model="form.uniqueness_method"
+                                                                  :items="uniquenessMethods" outlined dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-text-field label="Uniqueness TTL (hrs)"
+                                                                      v-model="form.uniqueness_ttl"
+                                                                      type="number" outlined dense/>
+                                                    </v-col>
+                                                </v-row>
+                                            </v-container>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <!-- INTEGRATIONS -->
+                                    <v-tab-item>
+                                        <v-card flat>
+                                            <v-container>
+                                                <v-row dense>
+                                                    <v-col cols="12" md="6">
+                                                        <v-switch label="Tracking Script Enabled"
+                                                                  v-model="form.tracking_script_enabled"
+                                                                  inset dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-select label="Integration Method"
+                                                                  v-model="form.integration_method"
+                                                                  :items="integrationMethods" outlined dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-text-field label="API Token" v-model="form.api_token"
+                                                                      outlined
+                                                                      dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6">
+                                                        <v-switch label="Bypass Cache (KClient)"
+                                                                  v-model="form.bypass_cache"
+                                                                  inset
+                                                                  dense/>
+                                                    </v-col>
+                                                </v-row>
+                                            </v-container>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <!-- PARAMETERS -->
+                                    <v-tab-item>
+                                        <v-card flat>
+                                            <v-container>
+                                                <v-row dense>
+                                                    <v-col cols="12" md="6" v-for="n in 10" :key="n">
+                                                        <v-text-field :label="'Sub ID ' + n"
+                                                                      v-model="form['sub_id_' + n]"
+                                                                      outlined
+                                                                      dense/>
+                                                    </v-col>
+                                                    <v-col cols="12" md="6" v-for="param in utmParams" :key="param">
+                                                        <v-text-field :label="param.toUpperCase()" v-model="form[param]"
+                                                                      outlined
+                                                                      dense/>
+                                                    </v-col>
+                                                </v-row>
+                                            </v-container>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <!-- POSTBACKS -->
+                                    <v-tab-item>
+                                        <v-card flat>
+                                            <v-container>
+                                                <v-row dense>
+                                                    <v-col cols="12">
+                                                        <v-textarea label="S2S Postback URLs (JSON format)"
+                                                                    v-model="form.postback_urls"
+                                                                    outlined dense rows="4" auto-grow/>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-textarea label="Postback Status Mapping (JSON)"
+                                                                    v-model="form.postback_statuses" outlined dense
+                                                                    rows="4"
+                                                                    auto-grow/>
+                                                    </v-col>
+                                                </v-row>
+                                            </v-container>
+                                        </v-card>
+                                    </v-tab-item>
+
+                                    <!-- NOTES -->
+                                    <v-tab-item>
+                                        <v-card flat>
+                                            <v-container>
+                                                <v-textarea v-model="form.notes" label="Internal Notes" outlined dense
+                                                            rows="5"
+                                                            auto-grow/>
+                                            </v-container>
+                                        </v-card>
+                                    </v-tab-item>
+                                </v-tabs-items>
+
+                            </v-col>
+
+
+                            <!-- RIGHT: Flow Configuration -->
+                            <v-col cols="12" md="5">
+                                <h3 class="mb-2 mt-2">Flow Configuration</h3>
+
+                                <v-row dense v-for="(flow, index) in form.flows" :key="index" class="mb-2">
+                                    <v-col cols="12">
+                                        <v-card outlined>
+                                            <v-card-title class="d-flex justify-space-between align-center">
+                                                <div>
+                                                    <v-btn icon small @click="moveFlowUp(index)"
+                                                           :disabled="index === 0">
+                                                        <v-icon>mdi-arrow-up</v-icon>
+                                                    </v-btn>
+                                                    <v-btn icon small @click="moveFlowDown(index)"
+                                                           :disabled="index === form.flows.length - 1">
+                                                        <v-icon>mdi-arrow-down</v-icon>
+                                                    </v-btn>
+                                                </div>
+                                                <div>
+                                                    <strong>{{ flow.name }}</strong>
+                                                    <span class="ml-2 grey--text text--darken-1">({{ flow.type }})</span>
+                                                </div>
+                                                <div>
+                                                    <v-btn text color="orange" @click="openFlowEdit(flow, index)">
+                                                        Edit
+                                                    </v-btn>
+                                                    <v-btn text color="red" @click="removeFlow(index)">Delete</v-btn>
+                                                </div>
+                                            </v-card-title>
+
+                                            <v-card-text>
+                                                <div>
+                                                    <span class="mr-3">Position: <b>{{ flow.position }}</b></span>
+                                                    <span class="mr-3">Weight: <b>{{ flow.weight }}%</b></span>
+                                                    <span class="mr-3">Schema: <b>{{ flow.schema }}</b></span>
+                                                    <span>Status: <b>{{ flow.enabled ? 'On' : 'Off' }}</b></span>
+                                                </div>
+                                            </v-card-text>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
+
+                                <v-btn small color="primary" @click="openFlowEdit()">Add Flow</v-btn>
+                            </v-col>
+
+                        </v-row>
+                    </v-col>
+                </v-row>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text color="grey" @click="confirmCancel">Cancel</v-btn>
+                    <v-btn text color="success" @click="save">Save</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <v-dialog v-model="flowDialog" max-width="700px" persistent>
+            <v-card dark>
+                <v-card-title>
+                    <span class="text-h6">{{ isEditingFlow ? 'Edit Flow' : 'New Flow' }}</span>
+                </v-card-title>
+
+                <v-card-text>
+                    <v-container>
+                        <v-row dense>
+                            <v-col cols="12">
+                                <v-text-field
+                                        label="Flow Name"
+                                        v-model="flowForm.name"
+                                        outlined
+                                        dense
+                                        required
+                                />
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <v-select
+                                        v-model="flowForm.type"
+                                        :items="['forced', 'regular', 'default']"
+                                        label="Flow Type"
+                                        outlined dense
+                                />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-text-field label="Position" v-model="flowForm.position" type="number" outlined
+                                              dense/>
+                            </v-col>
+                            <v-col cols="6">
+                                <v-text-field label="Weight (%)" v-model="flowForm.weight" type="number" outlined
+                                              dense/>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-select
+                                        v-model="flowForm.schema"
+                                        :items="['split', 'direct', 'action']"
+                                        label="Flow Schema"
+                                        outlined dense
+                                />
+                            </v-col>
+                            <v-col cols="6">
+                                <v-switch label="Enabled" v-model="flowForm.enabled" inset dense/>
+                            </v-col>
+                            <v-col cols="6">
+                                <v-switch label="Collect Clicks" v-model="flowForm.collect_clicks" inset dense/>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-textarea
+                                        label="Landers JSON"
+                                        v-model="flowForm.landers"
+                                        outlined
+                                        auto-grow dense
+                                />
+                            </v-col>
+                            <v-col cols="12">
+                                <v-textarea
+                                        label="Offers JSON"
+                                        v-model="flowForm.offers"
+                                        outlined
+                                        auto-grow dense
+                                />
+                            </v-col>
+                            <v-col cols="12">
+                                <v-textarea
+                                        label="Filters JSON"
+                                        v-model="flowForm.filters"
+                                        outlined
+                                        auto-grow dense
+                                />
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text color="grey" @click="confirmCancelFlow">Cancel</v-btn>
+                    <v-btn text color="success" @click="saveFlow">Save</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
 
         <v-row dense class="mt-4">
             <v-col>
                 <v-card>
                     <v-data-table
                             :headers="headers"
-                            :items="desserts"
+                            :items="campaigns"
                             :items-per-page="5"
                             class="elevation-1"
-                    ></v-data-table>
+                    >
+                        <template v-slot:item.type="{ item }">
+                            <v-chip small>{{ item.type }}</v-chip>
+                        </template>
+
+                        <template v-slot:item.status="{ item }">
+                            <v-chip small color="green" v-if="item.status === 'active'">{{ item.status }}</v-chip>
+                            <v-chip small color="orange" v-else-if="item.status === 'paused'">{{ item.status }}</v-chip>
+                            <v-chip small color="grey" v-else>{{ item.status }}</v-chip>
+                        </template>
+
+                        <template v-slot:item.redirect_mode="{ item }">
+                            <v-chip small outlined>{{ item.redirect_mode }}</v-chip>
+                        </template>
+
+                        <template v-slot:item.created_at="{ item }">
+                            {{ $formatDate(item.created_at) }}
+                        </template>
+
+                        <template v-slot:item.updated_at="{ item }">
+                            {{ $formatDate(item.updated_at) }}
+                        </template>
+                        <template v-slot:item.actions="{ item }">
+                            <v-btn
+                                    color="orange"
+                                    small
+                                    outlined
+                                    @click="openEdit(item)"
+                            >
+                                Edit
+                            </v-btn>
+                            <v-btn
+                                    color="red"
+                                    small
+                                    outlined
+                                    @click="deleteCampaign(item)"
+                            >
+                                Delete
+                            </v-btn>
+                        </template>
+                    </v-data-table>
                 </v-card>
             </v-col>
         </v-row>
@@ -33,101 +397,97 @@
         data() {
             return {
                 headers: [
-                    {
-                        text: 'Dessert (100g serving)',
-                        align: 'start',
-                        sortable: false,
-                        value: 'name',
-                    },
-                    {text: 'Calories', value: 'calories'},
-                    {text: 'Fat (g)', value: 'fat'},
-                    {text: 'Carbs (g)', value: 'carbs'},
-                    {text: 'Protein (g)', value: 'protein'},
-                    {text: 'Iron (%)', value: 'iron'},
+                    {text: 'Name', value: 'name'},
+                    {text: 'Type', value: 'type'},
+                    {text: 'Status', value: 'status'},
+                    {text: 'Redirect Mode', value: 'redirect_mode'},
+                    {text: 'Notes', value: 'notes'},
+                    {text: 'Created', value: 'created_at'},
+                    {text: 'Updated', value: 'updated_at'},
+                    {text: 'Actions', value: 'actions', sortable: false}
                 ],
-                desserts: [
-                    {
-                        name: 'Frozen Yogurt',
-                        calories: 159,
-                        fat: 6.0,
-                        carbs: 24,
-                        protein: 4.0,
-                        iron: 1,
-                    },
-                    {
-                        name: 'Ice cream sandwich',
-                        calories: 237,
-                        fat: 9.0,
-                        carbs: 37,
-                        protein: 4.3,
-                        iron: 1,
-                    },
-                    {
-                        name: 'Eclair',
-                        calories: 262,
-                        fat: 16.0,
-                        carbs: 23,
-                        protein: 6.0,
-                        iron: 7,
-                    },
-                    {
-                        name: 'Cupcake',
-                        calories: 305,
-                        fat: 3.7,
-                        carbs: 67,
-                        protein: 4.3,
-                        iron: 8,
-                    },
-                    {
-                        name: 'Gingerbread',
-                        calories: 356,
-                        fat: 16.0,
-                        carbs: 49,
-                        protein: 3.9,
-                        iron: 16,
-                    },
-                    {
-                        name: 'Jelly bean',
-                        calories: 375,
-                        fat: 0.0,
-                        carbs: 94,
-                        protein: 0.0,
-                        iron: 0,
-                    },
-                    {
-                        name: 'Lollipop',
-                        calories: 392,
-                        fat: 0.2,
-                        carbs: 98,
-                        protein: 0,
-                        iron: 2,
-                    },
-                    {
-                        name: 'Honeycomb',
-                        calories: 408,
-                        fat: 3.2,
-                        carbs: 87,
-                        protein: 6.5,
-                        iron: 45,
-                    },
-                    {
-                        name: 'Donut',
-                        calories: 452,
-                        fat: 25.0,
-                        carbs: 51,
-                        protein: 4.9,
-                        iron: 22,
-                    },
-                    {
-                        name: 'KitKat',
-                        calories: 518,
-                        fat: 26.0,
-                        carbs: 65,
-                        protein: 7,
-                        iron: 6,
-                    },
-                ],
+                campaigns: [],
+                dialog: false,
+                isEdit: false,
+                groups: [],
+                sources: [],
+                tab: 0,
+                form: {
+                    id: null,
+                    name: '',
+                    alias: '',
+                    group_id: null,
+                    domain_id: null,
+                    traffic_source_id: null,
 
+                    type: 'campaign',                  // 'campaign' | 'tracking-only'
+                    status: 'active',                 // 'active' | 'paused' | 'archived'
+                    redirect_mode: 'random',         // 'random' | 'sequential' | 'weight' | 'single'
+
+                    bind_method: 'none',             // 'none' | 'flow' | 'flow_lander' | 'flow_lander_offer'
+                    bind_ttl_hours: 24,
+
+                    cost_model: 'cpc',               // 'cpc' | 'cpuc' | 'cpm' | 'cpa' | 'cps' | 'revshare' | 'auto'
+                    traffic_loss_percent: 0,
+                    uniqueness_method: 'ip_ua',      // 'ip' | 'ip_ua' | 'cookie'
+                    uniqueness_ttl: 24,
+
+                    tracking_script_enabled: false,
+                    integration_method: '',
+                    api_token: '',
+                    bypass_cache: false,
+
+                    // UTM параметры
+                    utm_source: '',
+                    utm_medium: '',
+                    utm_campaign: '',
+                    utm_term: '',
+                    utm_content: '',
+
+                    // Sub ID параметры
+                    sub_id_1: '',
+                    sub_id_2: '',
+                    sub_id_3: '',
+                    sub_id_4: '',
+                    sub_id_5: '',
+                    sub_id_6: '',
+                    sub_id_7: '',
+                    sub_id_8: '',
+                    sub_id_9: '',
+                    sub_id_10: '',
+
+                    // S2S Postback
+                    postback_urls: '',           // JSON string
+                    postback_statuses: '',       // JSON string
+
+                    notes: '',
+                    flows: []
+                },
+                statuses: ['active', 'paused', 'archived'],
+                types: ['campaign', 'tracking-only'],
+                redirectModes: ['random', 'sequential', 'weight', 'single'],
+                costModels: ['cpc', 'cpuc', 'cpm', 'cpa', 'cps', 'revshare', 'auto'],
+                uniquenessMethods: ['ip', 'ip_ua', 'cookie'],
+                integrationMethods: ['pixel', 'api', 'manual'], // можешь настроить под себя
+                utmParams: ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'],
+                flowRules: [],
+                trafficSources: [],
+                domains: [],
+                flowDialog: false,
+                isEditingFlow: false,
+                flowForm: {
+                    name: '',
+                    type: 'regular',               // 'forced', 'regular', 'default'
+                    position: 1,
+                    weight: 100,
+                    schema: 'split',               // 'split', 'direct', 'action'
+                    enabled: true,
+                    collect_clicks: true,
+                    landers: '',                   // JSON
+                    offers: '',                    // JSON
+                    filters: ''                    // JSON
+                },
+                editedFlowIndex: null
             }
         },
         computed: {
@@ -135,6 +495,161 @@
                 return this.date_range.join(' ~ ')
             },
         },
+        mounted() {
+            this.loadCampaigns();
+            this.$root.$on('load-campaigns', this.loadCampaigns);
+        },
+        methods: {
+            moveFlowUp(index) {
+                if (index > 0) {
+                    const temp = this.form.flows[index];
+                    this.form.flows.splice(index, 1);
+                    this.form.flows.splice(index - 1, 0, temp);
+                    this.updateFlowPositions();
+                }
+            },
+            moveFlowDown(index) {
+                if (index < this.form.flows.length - 1) {
+                    const temp = this.form.flows[index];
+                    this.form.flows.splice(index, 1);
+                    this.form.flows.splice(index + 1, 0, temp);
+                    this.updateFlowPositions();
+                }
+            },
+            updateFlowPositions() {
+                this.form.flows.forEach((flow, idx) => {
+                    flow.position = 1 + idx * 2;
+                });
+            },
+            openFlowEdit(flow = null, index = null) {
+                this.isEditingFlow = !!flow;
+                this.flowDialog = true;
+
+                if (flow) {
+                    this.flowForm = {...flow};         // создаём копию
+                    this.editedFlowIndex = index;        // запоминаем индекс
+                } else {
+                    const nextPosition = this.form.flows.length === 0 ? 1 : Math.max(...this.form.flows.map(f => f.position || 0)) + 2;
+
+                    this.flowForm = {
+                        name: '',
+                        type: 'regular',
+                        position: nextPosition,
+                        weight: 100,
+                        schema: 'split',
+                        enabled: true,
+                        collect_clicks: true,
+                        landers: '',
+                        offers: '',
+                        filters: ''
+                    };
+                    this.editedFlowIndex = null;
+                }
+            },
+
+
+            removeFlow(index) {
+                if (confirm('Delete this flow?')) {
+                    this.form.flows.splice(index, 1);
+                }
+            },
+
+            saveFlow() {
+                if (!this.flowForm.name) {
+                    this.$root.$emit('show-message', {
+                        type: 'error',
+                        text: 'Flow must have a name.'
+                    });
+                    return;
+                }
+
+                if (this.isEditingFlow && this.editedFlowIndex !== null) {
+                    // Обновляем flow по индексу
+                    this.form.flows.splice(this.editedFlowIndex, 1, {...this.flowForm});
+                } else {
+                    this.form.flows.push({...this.flowForm});
+                }
+
+                this.flowDialog = false;
+                this.editedFlowIndex = null;
+                this.form.flows.sort((a, b) => a.position - b.position);
+                this.updateFlowPositions();
+
+            },
+
+            confirmCancelFlow() {
+                if (confirm('Discard changes to flow?')) {
+                    this.flowDialog = false;
+                }
+            },
+            save() {
+
+            },
+            confirmCancel() {
+                if (confirm("Are you sure you want to discard changes?")) {
+                    this.dialog = false;
+                }
+            },
+            openCreate() {
+                this.dialog = true;
+            },
+            openEdit(item) {
+                this.$root.$emit('open-edit-campaign', item);
+            },
+            loadCampaigns() {
+                fetch("/backend/api/campaigns/", {
+                    credentials: "include"
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.campaigns = data;
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        this.$root.$emit("show-message", {
+                            type: "error",
+                            text: err.message
+                        });
+                    });
+            },
+            deleteCampaign(item) {
+                if (!confirm(`Are you sure you want to delete campaign "${item.name}"?`)) {
+                    return;
+                }
+
+                fetch(`/backend/api/campaigns/${item.id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                })
+                    .then(async res => {
+                        const text = await res.text();
+                        if (!res.ok) {
+                            let msg = text;
+                            try {
+                                const err = JSON.parse(text);
+                                msg = err.detail || msg;
+                            } catch {
+                            }
+                            throw new Error(msg);
+                        }
+
+                        this.$root.$emit('show-message', {
+                            type: 'success',
+                            text: `Campaign "${item.name}" deleted successfully`
+                        });
+
+                        this.loadCampaigns(); // Обновляем список
+                    })
+                    .catch(err => {
+                        this.$root.$emit('show-message', {
+                            type: 'error',
+                            text: `Failed to delete campaign: ${err.message}`
+                        });
+                    });
+            }
+
+
+        }
     });
 </script>
 {% endraw %}

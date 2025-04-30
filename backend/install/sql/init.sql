@@ -1,6 +1,10 @@
 CREATE TYPE landing_mood AS ENUM ('link', 'mirror', 'local_file');
 CREATE TYPE status_mood AS ENUM ('pending', 'success', 'error');
 CREATE TYPE domain_error_handle_mood AS ENUM ('handle', 'error');
+CREATE TYPE campaign_type AS ENUM ('campaign', 'tracking-only');
+CREATE TYPE campaign_status AS ENUM ('active', 'paused', 'archived');
+CREATE TYPE redirect_mode AS ENUM ('random', 'sequential', 'weight', 'single');
+
 
 -- Создание таблицы пользователей
 CREATE TABLE users (
@@ -194,6 +198,107 @@ CREATE TABLE IF NOT EXISTS settings (
     name VARCHAR(255) UNIQUE NOT NULL,
     value TEXT NOT NULL
 );
+
+CREATE TABLE campaigns (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    type campaign_type DEFAULT 'campaign',
+    status campaign_status DEFAULT 'active',
+    redirect_mode redirect_mode DEFAULT 'random',
+    domain_id INTEGER REFERENCES domains(id) ON DELETE SET NULL,
+    traffic_source_id INTEGER REFERENCES sources(id) ON DELETE SET NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE campaign_landers (
+    id SERIAL PRIMARY KEY,
+    campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
+    landing_id INTEGER REFERENCES landings(id) ON DELETE CASCADE,
+    weight INTEGER DEFAULT 100
+);
+
+CREATE TABLE campaign_offers (
+    id SERIAL PRIMARY KEY,
+    campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
+    offer_id INTEGER REFERENCES offers(id) ON DELETE CASCADE,
+    weight INTEGER DEFAULT 100
+);
+
+CREATE TABLE campaign_rules (
+    id SERIAL PRIMARY KEY,
+    campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
+    conditions JSONB,               -- replaces geo[], device_types[], languages[]
+    redirect_mode redirect_mode DEFAULT 'random',  -- ENUM type (random, sequential, ...)
+    priority INTEGER DEFAULT 0
+);
+
+
+CREATE TABLE campaign_clicks (
+    id SERIAL PRIMARY KEY,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+
+    click_id UUID DEFAULT gen_random_uuid(),
+    domain_id INTEGER REFERENCES domains(id) ON DELETE SET NULL,
+
+    ip_address INET,
+    user_agent TEXT,
+    referer TEXT,
+
+    utm_source VARCHAR(255),
+    utm_medium VARCHAR(255),
+    utm_campaign VARCHAR(255),
+    utm_term VARCHAR(255),
+    utm_content VARCHAR(255),
+
+    sub_id_1 VARCHAR(255),
+    sub_id_2 VARCHAR(255),
+    sub_id_3 VARCHAR(255),
+    sub_id_4 VARCHAR(255),
+    sub_id_5 VARCHAR(255),
+    sub_id_6 VARCHAR(255),
+    sub_id_7 VARCHAR(255),
+    sub_id_8 VARCHAR(255),
+    sub_id_9 VARCHAR(255),
+    sub_id_10 VARCHAR(255),
+
+    device_type VARCHAR(50),
+    browser VARCHAR(100),
+    os VARCHAR(100),
+    country_code VARCHAR(10),
+
+    is_unique BOOLEAN DEFAULT true,
+    is_bot BOOLEAN DEFAULT false,
+
+    created_at TIMESTAMP DEFAULT now()
+);
+
+
+INSERT INTO campaigns (name, type, status, redirect_mode, notes)
+VALUES
+  ('Main Traffic - Tier1', 'campaign', 'active', 'random', 'Main redirection campaign for T1 traffic'),
+  ('Pixel Tracker - FB', 'tracking-only', 'active', 'random', 'Just logs clicks from Facebook'),
+  ('Google Ads Redirect', 'campaign', 'paused', 'sequential', 'Split test for AdWords traffic');
+
+
+-- Правила для кампании 1
+INSERT INTO campaign_rules (campaign_id, conditions, redirect_mode, priority)
+VALUES
+  (1, '{"geo": ["US", "CA"], "device_types": ["mobile"], "languages": ["en"]}'::jsonb, 'random', 1),
+  (1, '{"geo": ["GB"], "device_types": ["desktop"], "languages": ["en", "fr"]}'::jsonb, 'sequential', 2);
+
+-- Правила для кампании 2
+INSERT INTO campaign_rules (campaign_id, conditions, redirect_mode, priority)
+VALUES
+  (2, '{"geo": ["US"], "device_types": ["mobile"]}'::jsonb, 'random', 1);
+
+-- Правила для кампании 3
+INSERT INTO campaign_rules (campaign_id, conditions, redirect_mode, priority)
+VALUES
+  (3, '{"geo": ["DE", "AT"], "device_types": ["mobile", "tablet"], "languages": ["de"]}'::jsonb, 'sequential', 1);
+
+
 
 -- Добавим начальные данные
 INSERT INTO settings (name, value) VALUES

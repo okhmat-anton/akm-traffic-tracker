@@ -1,5 +1,5 @@
 <script type="text/x-template" id="dashboard-page-template">
-    <v-container fluid style="height: 100%;" >
+    <v-container fluid style="height: 100%;">
 
         <v-row class="align-center mb-2">
             <v-col>
@@ -133,35 +133,50 @@
                     "Sources",
                     "Reports",
 {% if is_authenticated_user_type == 'admin' %}
-                    "Domains",
-                    "Settings",
-                    "Users",
+            "Domains",
+                "Settings",
+                "Users",
 {% endif %}
-                    "Documentattion"
-                ],
+            "Documentattion"
+        ],
 
-            }
+        }
         },
         watch: {
             tab(newTab) {
-                if (this.tab === 2) {
-                    this.$root.$emit('load-landings');
+                switch (newTab) {
+                    case 0:
+                        this.$root.$emit('load-dashboard');
+                        break;
+                    case 1:
+                        this.$root.$emit('load-campaigns');
+                        break;
+                    case 2:
+                        this.$root.$emit('load-landings');
+                        break;
+                    case 3:
+                        this.$root.$emit('load-affiliates');
+                        break;
+                    case 4:
+                        this.$root.$emit('load-offers');
+                        break;
+                    case 5:
+                        this.$root.$emit('load-sources');
+                        break;
+                    case 6:
+                        this.$root.$emit('load-reports');
+                        break;
+                    case 7:
+                        this.$root.$emit('load-domains');
+                        break;
+                    case 8:
+                        this.$root.$emit('load-settings');
+                        break;
+                    case 9:
+                        this.$root.$emit('load-users');
+                        break;
                 }
-                if (this.tab === 3) {
-                    this.$root.$emit('load-affiliates');
-                }
-                if (this.tab === 5) {
-                    this.$root.$emit('load-sources');
-                }
-                if (this.tab === 7) {
-                    this.$root.$emit('load-domains');
-                }
-                if (this.tab === 8) {
-                    this.$root.$emit('load-settings');
-                }
-                if (this.tab === 9) {
-                    this.$root.$emit('load-users');
-                }
+
             }
         },
         methods: {
