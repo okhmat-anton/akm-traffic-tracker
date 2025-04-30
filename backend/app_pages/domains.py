@@ -30,7 +30,7 @@ class DomainCreateUpdate(BaseModel):
 # ====== GET /domains ======
 @router.get("/", response_model=List[dict])
 async def get_domains(db: Session = Depends(get_db)):
-    domains = db.query(DomainORM).order_by(DomainORM.id.desc()).all()
+    domains = db.query(DomainORM).order_by(DomainORM.id.asc()).all()
     return [
         {
             "id": domain.id,

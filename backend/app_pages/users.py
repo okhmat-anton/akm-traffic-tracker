@@ -4,6 +4,7 @@ from typing import Optional, List
 from hashlib import md5
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
 
 from db import get_db
 from models.user import UserORM
@@ -19,6 +20,8 @@ class UserOut(BaseModel):
     email: Optional[EmailStr]
     is_admin: bool
     active: bool
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
@@ -34,7 +37,7 @@ class UserCreateUpdate(BaseModel):
 
 @router.get("/", response_model=List[UserOut])
 def get_users(db: Session = Depends(get_db)):
-    return db.query(UserORM).order_by(UserORM.id.desc()).all()
+    return db.query(UserORM).order_by(UserORM.id.asc()).all()
 
 # ====== Создать пользователя ======
 

@@ -89,6 +89,7 @@
                         <template v-slot:item.updated_at="{ item }">
                             {{ $formatDate(item.updated_at) }}
                         </template>
+
                         <template v-slot:item.actions="{ item }">
                             <v-btn
                                     color="orange"
@@ -126,6 +127,7 @@
                     {text: 'Email', value: 'email'},
                     {text: 'Created', value: 'created_at'},
                     {text: 'Updated', value: 'updated_at'},
+                    {text: 'Is Active', value: 'active'},
                     {text: 'Is Admin', value: 'is_admin'},
                     {text: 'Actions', value: 'actions', sortable: false},
                 ],
