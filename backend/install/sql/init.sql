@@ -2,8 +2,8 @@ CREATE TYPE landing_mood AS ENUM ('link', 'mirror', 'local_file');
 CREATE TYPE status_mood AS ENUM ('pending', 'success', 'error');
 CREATE TYPE domain_error_handle_mood AS ENUM ('handle', 'error');
 CREATE TYPE campaign_type AS ENUM ('campaign', 'tracking-only');
-CREATE TYPE campaign_status AS ENUM ('active', 'paused', 'archived');
-CREATE TYPE redirect_mode AS ENUM ('random', 'sequential', 'weight', 'single');
+CREATE TYPE campaign_status AS ENUM ('active', 'paused');
+CREATE TYPE redirect_mode AS ENUM ('position', 'weight');
 
 
 -- Создание таблицы пользователей
@@ -18,28 +18,7 @@ CREATE TABLE users (
     active BOOLEAN DEFAULT TRUE
 );
 
--- Таблица визитов
-CREATE TABLE visits (
-    id SERIAL PRIMARY KEY,
-    visit_id UUID NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT now(),
-    ip VARCHAR(45),
-    user_agent TEXT,
-    country_code CHAR(2),
-    referer TEXT,
-    domain TEXT,
-    is_bot BOOLEAN DEFAULT FALSE,
-    device_type VARCHAR(50),
-    utm_source VARCHAR(255),
-    utm_medium VARCHAR(255),
-    utm_campaign VARCHAR(255),
-    utm_content VARCHAR(255),
-    utm_term VARCHAR(255),
-    custom_vars JSONB,
-    clicked_element TEXT,
-    external_id VARCHAR(255),
-    converted BOOLEAN DEFAULT FALSE
-);
+
 
 
 
@@ -158,65 +137,17 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE TABLE campaigns (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
+    alias VARCHAR(255) NOT NULL UNIQUE,
     type campaign_type DEFAULT 'campaign',
     status campaign_status DEFAULT 'active',
-    redirect_mode redirect_mode DEFAULT 'random',
+    redirect_mode redirect_mode DEFAULT 'position',
     domain_id INTEGER REFERENCES domains(id) ON DELETE SET NULL,
     traffic_source_id INTEGER REFERENCES sources(id) ON DELETE SET NULL,
+    config JSONB,
     notes TEXT,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
-
-
-CREATE TABLE campaign_clicks (
-    id SERIAL PRIMARY KEY,
-    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
-
-    click_id UUID DEFAULT gen_random_uuid(),
-    domain_id INTEGER REFERENCES domains(id) ON DELETE SET NULL,
-
-    ip_address INET,
-    user_agent TEXT,
-    referer TEXT,
-
-    utm_source VARCHAR(255),
-    utm_medium VARCHAR(255),
-    utm_campaign VARCHAR(255),
-    utm_term VARCHAR(255),
-    utm_content VARCHAR(255),
-
-    sub_id_1 VARCHAR(255),
-    sub_id_2 VARCHAR(255),
-    sub_id_3 VARCHAR(255),
-    sub_id_4 VARCHAR(255),
-    sub_id_5 VARCHAR(255),
-    sub_id_6 VARCHAR(255),
-    sub_id_7 VARCHAR(255),
-    sub_id_8 VARCHAR(255),
-    sub_id_9 VARCHAR(255),
-    sub_id_10 VARCHAR(255),
-
-    device_type VARCHAR(50),
-    browser VARCHAR(100),
-    os VARCHAR(100),
-    country_code VARCHAR(10),
-
-    is_unique BOOLEAN DEFAULT true,
-    is_bot BOOLEAN DEFAULT false,
-
-    created_at TIMESTAMP DEFAULT now()
-);
-
-
-INSERT INTO campaigns (name, type, status, redirect_mode, notes)
-VALUES
-  ('Main Traffic - Tier1', 'campaign', 'active', 'random', 'Main redirection campaign for T1 traffic'),
-  ('Pixel Tracker - FB', 'tracking-only', 'active', 'random', 'Just logs clicks from Facebook'),
-  ('Google Ads Redirect', 'campaign', 'paused', 'sequential', 'Split test for AdWords traffic');
-
-
-
 
 -- Добавим начальные данные
 INSERT INTO settings (name, value) VALUES
@@ -251,13 +182,6 @@ INSERT INTO settings (name, value) VALUES
   {"name":"Sub id 10","parameter":"sub_id_10","token":"","editable_name":true}
 ]') ON CONFLICT (name) DO NOTHING;
 
--- Создание индексов для скорости
-CREATE INDEX idx_visits_project_id ON visits (project_id);
-CREATE INDEX idx_visits_created_at ON visits (created_at);
-CREATE INDEX idx_redirect_rules_project_id ON redirect_rules (project_id);
-CREATE INDEX idx_postbacks_project_id ON postbacks (project_id);
-CREATE INDEX idx_visits_visit_id ON visits (visit_id);
-CREATE INDEX idx_postbacks_visit_id ON postbacks (visit_id);
 
 -- Создание стартового пользователя tracker_admin
 INSERT INTO users (username, email, password_hash, is_admin, active)
@@ -267,4 +191,28 @@ VALUES (
     '5dfc9a6ef90c0908795b917ae279e90a', /* akm_ + admin */
     TRUE,
     TRUE
+);
+
+INSERT INTO campaigns (
+    name,alias, type, status, redirect_mode, domain_id, traffic_source_id, config, notes, created_at, updated_at
+) VALUES (
+    'Campaign Demo 1', 'alias1', 'campaign', 'active', 'position', 1, 1,
+    '{"integration_method": "php", "send_se_referrer": true, "use_title_as_keyword": true, "send_query_params": true, "bind_method": "full", "bind_ttl_hours": 24, "cost_model": "cpc", "traffic_loss_percent": 0, "cost": 0, "cost_currency": "USD", "cost_from_cost_parameter": false, "paramsIdMapping": [{"name": "Keyword", "parameter": "keyword", "token": ""}, {"name": "Cost", "parameter": "cost", "token": ""}, {"name": "Currency", "parameter": "currency", "token": ""}, {"name": "External ID", "parameter": "external_id", "token": ""}, {"name": "Creative ID", "parameter": "utm_creative", "token": "{{ad.name}}"}, {"name": "AD Campaign ID", "parameter": "utm_campaign", "token": "{{campaign.name}}"}, {"name": "Site", "parameter": "utm_source", "token": "{{site_source_name}}"}], "postbacks": [], "flows": []}',
+    'Demo notes for campaign 1', '2025-05-01 00:00:00', '2025-05-01 00:00:00'
+);
+
+INSERT INTO campaigns (
+    name, alias, type, status, redirect_mode, domain_id, traffic_source_id, config, notes, created_at, updated_at
+) VALUES (
+    'Campaign Demo 2', 'alias2', 'campaign', 'active', 'position', 1, 1,
+    '{"integration_method": "php", "send_se_referrer": true, "use_title_as_keyword": true, "send_query_params": true, "bind_method": "full", "bind_ttl_hours": 24, "cost_model": "cpc", "traffic_loss_percent": 0, "cost": 0, "cost_currency": "USD", "cost_from_cost_parameter": false, "paramsIdMapping": [{"name": "Keyword", "parameter": "keyword", "token": ""}, {"name": "Cost", "parameter": "cost", "token": ""}, {"name": "Currency", "parameter": "currency", "token": ""}, {"name": "External ID", "parameter": "external_id", "token": ""}, {"name": "Creative ID", "parameter": "utm_creative", "token": "{{ad.name}}"}, {"name": "AD Campaign ID", "parameter": "utm_campaign", "token": "{{campaign.name}}"}, {"name": "Site", "parameter": "utm_source", "token": "{{site_source_name}}"}], "postbacks": [], "flows": []}',
+    'Demo notes for campaign 2', '2025-05-01 00:00:00', '2025-05-01 00:00:00'
+);
+
+INSERT INTO campaigns (
+    name,alias,  type, status, redirect_mode, domain_id, traffic_source_id, config, notes, created_at, updated_at
+) VALUES (
+    'Campaign Demo 3', 'alias3', 'campaign', 'active', 'position', 1, 1,
+    '{"integration_method": "php", "send_se_referrer": true, "use_title_as_keyword": true, "send_query_params": true, "bind_method": "full", "bind_ttl_hours": 24, "cost_model": "cpc", "traffic_loss_percent": 0, "cost": 0, "cost_currency": "USD", "cost_from_cost_parameter": false, "paramsIdMapping": [{"name": "Keyword", "parameter": "keyword", "token": ""}, {"name": "Cost", "parameter": "cost", "token": ""}, {"name": "Currency", "parameter": "currency", "token": ""}, {"name": "External ID", "parameter": "external_id", "token": ""}, {"name": "Creative ID", "parameter": "utm_creative", "token": "{{ad.name}}"}, {"name": "AD Campaign ID", "parameter": "utm_campaign", "token": "{{campaign.name}}"}, {"name": "Site", "parameter": "utm_source", "token": "{{site_source_name}}"}], "postbacks": [], "flows": []}',
+    'Demo notes for campaign 3', '2025-05-01 00:00:00', '2025-05-01 00:00:00'
 );

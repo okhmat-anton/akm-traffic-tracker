@@ -49,12 +49,19 @@
                                                 <v-row dense>
 
                                                     <v-col cols="12" class="mt-2">
-                                                        <v-switch label="Status" v-model="form.status" inset
-                                                                  dense></v-switch>
+                                                        <v-switch
+                                                                label="Status"
+                                                                v-model="form.status"
+                                                                :value="form.status === 'active'"
+                                                                :false-value="'paused'"
+                                                                :true-value="'active'"
+                                                                inset
+                                                                dense
+                                                        ></v-switch>
                                                     </v-col>
                                                     <v-col cols="12">
                                                         <v-select
-                                                                v-model="flowForm.landing"
+                                                                v-model="form.domain_id"
                                                                 :items="domains"
                                                                 item-text="domain"
                                                                 item-value="id"
@@ -583,6 +590,10 @@
                             <v-chip small>{{ item.type }}</v-chip>
                         </template>
 
+                        <template v-slot:item.domain="{ item }">
+                            {{ domainsMap[item.domain_id] || 'N/A' }}
+                        </template>
+
                         <template v-slot:item.status="{ item }">
                             <v-chip small color="green" v-if="item.status === 'active'">{{ item.status }}</v-chip>
                             <v-chip small color="orange" v-else-if="item.status === 'paused'">{{ item.status }}</v-chip>
@@ -632,7 +643,10 @@
             return {
                 headers: [
                     {text: 'Name', value: 'name'},
+                    {text: 'Domain', value: 'domain'},
+                    {text: 'Alias', value: 'alias'},
                     {text: 'Type', value: 'type'},
+                    {text: 'Flow Mode', value: 'redirect_mode'},
                     {text: 'Status', value: 'status'},
                     {text: 'Notes', value: 'notes'},
                     {text: 'Created', value: 'created_at'},
@@ -756,7 +770,7 @@
                 ,
                 flowSchemes: ['position', 'weight'],
                 statuses:
-                    ['active', 'disabled'],
+                    ['active', 'paused'],
                 types:
                     ['campaign', 'tracking-only'],
                 costModels:
@@ -865,7 +879,7 @@
             },
             domainsMap() {
                 const map = {};
-                this.domains.forEach(l => (map[l.id] = l.name));
+                this.domains.forEach(l => (map[l.id] = l.domain));
                 return map;
             },
             offerMap() {
@@ -882,7 +896,7 @@
             campaignUrl() {
                 if (this.form.domain_id) {
                     const domain = this.domains.find(d => d.id === this.form.domain_id);
-                    return domain ? `https://${domain.name}/${this.form.alias}` : 'domain error';
+                    return domain ? `https://${domain.domain}/${this.form.alias}` : 'domain error';
                 } else {
                     if (!this.form.alias) return 'please setup alias';
                     // read server ip from browser
@@ -912,23 +926,6 @@
                         return 'none';
                 }
             },
-            loadSources() {
-                this.loadingSources = true;
-                fetch("/backend/api/sources/", {
-                    credentials: "include"
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        this.sources = data;
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        this.$root.$emit("show-message", {type: "error", text: err.message});
-                    })
-                    .finally(() => {
-                        this.loadingSources = false;
-                    });
-            },
             copyCampaignUrl() {
                 const text = this.campaignUrl;
                 if (!text) return;
@@ -941,31 +938,42 @@
                 });
             },
             loadLandings() {
-                fetch('/landings', {credentials: 'include'})
+                return fetch('/landings', {credentials: 'include'})
                     .then(res => res.json())
                     .then(data => {
                         this.landings = data;
                     });
             },
             loadOffers() {
-                fetch('/backend/api/offers/', {credentials: 'include'})
+                return fetch('/backend/api/offers/', {credentials: 'include'})
                     .then(res => res.json())
                     .then(data => {
                         this.offers = data;
                     });
             },
+
             loadDomains() {
-                fetch('/backend/api/domains/', {credentials: 'include'})
+                return fetch('/backend/api/domains/', {credentials: 'include'})
                     .then(res => res.json())
                     .then(data => {
                         this.domains = data;
                     });
             },
-            preloadData() {
-                this.loadLandings();
-                this.loadOffers();
-                this.loadDomains();
-                this.loadSources()
+
+            loadSources() {
+                return fetch("/backend/api/sources/", {credentials: "include"})
+                    .then(res => res.json())
+                    .then(data => {
+                        this.sources = data;
+                    });
+            },
+            async preloadData() {
+                await Promise.all([
+                    this.loadLandings(),
+                    this.loadOffers(),
+                    this.loadDomains(),
+                    this.loadSources()
+                ]);
             },
             moveFlowUp(index) {
                 if (index > 0) {
@@ -1050,11 +1058,80 @@
                 }
             },
             save() {
+                console.log(this.form.domain_id)
+                const payload = {
+                    name: this.form.name,
+                    alias: this.form.alias,
+                    type: this.form.type,
+                    status: this.form.status,
+                    redirect_mode: this.form.flowScheme,
+                    domain_id: this.form.domain_id,
+                    traffic_source_id: this.form.traffic_source_id,
+                    notes: this.form.notes,
+                    config: {
+                        integration_method: this.form.integration_method,
+                        send_se_referrer: this.form.send_se_referrer,
+                        use_title_as_keyword: this.form.use_title_as_keyword,
+                        send_query_params: this.form.send_query_params,
+                        bind_method: this.form.bind_method,
+                        bind_ttl_hours: this.form.bind_ttl_hours,
+                        cost_model: this.form.cost_model,
+                        traffic_loss_percent: this.form.traffic_loss_percent,
+                        cost: this.form.cost,
+                        cost_currency: this.form.cost_currency,
+                        cost_from_cost_parameter: this.form.cost_from_cost_parameter,
+                        paramsIdMapping: this.form.paramsIdMapping,
+                        postbacks: this.form.postbacks,
+                        flows: this.form.flows
+                    }
+                };
 
+                const url = this.isEdit
+                    ? `/backend/api/campaigns/${this.form.id}`
+                    : '/backend/api/campaigns/';
+
+                const method = this.isEdit ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method,
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                    .then(async res => {
+                        const text = await res.text();
+                        if (!res.ok) {
+                            let msg = text;
+                            try {
+                                const err = JSON.parse(text);
+                                msg = err.detail || msg;
+                            } catch {
+                            }
+                            throw new Error(msg);
+                        }
+
+                        this.$root.$emit('show-message', {
+                            type: 'success',
+                            text: `Campaign ${this.isEdit ? 'updated' : 'created'} successfully!`
+                        });
+
+                        this.dialog = false;
+                        this.resetForm();
+                        this.loadCampaigns();
+                    })
+                    .catch(err => {
+                        this.$root.$emit('show-message', {
+                            type: 'error',
+                            text: `Save failed: ${err.message}`
+                        });
+                    });
             },
             confirmCancel() {
                 if (confirm("Are you sure you want to discard changes?")) {
                     this.dialog = false;
+                    this.resetForm();
                 }
             },
             openCreate() {
@@ -1062,9 +1139,38 @@
                 this.dialog = true;
                 this.form.alias = this.generateAlias()
             },
-            openEdit(item) {
-                this.preloadData();
-                this.$root.$emit('open-edit-campaign', item);
+            async openEdit(item) {
+                await this.preloadData();
+                await this.loadCampaigns();
+                this.dialog = true;
+                this.isEdit = true;
+
+                this.form = {
+                    id: item.id,
+                    name: item.name,
+                    alias: item.alias,
+                    type: item.type,
+                    status: item.status,
+                    flowScheme: item.redirect_mode,
+                    domain_id: item.domain_id,
+                    traffic_source_id: item.traffic_source_id,
+                    notes: item.notes || '',
+                    integration_method: item.config?.integration_method || null,
+                    send_se_referrer: item.config?.send_se_referrer ?? true,
+                    use_title_as_keyword: item.config?.use_title_as_keyword ?? true,
+                    send_query_params: item.config?.send_query_params ?? true,
+                    bind_method: item.config?.bind_method || 'full',
+                    bind_ttl_hours: item.config?.bind_ttl_hours ?? 24,
+                    cost_model: item.config?.cost_model || 'cpc',
+                    traffic_loss_percent: item.config?.traffic_loss_percent ?? 0,
+                    cost: item.config?.cost ?? 0,
+                    cost_currency: item.config?.cost_currency || 'USD',
+                    cost_from_cost_parameter: item.config?.cost_from_cost_parameter ?? false,
+                    paramsIdMapping: item.config?.paramsIdMapping || [],
+                    postbacks: item.config?.postbacks || [],
+                    flows: item.config?.flows || []
+                };
+
             },
             loadCampaigns() {
                 this.preloadData();
@@ -1196,6 +1302,54 @@
                 this.postbackEditorIndex = null; // значит, редактируем новый
                 this.postbackUrlDraft = this.newPostback.url;
                 this.postbackEditorDialog = true;
+            },
+            resetForm() {
+                this.isEdit = false;
+                this.form = {
+                    id: null,
+                    name: '',
+                    alias: this.generateAlias(),
+                    type: 'campaign',
+                    status: 'active',
+                    redirect_mode: 'position',
+                    domain_id: null,
+                    traffic_source_id: null,
+                    notes: '',
+                    flowScheme: 'position',
+                    integration_method: null,
+                    send_se_referrer: true,
+                    use_title_as_keyword: true,
+                    send_query_params: true,
+                    bind_method: 'full',
+                    bind_ttl_hours: 24,
+                    cost_model: 'cpc',
+                    traffic_loss_percent: 0,
+                    cost: 0,
+                    cost_currency: 'USD',
+                    cost_from_cost_parameter: false,
+                    paramsIdMapping: [...this.defaultParamMappings()],
+                    postbacks: [],
+                    flows: []
+                };
+            },
+            defaultParamMappings() {
+                return [
+                    {name: "Keyword", parameter: "keyword", token: "", editable_name: false},
+                    {name: "Cost", parameter: "cost", token: "", editable_name: false},
+                    {name: "Currency", parameter: "currency", token: "", editable_name: false},
+                    {name: "External ID", parameter: "external_id", token: "", editable_name: false},
+                    {name: "Creative ID", parameter: "utm_creative", token: "{{ad.name}}", editable_name: false},
+                    {
+                        name: "AD Campaign ID",
+                        parameter: "utm_campaign",
+                        token: "{{campaign.name}}",
+                        editable_name: false
+                    },
+                    {name: "Site", parameter: "utm_source", token: "{{site_source_name}}", editable_name: false},
+                    {name: "Sub id 1", parameter: "sub_id_1", token: "", editable_name: true},
+                    {name: "Sub id 2", parameter: "sub_id_2", token: "", editable_name: true}
+                    // добавь остальные при необходимости
+                ];
             }
 
 

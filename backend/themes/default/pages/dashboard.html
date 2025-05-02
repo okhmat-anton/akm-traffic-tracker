@@ -176,7 +176,14 @@
                         this.$root.$emit('load-users');
                         break;
                 }
+                localStorage.setItem('dashboard_tab', newTab);
 
+            }
+        },
+        mounted(){
+            const savedTab = localStorage.getItem('dashboard_tab');
+            if (savedTab !== null) {
+                this.tab = parseInt(savedTab, 10);
             }
         },
         methods: {

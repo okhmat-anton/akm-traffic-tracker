@@ -12,13 +12,14 @@ router = APIRouter()
 
 class CampaignIn(BaseModel):
     name: str
+    alias: str
     type: Literal['campaign', 'tracking-only'] = 'campaign'
     status: Literal['active', 'paused', 'archived'] = 'active'
-    redirect_mode: Literal['random', 'sequential', 'weight', 'single'] = 'random'
+    redirect_mode: Literal['position', 'weight'] = 'position'
     traffic_source_id: Optional[int] = None
     domain_id: Optional[int] = None
-    default_campaign_id: Optional[int] = None
     notes: Optional[str] = None
+    config: Optional[dict] = None
 
 class CampaignOut(CampaignIn):
     id: int
@@ -41,17 +42,19 @@ def create_campaign(data: CampaignIn, db: Session = Depends(get_db)):
     db.refresh(campaign)
     return {"message": "Campaign created", "id": campaign.id}
 
-@router.patch("/{campaign_id}")
+@router.put("/{campaign_id}", response_model=CampaignOut)
 def update_campaign(campaign_id: int, data: CampaignIn, db: Session = Depends(get_db)):
-    campaign = db.query(CampaignORM).filter_by(id=campaign_id).first()
+    campaign = db.query(CampaignORM).filter(CampaignORM.id == campaign_id).first()
     if not campaign:
-        raise HTTPException(404, detail="Campaign not found")
+        raise HTTPException(status_code=404, detail="Campaign not found.")
 
     for key, value in data.dict().items():
         setattr(campaign, key, value)
+    campaign.updated_at = datetime.utcnow()
 
     db.commit()
-    return {"message": "Campaign updated"}
+    db.refresh(campaign)
+    return campaign
 
 @router.delete("/{campaign_id}")
 def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
