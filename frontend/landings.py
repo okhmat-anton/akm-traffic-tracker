@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
@@ -21,6 +21,9 @@ router = APIRouter()
 
 LANDINGS_DIR = "/app/landings"  # путь внутри контейнера src
 os.makedirs(LANDINGS_DIR, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'.html', '.php', '.css', '.js', '.jpg', '.jpeg', '.png'}
+
 
 
 def get_next_site_id():
@@ -372,4 +375,53 @@ def save_file(landing_id: int, payload: FileSaveRequest, db: Session = Depends(g
     with open(full_path, "w", encoding="utf-8") as f:
         f.write(payload.content)
 
+    return {"status": "ok"}
+
+
+
+@router.post("/landings_editor/{landing_id}/upload")
+def upload_file(
+    landing_id: int,
+    path: str = Query(..., description="Relative path to save file (e.g. subdir/image.png)"),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    base = Path(get_landing_folder(db, landing_id))
+    relative_path = Path(path).as_posix().lstrip("/")
+    save_path = base.joinpath(relative_path).resolve()
+
+    # Ensure path is inside base directory
+    if not str(save_path).startswith(str(base)):
+        raise HTTPException(400, "Invalid path")
+
+    ext = save_path.suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(400, f"Extension '{ext}' not allowed")
+
+    # Create directory if needed
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(save_path, "wb") as out_file:
+        shutil.copyfileobj(file.file, out_file)
+
+    return {"status": "ok", "filename": str(save_path.relative_to(base))}
+
+
+
+@router.post("/landings_editor/{landing_id}/file-plain")
+def save_file_plain(
+    landing_id: int,
+    filename: str = Form(...),
+    content: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    base = Path(get_landing_folder(db, landing_id))
+    safe_rel_path = Path(filename).as_posix().lstrip("/")
+    full_path = base.joinpath(safe_rel_path).resolve()
+
+    if not str(full_path).startswith(str(base)):
+        raise HTTPException(400, "Invalid file path")
+
+    full_path.parent.mkdir(parents=True, exist_ok=True)
+    full_path.write_text(content, encoding="utf-8")
     return {"status": "ok"}

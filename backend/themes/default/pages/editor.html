@@ -1,4 +1,6 @@
 {% raw %}
+<!-- CodeMirror Light Theme (Base) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
@@ -8,15 +10,56 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/php/php.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/matchbrackets.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closebrackets.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css"/>
+<style>
+    .CodeMirror {
+        height: 80vh;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+        background: #ffffff;
+        color: #000000;
+    }
+
+    .CodeMirror-gutters {
+        background: #f5f5f5;
+        border-right: 1px solid #ccc;
+        color: #999;
+    }
+
+    .v-treeview-node__label,
+    .v-card-title,
+    .v-btn,
+    h2 {
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .v-card-title {
+        background-color: #f1f1f1;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .v-btn {
+        font-size: 12px;
+        text-transform: none;
+    }
+
+    body {
+        background-color: #fafafa;
+    }
+</style>
 
 <script type="text/x-template" id="editor-page-template">
     <v-container fluid>
-        <h2>Edit Landing File</h2>
+        <h2 style="color: #222;">Edit Landing File</h2>
 
         <v-row>
             <v-col cols="3">
+                <v-btn block small color="primary" class="mb-2" @click="promptCreateFile">Create File</v-btn>
+                <v-btn block small color="secondary" class="mb-2" @click="triggerUpload">Upload File</v-btn>
+                <input ref="upload" type="file" style="display: none" @change="uploadFile">
+
                 <v-treeview
+                        dense
                         :items="fileTree"
                         item-key="path"
                         item-text="name"
@@ -26,14 +69,14 @@
                         :open.sync="openFolders"
                 >
                     <template v-slot:prepend="{ item }">
-                        <v-icon v-if="item.type === 'folder'">mdi-folder</v-icon>
-                        <v-icon v-else>mdi-file</v-icon>
+                        <v-icon v-if="item.type === 'folder'">mdi-folder-outline</v-icon>
+                        <v-icon v-else>mdi-file-code-outline</v-icon>
                     </template>
                 </v-treeview>
             </v-col>
 
             <v-col cols="9">
-                <v-card>
+                <v-card elevation="2">
                     <v-card-title>
                         {{ selectedFile || 'No file selected' }}
                     </v-card-title>
@@ -114,17 +157,21 @@
                 if (this.editorInstance) {
                     this.content = this.editorInstance.getValue();
                 }
-                fetch(`/landings_editor/${this.landingId}/file`, {
+
+                const payload = new URLSearchParams();
+                payload.set("filename", this.selectedFile);
+                payload.set("content", this.content);
+
+                fetch(`/landings_editor/${this.landingId}/file-plain`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: JSON.stringify({
-                        filename: this.selectedFile,
-                        content: this.content,
-                    }),
+                    body: payload.toString()
                 })
-                    .then((res) => res.json())
+                    .then((res) => res.ok ? res.json() : res.text().then(t => {
+                        throw new Error(t);
+                    }))
                     .then(() => {
                         alert('File saved!');
                     })
@@ -132,6 +179,43 @@
                         alert(`Error: ${err.message}`);
                     });
             },
+
+            promptCreateFile() {
+                const name = prompt("Enter new file path (e.g., subdir/newfile.php):");
+                if (!name) return;
+                fetch(`/landings_editor/${this.landingId}/file`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: name, content: ''})
+                })
+                    .then(res => res.json())
+                    .then(() => {
+                        this.loadTree();
+                        this.selectFile(name);
+                    })
+                    .catch(err => alert(`Error: ${err.message}`));
+            },
+            triggerUpload() {
+                this.$refs.upload.click();
+            },
+            uploadFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append("file", file);
+
+                fetch(`/landings_editor/${this.landingId}/upload?path=${encodeURIComponent(file.name)}`, {
+                    method: "POST",
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(() => {
+                        this.loadTree();
+                        this.selectFile(file.name);
+                    })
+                    .catch(err => alert(`Upload error: ${err.message}`));
+            }
         },
         mounted() {
             const params = new URLSearchParams(window.location.search);
