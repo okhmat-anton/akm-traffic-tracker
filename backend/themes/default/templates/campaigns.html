@@ -17,12 +17,25 @@
                     <v-col cols="12" class="ma-4">
 
                         <h3>{{ isEdit ? 'Edit Campaign' : 'New Campaign' }}</h3>
-                        <v-row class="mt-4">
-                            <v-col cols="12" md="7">
+                        <v-row dense class="mt-2">
+                            <v-col cols="12" md="4">
+                                <v-text-field label="Name" v-model="form.name" outlined
+                                              dense></v-text-field>
+                            </v-col>
+
+
+                            <v-col cols="12" md="2">
+                                <v-select label="Type" v-model="form.type" :items="types"
+                                          outlined
+                                          dense></v-select>
+                            </v-col>
+                        </v-row>
+                        <v-row class="mt-0">
+                            <v-col cols="12" md="6">
                                 <v-tabs v-model="tab" dark>
                                     <v-tab>General</v-tab>
+                                    <v-tab>Cost</v-tab>
                                     <v-tab>Tracking</v-tab>
-                                    <v-tab>Integrations</v-tab>
                                     <v-tab>Parameters</v-tab>
                                     <v-tab>S2S Postbacks</v-tab>
                                     <v-tab>Notes</v-tab>
@@ -34,63 +47,55 @@
                                         <v-card flat>
                                             <v-container>
                                                 <v-row dense>
-                                                    <v-col cols="12" md="6">
-                                                        <v-text-field label="Name" v-model="form.name" outlined
-                                                                      dense></v-text-field>
+
+                                                    <v-col cols="12" class="mt-2">
+                                                        <v-switch label="Status" v-model="form.status" inset
+                                                                  dense></v-switch>
                                                     </v-col>
-                                                    <v-col cols="12" md="6">
+                                                    <v-col cols="12">
+                                                        <v-select
+                                                                v-model="flowForm.landing"
+                                                                :items="domains"
+                                                                item-text="domain"
+                                                                item-value="id"
+                                                                label="Domain"
+                                                                outlined
+                                                                dense></v-select>
+                                                    </v-col>
+                                                    <v-col cols="12">
                                                         <v-text-field label="Alias" v-model="form.alias" outlined
                                                                       dense></v-text-field>
                                                     </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Status" v-model="form.status" :items="statuses"
+
+                                                    <v-col cols="12">
+                                                        <v-text-field label="Group" v-model="form.group_id"
+                                                                      outlined
+                                                                      dense></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-select label="Traffic Source"
+                                                                  v-model="form.traffic_source_id"
+                                                                  :items="sources" item-text="name" item-value="id"
                                                                   outlined
                                                                   dense></v-select>
                                                     </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Type" v-model="form.type" :items="types"
-                                                                  outlined
-                                                                  dense></v-select>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Redirect Mode" v-model="form.redirect_mode"
-                                                                  :items="redirectModes" outlined dense></v-select>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-col cols="12">
-                                                            <v-select
-                                                                    v-model="flowForm.landing"
-                                                                    :items="domains"
-                                                                    item-text="domain"
-                                                                    item-value="id"
-                                                                    label="Domain"
-                                                                    outlined
-                                                                    dense></v-select>
-                                                        </v-col>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Group" v-model="form.group_id" :items="groups"
-                                                                  item-text="name"
-                                                                  item-value="id" outlined dense></v-select>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
+                                                    <v-col cols="12">
                                                         <v-select
-                                                                label="Bind Visitors"
+                                                                label="Uniqueness Bind Method"
                                                                 v-model="form.bind_method"
                                                                 :items="[
-                                                                    { text: 'None', value: 'none' },
-                                                                    { text: 'Flows', value: 'flow' },
-                                                                    { text: 'Flows + LP', value: 'flow_lander' },
-                                                                    { text: 'Flows + LP + Offer', value: 'flow_lander_offer' }
+                                                                    { text: 'IP with user-agent and Cookies', value: 'full' },
+                                                                    { text: 'IP with user-agent', value: 'ip_and_useragent' },
+                                                                    { text: 'IP only', value: 'ip_only' },
                                                                 ]"
                                                                 outlined
                                                                 dense
                                                         ></v-select>
                                                     </v-col>
 
-                                                    <v-col cols="12" md="6">
+                                                    <v-col cols="12">
                                                         <v-text-field
-                                                                label="Bind TTL (hours)"
+                                                                label="Uniqueness Bind TTL (hours)"
                                                                 v-model="form.bind_ttl_hours"
                                                                 type="number"
                                                                 outlined
@@ -103,12 +108,49 @@
                                         </v-card>
                                     </v-tab-item>
 
+                                    <!-- COST -->
+                                    <v-tab-item>
+                                        <v-card flat>
+                                            <v-container>
+                                                <v-row dense>
+                                                    <v-col cols="12">
+                                                        <v-select label="Cost Model" v-model="form.cost_model"
+                                                                  :items="costModels"
+                                                                  outlined dense></v-select>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-text-field label="Traffic Loss (%)"
+                                                                      v-model="form.traffic_loss_percent"
+                                                                      type="number" outlined dense></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-text-field label="Cost"
+                                                                      v-model="form.cost"
+                                                                      type="number" outlined dense></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-autocomplete label="Cost Currency"
+                                                                        v-model="form.cost_currency"
+                                                                        :items="currencies"
+                                                                        outlined dense></v-autocomplete>
+                                                        <v-col cols="12">
+                                                            <v-switch label="Cost from Cost Parameter"
+                                                                      v-model="form.cost_from_cost_parameter"
+                                                                      inset
+                                                                      dense></v-switch>
+                                                        </v-col>
+                                                    </v-col>
+                                                </v-row>
+                                            </v-container>
+                                        </v-card>
+                                    </v-tab-item>
+
                                     <!-- TRACKING -->
                                     <v-tab-item>
                                         <v-card flat>
                                             <v-container>
                                                 <v-row dense>
-                                                    <v-col cols="12" md="12">
+                                                    <v-col cols="12">
                                                         <v-text-field
                                                                 label="Campaign URL"
                                                                 :value="campaignUrl"
@@ -118,64 +160,44 @@
                                                                 append-icon="mdi-content-copy"
                                                                 @click:append="copyCampaignUrl"></v-text-field>
                                                     </v-col>
-
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Traffic Source"
-                                                                  v-model="form.traffic_source_id"
-                                                                  :items="sources" item-text="name" item-value="id"
-                                                                  outlined
-                                                                  dense></v-select>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Cost Model" v-model="form.cost_model"
-                                                                  :items="costModels"
-                                                                  outlined dense></v-select>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-text-field label="Traffic Loss (%)"
-                                                                      v-model="form.traffic_loss_percent"
-                                                                      type="number" outlined dense></v-text-field>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Uniqueness Method"
-                                                                  v-model="form.uniqueness_method"
-                                                                  :items="uniquenessMethods" outlined dense></v-select>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-text-field label="Uniqueness TTL (hrs)"
-                                                                      v-model="form.uniqueness_ttl"
-                                                                      type="number" outlined dense></v-text-field>
-                                                    </v-col>
-                                                </v-row>
-                                            </v-container>
-                                        </v-card>
-                                    </v-tab-item>
-
-                                    <!-- INTEGRATIONS -->
-                                    <v-tab-item>
-                                        <v-card flat>
-                                            <v-container>
-                                                <v-row dense>
-                                                    <v-col cols="12" md="6">
-                                                        <v-switch label="Tracking Script Enabled"
-                                                                  v-model="form.tracking_script_enabled"
-                                                                  inset dense/>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-select label="Integration Method"
-                                                                  v-model="form.integration_method"
-                                                                  :items="integrationMethods" outlined dense/>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-text-field label="API Token" v-model="form.api_token"
-                                                                      outlined
-                                                                      dense/>
-                                                    </v-col>
-                                                    <v-col cols="12" md="6">
-                                                        <v-switch label="Bypass Cache (KClient)"
-                                                                  v-model="form.bypass_cache"
+                                                    <v-col cols="12">
+                                                        <v-switch label="Send se_referrer"
+                                                                  v-model="form.send_se_referrer"
                                                                   inset
-                                                                  dense/>
+                                                                  dense></v-switch>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-switch label="Use <title> as keyword"
+                                                                  v-model="form.use_title_as_keyword"
+                                                                  inset
+                                                                  dense></v-switch>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-switch label="Send query params"
+                                                                  v-model="form.send_query_params"
+                                                                  inset
+                                                                  dense></v-switch>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-select
+                                                                label="Tracking Script Method"
+                                                                v-model="form.integration_method"
+                                                                :items="Object.keys(integrationMethods)"
+                                                                item-text="value"
+                                                                item-value="key"
+                                                                outlined
+                                                                dense
+                                                        ></v-select>
+                                                    </v-col>
+                                                    <v-col cols="12" v-if="form.integration_method">
+                                                        <v-textarea
+                                                                label="Tracking Script"
+                                                                readonly
+                                                                outlined
+                                                                dense
+                                                                v-model="generateTrackingScript()"
+                                                        >
+                                                        </v-textarea>
                                                     </v-col>
                                                 </v-row>
                                             </v-container>
@@ -186,41 +208,133 @@
                                     <v-tab-item>
                                         <v-card flat>
                                             <v-container>
-                                                <v-row dense>
-                                                    <v-col cols="12" md="6" v-for="n in 10" :key="n">
-                                                        <v-text-field :label="'Sub ID ' + n"
-                                                                      v-model="form['sub_id_' + n]"
-                                                                      outlined
-                                                                      dense/>
+                                                <v-row dense v-for="(mapping, index) in form.paramsIdMapping"
+                                                       :key="index"
+                                                       align="center">
+                                                    <v-col cols="3">
+                                                        <template v-if="!mapping.editable_name">
+                                                            {{mapping.name}}
+                                                        </template>
+                                                        <template v-if="mapping.editable_name">
+                                                            <v-text-field
+                                                                    :label="mapping.name"
+                                                                    v-model="mapping.name"
+                                                                    :readonly="!mapping.editable_name"
+                                                                    outlined
+                                                                    dense
+                                                            ></v-text-field>
+                                                        </template>
                                                     </v-col>
-                                                    <v-col cols="12" md="6" v-for="param in utmParams" :key="param">
-                                                        <v-text-field :label="param.toUpperCase()" v-model="form[param]"
-                                                                      outlined
-                                                                      dense/>
+                                                    <v-col cols="3">
+                                                        <v-text-field
+                                                                :label="mapping.parameter"
+                                                                v-model="mapping.parameter"
+                                                                :readonly="!mapping.editable_name"
+                                                                outlined
+                                                                dense
+                                                        ></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="6">
+                                                        <v-text-field
+                                                                label="Variable Name"
+                                                                v-model="mapping.token"
+                                                                outlined
+                                                                dense
+                                                        ></v-text-field>
                                                     </v-col>
                                                 </v-row>
                                             </v-container>
                                         </v-card>
                                     </v-tab-item>
 
+
                                     <!-- POSTBACKS -->
                                     <v-tab-item>
                                         <v-card flat>
                                             <v-container>
-                                                <v-row dense>
+                                                <!-- Существующие постбеки -->
+                                                <v-row
+                                                        dense
+                                                        v-for="(pb, i) in form.postbacks"
+                                                        :key="'pb_' + i"
+                                                        class="mb-2"
+                                                >
                                                     <v-col cols="12">
-                                                        <v-textarea label="S2S Postback URLs (JSON format)"
-                                                                    v-model="form.postback_urls"
-                                                                    outlined dense rows="4" auto-grow/>
+                                                        <v-select
+                                                                v-model="pb.method"
+                                                                :items="['GET', 'POST']"
+                                                                label="Request Method"
+                                                                dense
+                                                                outlined
+                                                                class="mt-3"></v-select>
                                                     </v-col>
                                                     <v-col cols="12">
-                                                        <v-textarea label="Postback Status Mapping (JSON)"
-                                                                    v-model="form.postback_statuses" outlined dense
-                                                                    rows="4"
-                                                                    auto-grow/>
+                                                        <v-textarea v-model="pb.url" label="Postback URL" dense
+
+                                                                    rows="3"
+                                                                    outlined></v-textarea>
+                                                        <v-btn small color="blue" @click="openPostbackEditor(i)">Edit
+                                                            Postback URL
+                                                        </v-btn>
+                                                    </v-col>
+                                                    <v-col cols="10">
+                                                        <v-checkbox
+                                                                v-for="key in postbackStatusKeys"
+                                                                :key="key"
+                                                                v-model="pb.status[key]"
+                                                                :label="key.charAt(0).toUpperCase() + key.slice(1)"
+                                                                dense hide-details
+                                                                class="mr-2 d-inline-block"></v-checkbox>
+                                                    </v-col>
+                                                    <v-col cols="2" class="text-right">
+                                                        <v-btn icon @click="form.postbacks.splice(i, 1)">
+                                                            <v-icon color="red">mdi-delete</v-icon>
+                                                        </v-btn>
+                                                    </v-col>
+                                                </v-row>
+
+                                                <v-divider class="my-4"></v-divider>
+
+                                                <!-- Добавление нового -->
+                                                <v-row dense>
+                                                    <v-col cols="12">
+                                                        <v-select
+                                                                v-model="newPostback.method"
+                                                                :items="['GET', 'POST']"
+                                                                label="Request Method"
+                                                                dense
+                                                                outlined
+                                                                class="mt-3"></v-select>
+                                                    </v-col>
+                                                    <v-col cols="12">
+                                                        <v-textarea
+                                                                v-model="newPostback.url"
+                                                                label="New Postback URL"
+                                                                rows="3"
+                                                                dense
+                                                                outlined></v-textarea>
+                                                        <v-btn small color="blue" @click="openPostbackEditor()">Edit
+                                                            Postback URL
+                                                        </v-btn>
+                                                    </v-col>
+                                                    <v-col cols="10">
+                                                        <v-checkbox
+                                                                v-for="key in postbackStatusKeys"
+                                                                :key="'new_' + key"
+                                                                v-model="newPostback.status[key]"
+                                                                :label="key.charAt(0).toUpperCase() + key.slice(1)"
+                                                                dense hide-details
+                                                                class="mr-2 d-inline-block"></v-checkbox>
+                                                    </v-col>
+                                                    <v-col cols="2" class="text-right">
+                                                        <v-btn color="primary" @click="addPostback"
+                                                               :disabled="!newPostback.url">
+                                                            Add
+                                                        </v-btn>
                                                     </v-col>
                                                 </v-row>
                                             </v-container>
+
                                         </v-card>
                                     </v-tab-item>
 
@@ -230,7 +344,7 @@
                                             <v-container>
                                                 <v-textarea v-model="form.notes" label="Internal Notes" outlined dense
                                                             rows="5"
-                                                            auto-grow/>
+                                                            auto-grow></v-textarea>
                                             </v-container>
                                         </v-card>
                                     </v-tab-item>
@@ -240,8 +354,19 @@
 
 
                             <!-- RIGHT: Flow Configuration -->
-                            <v-col cols="12" md="5">
+                            <v-col cols="12" md="6">
                                 <h3 class="mb-2 mt-2">Flow Configuration</h3>
+
+                                <v-row>
+                                    <v-col cols="12" md="4">
+                                        <v-select
+                                                v-model="form.flowScheme"
+                                                :items="flowSchemes"
+                                                label="Flow Scheme"
+                                                outlined
+                                                dense></v-select>
+                                    </v-col>
+                                </v-row>
 
                                 <v-row dense v-for="(flow, index) in form.flows" :key="index" class="mb-2">
                                     <v-col cols="12">
@@ -312,82 +437,134 @@
                 </v-card-title>
 
                 <v-card-text>
-                    <v-container>
-                        <v-row dense>
-                            <v-col cols="12">
-                                <v-text-field
-                                        label="Flow Name"
-                                        v-model="flowForm.name"
-                                        outlined
-                                        dense
-                                        required></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <v-select
-                                        v-model="flowForm.type"
-                                        :items="['forced', 'regular', 'default']"
-                                        label="Flow Type"
-                                        outlined dense></v-select>
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Position" v-model="flowForm.position" type="number" outlined
-                                              dense></v-text-field>
-                            </v-col>
-                            <v-col cols="6">
-                                <v-text-field label="Weight (%)" v-model="flowForm.weight" type="number" outlined
-                                              dense></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-select
-                                        v-model="flowForm.schema"
-                                        :items="['split', 'direct', 'action']"
-                                        label="Flow Schema"
-                                        outlined dense></v-select>
-                            </v-col>
-                            <v-col cols="6">
-                                <v-switch label="Enabled" v-model="flowForm.enabled" inset dense></v-switch>
-                            </v-col>
-                            <v-col cols="6">
-                                <v-switch label="Collect Clicks" v-model="flowForm.collect_clicks" inset
-                                          dense></v-switch>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-select
-                                        v-model="flowForm.landing"
-                                        :items="landings"
-                                        item-text="name"
-                                        item-value="id"
-                                        label="Landing Pages"
-                                        outlined
-                                        dense></v-select>
-                            </v-col>
+                    <v-tabs v-model="activeFlowTab" dark>
+                        <v-tab>Main</v-tab>
+                        <v-tab>Schema</v-tab>
+                        <v-tab>Filters</v-tab>
+                        <v-tab>Notes</v-tab>
+                    </v-tabs>
 
-                            <v-col cols="12">
-                                <v-select
-                                        v-model="flowForm.offer"
-                                        :items="offers"
-                                        item-text="name"
-                                        item-value="id"
-                                        label="Offers"
-                                        outlined
-                                        dense></v-select>
-                            </v-col>
+                    <v-tabs-items v-model="activeFlowTab">
+                        <!-- MAIN TAB -->
+                        <v-tab-item>
+                            <v-container>
+                                <v-row dense>
+                                    <v-col cols="12">
+                                        <v-text-field label="Flow Name" v-model="flowForm.name" outlined dense
+                                                      required></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-select v-model="flowForm.type" :items="['regular','forced', 'default']"
+                                                  label="Flow Type" outlined dense></v-select>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-text-field label="Position" v-model="flowForm.position" type="number"
+                                                      outlined dense></v-text-field>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-text-field label="Weight (%)" v-model="flowForm.weight" type="number"
+                                                      outlined dense></v-text-field>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-switch label="Enabled" v-model="flowForm.enabled" inset dense></v-switch>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-switch label="Collect Clicks" v-model="flowForm.collect_clicks" inset
+                                                  dense></v-switch>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </v-tab-item>
 
-                            <v-col cols="12">
-                                <v-textarea
-                                        label="Filters JSON"
-                                        v-model="flowForm.filters"
-                                        outlined
-                                        auto-grow dense></v-textarea>
-                            </v-col>
-                        </v-row>
-                    </v-container>
+                        <!-- SCHEMA TAB -->
+                        <v-tab-item>
+                            <v-container>
+                                <v-row dense>
+                                    <v-col cols="12">
+                                        <v-select v-model="flowForm.schema" :items="['split', 'direct', 'action']"
+                                                  label="Flow Schema" outlined dense></v-select>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-select v-model="flowForm.landing" :items="landings" item-text="name"
+                                                  item-value="id" label="Landing Pages" outlined dense></v-select>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-select v-model="flowForm.offer" :items="offers" item-text="name"
+                                                  item-value="id" label="Offers" outlined dense></v-select>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </v-tab-item>
+
+                        <!-- FILTERS TAB -->
+                        <v-tab-item>
+                            <v-container>
+                                <v-row dense>
+                                    <v-col cols="12">
+                                        <v-textarea label="Filters JSON" v-model="flowForm.filters" outlined auto-grow
+                                                    dense></v-textarea>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </v-tab-item>
+
+                        <!-- NOTES TAB -->
+                        <v-tab-item>
+                            <v-container>
+                                <v-row dense>
+                                    <v-col cols="12">
+                                        <v-textarea label="Notes" v-model="flowForm.notes" outlined auto-grow
+                                                    dense></v-textarea>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </v-tab-item>
+                    </v-tabs-items>
                 </v-card-text>
 
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text color="grey" @click="confirmCancelFlow">Cancel</v-btn>
                     <v-btn text color="success" @click="saveFlow">Save</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <v-dialog v-model="postbackEditorDialog" max-width="800px" persistent>
+            <v-card>
+                <v-card-title>
+                    <span class="text-h6">Edit Postback URL</span>
+                </v-card-title>
+                <v-card-text>
+                    <v-textarea
+                            v-model="postbackUrlDraft"
+                            label="Postback URL"
+                            auto-grow
+                            outlined
+                            dense
+                    ></v-textarea>
+
+                    <v-divider class="my-3"></v-divider>
+
+                    <div>Click to insert variable:</div>
+                    <v-chip-group column>
+                        <v-chip
+                                v-for="macro in postbackMacros"
+                                :key="macro"
+                                class="ma-1"
+                                small
+                                outlined
+                                :text-color="isMacroInUrl(macro) ? 'purple' : ''"
+                                @click="insertMacro(macro)"
+                        >
+                            {{"{"}}{{macro}}{{"}"}}
+                        </v-chip>
+                    </v-chip-group>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="postbackEditorDialog = false">Cancel</v-btn>
+                    <v-btn color="success" text @click="applyPostbackUrl">Apply</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -457,7 +634,6 @@
                     {text: 'Name', value: 'name'},
                     {text: 'Type', value: 'type'},
                     {text: 'Status', value: 'status'},
-                    {text: 'Redirect Mode', value: 'redirect_mode'},
                     {text: 'Notes', value: 'notes'},
                     {text: 'Created', value: 'created_at'},
                     {text: 'Updated', value: 'updated_at'},
@@ -471,82 +647,211 @@
                 offers: [],
                 landings: [],
                 tab: 0,
+                currencies: ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AWG', 'AZN',
+                    'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL',
+                    'BSD', 'BTN', 'BWP', 'BYN', 'BZD', 'CDF', 'CHF', 'CLP', 'CNY',
+                    'COP', 'CRC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EGP',
+                    'ERN', 'ETB', 'FJD', 'FKP', 'FOK', 'GEL', 'GGP', 'GHS',
+                    'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF',
+                    'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP', 'JMD', 'JOD',
+                    'KES', 'KGS', 'KHR', 'KID', 'KMF', 'KRW', 'KWD', 'KYD', 'KZT',
+                    'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD',
+                    'MMK', 'MNT', 'MOP', 'MRU', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN',
+                    'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK',
+                    'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR',
+                    'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLE', 'SOS', 'SRD', 'SSP',
+                    'STN', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD',
+                    'TVD', 'TWD', 'TZS', 'UAH', 'UGX', 'UYU', 'UZS', 'VES', 'VND',
+                    'VUV', 'WST', 'XAF', 'XCD', 'XDR', 'XOF', 'XPF', 'YER', 'ZAR', 'ZMW'
+                ],
                 form: {
-                    id: null,
-                    name: '',
-                    alias: '',
-                    group_id: null,
-                    domain_id: null,
-                    traffic_source_id: null,
+                    integration_method: null,
+                    send_se_referrer: true,
+                    use_title_as_keyword:
+                        true,
+                    send_query_params:
+                        true,
+                    id:
+                        null,
+                    name:
+                        '',
+                    alias:
+                        '',
+                    group_id:
+                        null,
+                    domain_id:
+                        null,
+                    traffic_source_id:
+                        null,
+                    flowScheme:
+                        'position',
+                    type:
+                        'campaign',                  // 'campaign' | 'tracking-only'
+                    status:
+                        'active',                 // 'active' | 'paused' | 'archived'
 
-                    type: 'campaign',                  // 'campaign' | 'tracking-only'
-                    status: 'active',                 // 'active' | 'paused' | 'archived'
-                    redirect_mode: 'random',         // 'random' | 'sequential' | 'weight' | 'single'
+                    bind_method:
+                        'full',             // 'full' | 'ip_and_useragent' | 'ip_only'
+                    bind_ttl_hours:
+                        24,
 
-                    bind_method: 'none',             // 'none' | 'flow' | 'flow_lander' | 'flow_lander_offer'
-                    bind_ttl_hours: 24,
+                    cost_model:
+                        'cpc',               // 'cpc' | 'cpuc' | 'cpm' | 'cpa' | 'cps' | 'revshare' | 'auto'
+                    traffic_loss_percent:
+                        0,
+                    cost:
+                        0,
+                    cost_currency:
+                        0,
+                    cost_from_cost_parameter:
+                        false,
 
-                    cost_model: 'cpc',               // 'cpc' | 'cpuc' | 'cpm' | 'cpa' | 'cps' | 'revshare' | 'auto'
-                    traffic_loss_percent: 0,
-                    uniqueness_method: 'ip_ua',      // 'ip' | 'ip_ua' | 'cookie'
-                    uniqueness_ttl: 24,
 
-                    tracking_script_enabled: false,
-                    integration_method: '',
-                    api_token: '',
-                    bypass_cache: false,
-
-                    // UTM параметры
-                    utm_source: '',
-                    utm_medium: '',
-                    utm_campaign: '',
-                    utm_term: '',
-                    utm_content: '',
-
-                    // Sub ID параметры
-                    sub_id_1: '',
-                    sub_id_2: '',
-                    sub_id_3: '',
-                    sub_id_4: '',
-                    sub_id_5: '',
-                    sub_id_6: '',
-                    sub_id_7: '',
-                    sub_id_8: '',
-                    sub_id_9: '',
-                    sub_id_10: '',
+                    paramsIdMapping:
+                        [
+                            {name: "Keyword", parameter: "keyword", token: "", editable_name: false},
+                            {name: "Cost", parameter: "cost", token: "", editable_name: false},
+                            {name: "Currency", parameter: "currency", token: "", editable_name: false},
+                            {name: "External ID", parameter: "external_id", token: "", editable_name: false},
+                            {
+                                name: "Creative ID",
+                                parameter: "utm_creative",
+                                token: "{{ad.name}}",
+                                editable_name: false
+                            },
+                            {
+                                name: "AD Campaign ID",
+                                parameter: "utm_campaign",
+                                token: "{{campaign.name}}",
+                                editable_name: false
+                            },
+                            {name: "Keyword", parameter: "keyword", token: "", editable_name: false},
+                            {
+                                name: "Site",
+                                parameter: "utm_source",
+                                token: "{{site_source_name}}",
+                                editable_name: false
+                            },
+                            {name: "Sub id 1", parameter: "sub_id_1", token: "", editable_name: true},
+                            {name: "Sub id 2", parameter: "sub_id_2", token: "", editable_name: true},
+                            {name: "Sub id 3", parameter: "sub_id_3", token: "", editable_name: true},
+                            {name: "Sub id 4", parameter: "sub_id_4", token: "", editable_name: true},
+                            {name: "Sub id 5", parameter: "sub_id_5", token: "", editable_name: true},
+                            {name: "Sub id 6", parameter: "sub_id_6", token: "", editable_name: true},
+                            {name: "Sub id 7", parameter: "sub_id_7", token: "", editable_name: true},
+                            {name: "Sub id 8", parameter: "sub_id_8", token: "", editable_name: true},
+                            {name: "Sub id 9", parameter: "sub_id_9", token: "", editable_name: true},
+                            {name: "Sub id 10", parameter: "sub_id_10", token: "", editable_name: true}
+                        ],
 
                     // S2S Postback
-                    postback_urls: '',           // JSON string
-                    postback_statuses: '',       // JSON string
+                    postbacks:
+                        [],  // массив объектов {url: '', status: 'approved' | 'rejected' | ...}
 
-                    notes: '',
-                    flows: []
+                    notes:
+                        '',
+                    flows:
+                        []
+                }
+                ,
+                flowSchemes: ['position', 'weight'],
+                statuses:
+                    ['active', 'disabled'],
+                types:
+                    ['campaign', 'tracking-only'],
+                costModels:
+                    ['cpc', 'cpuc', 'cpm', 'cpa', 'cps', 'revshare', 'auto'],
+                uniquenessMethods:
+                    ['ip', 'ip_ua', 'cookie'],
+                integrationMethods: {
+                    js: 'JS generated async script',
+                    php: 'php',
+                    forced_php: 'Forced PHP redirect',
+                    qr: 'QR Code',
+                    pixel_email: 'Pixel for Email'
                 },
-                statuses: ['active', 'paused', 'archived'],
-                types: ['campaign', 'tracking-only'],
-                redirectModes: ['random', 'sequential', 'weight', 'single'],
-                costModels: ['cpc', 'cpuc', 'cpm', 'cpa', 'cps', 'revshare', 'auto'],
-                uniquenessMethods: ['ip', 'ip_ua', 'cookie'],
-                integrationMethods: ['pixel', 'api', 'manual'], // можешь настроить под себя
-                utmParams: ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'],
-                flowRules: [],
-                trafficSources: [],
-                domains: [],
-                flowDialog: false,
-                isEditingFlow: false,
-                flowForm: {
-                    name: '',
-                    type: 'regular',               // 'forced', 'regular', 'default'
-                    position: 1,
-                    weight: 100,
-                    schema: 'split',               // 'split', 'direct', 'action'
-                    enabled: true,
-                    collect_clicks: true,
-                    landing: '',
-                    offer: '',
-                    filters: ''                    // JSON
-                },
-                editedFlowIndex: null
+                utmParams:
+                    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'],
+                flowRules:
+                    [],
+                trafficSources:
+                    [],
+                domains:
+                    [],
+                flowDialog:
+                    false,
+                isEditingFlow:
+                    false,
+
+                activeFlowTab:
+                    0,
+                flowForm:
+                    {
+                        name: '',
+                        type:
+                            'regular',
+                        position:
+                            0,
+                        weight:
+                            100,
+                        schema:
+                            '',
+                        enabled:
+                            true,
+                        collect_clicks:
+                            true,
+                        landing:
+                            null,
+                        offer:
+                            null,
+                        filters:
+                            '',
+                        notes:
+                            ''
+                    }
+                ,
+                editedFlowIndex: null,
+
+                postbackStatusKeys:
+                    ['lead', 'sale', 'rejected', 'upsale', 'pending'],
+                newPostback:
+                    {
+                        url: '',
+                        method:
+                            'GET',
+                        status:
+                            {
+                                lead: true,
+                                sale:
+                                    true,
+                                rejected:
+                                    false,
+                                upsale:
+                                    false,
+                                pending:
+                                    false
+                            }
+                    }
+                ,
+                postbackEditorDialog: false,
+                postbackEditorIndex:
+                    null,
+                postbackUrlDraft:
+                    '',
+                postbackMacros:
+                    [
+                        'ad_campaign_id', 'affiliate_network_name', 'browser', 'browser_version', 'connection_type',
+                        'city', 'campaign_name', 'campaign_id', 'campaign_alias', 'conversion_cost', 'conversion_profit',
+                        'conversion_revenue', 'conversion_sale_time', 'conversion_time', 'cost', 'country', 'creative_id',
+                        'device_model', 'visitor_id', 'token', 'tid', 'subid', 'sub_id_1', 'sub_id_2', 'sub_id_3',
+                        'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10', 'visitor_code',
+                        'user_agent', 'ts_id', 'traffic_source_name', 'x_requested_with', 'stream_id', 'status', 'source',
+                        'search_engine', 'sample', 'revenue', 'parent_campaign_id', 'previous_status', 'profit', 'random',
+                        'referrer', 'region', 'os_version', 'os', 'original_status', 'operator', 'offer_value', 'keyword',
+                        'landing_id', 'language', 'offer', 'offer_id', 'offer_name', 'isp', 'is_using_proxy', 'ip',
+                        'is_bot', 'from_file', 'external_id', 'device_type', 'current_domain', 'date', 'debug', 'destination',
+                        'device_brand'
+                    ]
             }
         },
         computed: {
@@ -568,11 +873,22 @@
                 this.offers.forEach(o => (map[o.id] = o.name));
                 return map;
             },
+            sourceMap() {
+                const map = {};
+                this.sources.forEach(o => (map[o.id] = o.name));
+                return map;
+            },
 
             campaignUrl() {
-                if (!this.form.domain_id || !this.form.alias) return '';
-                const domain = this.domains.find(d => d.id === this.form.domain_id);
-                return domain ? `https://${domain.name}/${this.form.alias}` : '';
+                if (this.form.domain_id) {
+                    const domain = this.domains.find(d => d.id === this.form.domain_id);
+                    return domain ? `https://${domain.name}/${this.form.alias}` : 'domain error';
+                } else {
+                    if (!this.form.alias) return 'please setup alias';
+                    // read server ip from browser
+                    const serverIp = window.location.hostname;
+                    return `https://${serverIp}/${this.form.alias}`;
+                }
             }
         },
         mounted() {
@@ -580,6 +896,39 @@
             this.$root.$on('load-campaigns', this.loadCampaigns);
         },
         methods: {
+            generateTrackingScript() {
+                switch (this.form.integration_method.toString()) {
+                    case 'js':
+                        return `<script src="https://cdn.example.com/tracking.js"><\/script>`;
+                    case 'php':
+                        return `<?php include('https://cdn.example.com/tracking.php'); ?>`;
+                    case 'forced_php':
+                        return `<?php header('Location: https://example.com/redirect.php'); ?>`;
+                    case 'qr':
+                        return `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${this.campaignUrl}" alt="QR Code">`;
+                    case 'pixel_email':
+                        return `<img src="${this.campaignUrl}" alt="Tracking Pixel" style="display:none;">`;
+                    default:
+                        return 'none';
+                }
+            },
+            loadSources() {
+                this.loadingSources = true;
+                fetch("/backend/api/sources/", {
+                    credentials: "include"
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.sources = data;
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        this.$root.$emit("show-message", {type: "error", text: err.message});
+                    })
+                    .finally(() => {
+                        this.loadingSources = false;
+                    });
+            },
             copyCampaignUrl() {
                 const text = this.campaignUrl;
                 if (!text) return;
@@ -616,6 +965,7 @@
                 this.loadLandings();
                 this.loadOffers();
                 this.loadDomains();
+                this.loadSources()
             },
             moveFlowUp(index) {
                 if (index > 0) {
@@ -775,6 +1125,77 @@
                     result += chars.charAt(Math.floor(Math.random() * chars.length));
                 }
                 return result;
+            },
+            addPostback() {
+                const copy = {
+                    url: this.newPostback.url,
+                    method: this.newPostback.method,
+                    status: {...this.newPostback.status}
+                };
+                this.form.postbacks.push(copy);
+
+                // сброс
+                this.newPostback = {
+                    url: '',
+                    method: 'GET',
+                    status: {
+                        lead: true,
+                        sale: true,
+                        rejected: false,
+                        upsale: false,
+                        pending: false
+                    }
+                };
+            },
+            openPostbackEditor(i = null) {
+                this.postbackEditorIndex = i;
+
+                if (i !== null) {
+                    this.postbackUrlDraft = this.form.postbacks[i]?.url || '';
+                } else {
+                    this.postbackUrlDraft = this.newPostback.url || '';
+                }
+
+                this.postbackEditorDialog = true;
+            },
+            insertMacro(macro) {
+                const baseUrl = this.postbackUrlDraft.split('?')[0];
+                const rawQuery = this.postbackUrlDraft.split('?')[1] || '';
+                const queryParams = new URLSearchParams(rawQuery);
+
+                const key = `${macro}`;
+                const value = `{${macro}}`;
+
+                // Удалить, если уже есть
+                if (queryParams.has(key)) {
+                    queryParams.delete(key);
+                } else {
+                    queryParams.append(key, value);
+                }
+
+                // Собрать обратно
+                const queryString = queryParams.toString()
+                    .replace(/%7B/g, '{')
+                    .replace(/%7D/g, '}');
+                this.postbackUrlDraft = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+            },
+            isMacroInUrl(macro) {
+                const query = this.postbackUrlDraft.split('?')[1] || '';
+                const params = new URLSearchParams(query);
+                return params.get(macro) === `{${macro}}`;
+            },
+            applyPostbackUrl() {
+                if (this.postbackEditorIndex !== null) {
+                    this.form.postbacks[this.postbackEditorIndex].url = this.postbackUrlDraft;
+                } else {
+                    this.newPostback.url = this.postbackUrlDraft;
+                }
+                this.postbackEditorDialog = false;
+            },
+            editNewPostback() {
+                this.postbackEditorIndex = null; // значит, редактируем новый
+                this.postbackUrlDraft = this.newPostback.url;
+                this.postbackEditorDialog = true;
             }
 
 
