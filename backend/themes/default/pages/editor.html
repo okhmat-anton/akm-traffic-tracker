@@ -1,0 +1,145 @@
+{% raw %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closebrackets.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css"/>
+
+<script type="text/x-template" id="editor-page-template">
+    <v-container fluid>
+        <h2>Edit Landing File</h2>
+
+        <v-row>
+            <v-col cols="3">
+                <v-treeview
+                        :items="fileTree"
+                        item-key="path"
+                        item-text="name"
+                        item-children="children"
+                        activatable
+                        @update:active="onSelectFile"
+                        :open.sync="openFolders"
+                >
+                    <template v-slot:prepend="{ item }">
+                        <v-icon v-if="item.type === 'folder'">mdi-folder</v-icon>
+                        <v-icon v-else>mdi-file</v-icon>
+                    </template>
+                </v-treeview>
+            </v-col>
+
+            <v-col cols="9">
+                <v-card>
+                    <v-card-title>
+                        {{ selectedFile || 'No file selected' }}
+                    </v-card-title>
+                    <v-card-text>
+                        <textarea id="code-editor" v-show="selectedFile"></textarea>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="primary" :disabled="!selectedFile" @click="saveFile">Save</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-col>
+        </v-row>
+    </v-container>
+</script>
+
+<script>
+    Vue.component('editor-page-component', {
+        template: '#editor-page-template',
+        data() {
+            return {
+                landingId: null,
+                fileTree: [],
+                openFolders: [],
+                selectedFile: null,
+                content: '',
+                editorInstance: null,
+            };
+        },
+        methods: {
+            loadTree() {
+                fetch(`/landings_editor/${this.landingId}/files`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.fileTree = data.children || []; // безопасно
+                    });
+            },
+            onSelectFile(paths) {
+                const path = paths[0];
+                const node = this.findFileByPath(this.fileTree, path);
+                if (node && node.type === 'file') {
+                    this.selectFile(node.path);
+                }
+            },
+            findFileByPath(nodes, path) {
+                for (const node of nodes) {
+                    if (node.path === path) return node;
+                    if (node.children) {
+                        const found = this.findFileByPath(node.children, path);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            },
+            selectFile(path) {
+                this.selectedFile = path;
+                fetch(`/landings_editor/${this.landingId}/file?filename=${encodeURIComponent(path)}`)
+                    .then((res) => res.json())
+                    .then((data) => {
+                        setTimeout(() => {
+                            const textarea = document.getElementById('code-editor');
+                            if (!textarea) return;
+                            if (this.editorInstance) this.editorInstance.toTextArea();
+                            textarea.value = data.content;
+                            this.editorInstance = CodeMirror.fromTextArea(textarea, {
+                                mode: 'application/x-httpd-php',
+                                lineNumbers: true,
+                                theme: 'default',
+                                indentUnit: 4,
+                                tabSize: 4,
+                                matchBrackets: true,
+                                autoCloseBrackets: true
+                            });
+                        }, 100);
+                    });
+            },
+            saveFile() {
+                if (this.editorInstance) {
+                    this.content = this.editorInstance.getValue();
+                }
+                fetch(`/landings_editor/${this.landingId}/file`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filename: this.selectedFile,
+                        content: this.content,
+                    }),
+                })
+                    .then((res) => res.json())
+                    .then(() => {
+                        alert('File saved!');
+                    })
+                    .catch((err) => {
+                        alert(`Error: ${err.message}`);
+                    });
+            },
+        },
+        mounted() {
+            const params = new URLSearchParams(window.location.search);
+            const id = parseInt(params.get('landing'));
+            if (!id) return alert('Landing ID missing');
+            this.landingId = id;
+            this.loadTree();
+        },
+    });
+</script>
+{% endraw %}

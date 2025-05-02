@@ -1,24 +1,34 @@
-
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
 import zipfile, os, shutil
 from datetime import datetime
+from fastapi.responses import JSONResponse
 
 from db import get_db
 from models import Landing
+
+from pydantic import BaseModel
+
+
+class FileSaveRequest(BaseModel):
+    filename: str
+    content: str
+
 
 router = APIRouter()
 
 LANDINGS_DIR = "/app/landings"  # путь внутри контейнера src
 os.makedirs(LANDINGS_DIR, exist_ok=True)
 
+
 def get_next_site_id():
     existing = [f for f in os.listdir(LANDINGS_DIR) if
                 f.startswith("site_") and os.path.isdir(os.path.join(LANDINGS_DIR, f))]
     numbers = [int(f.replace("site_", "")) for f in existing if f.replace("site_", "").isdigit()]
     return max(numbers, default=0) + 1
+
 
 def landing_path(folder):
     return os.path.join(LANDINGS_DIR, folder)
@@ -46,6 +56,7 @@ def save_uploaded_file(file: UploadFile, folder_path: str):
             shutil.copyfileobj(file.file, f)
     else:
         raise HTTPException(status_code=400, detail="Unsupported file type. Only .zip, .php, .html allowed.")
+
 
 @router.post("/landing")
 async def upload_landing(
@@ -121,6 +132,7 @@ async def upload_landing(
         "id": landing.id
     }
 
+
 @router.get("/landings")
 def list_landings(db: Session = Depends(get_db)):
     landings = db.query(Landing).all()
@@ -133,14 +145,15 @@ def list_landings(db: Session = Depends(get_db)):
             "type": landing.type.value if hasattr(landing.type, "value") else landing.type,  # ENUM support
             "tags": landing.tags.split(",") if landing.tags else [],
             "created_at": landing.created_at,
-            "clicks": 0,           # пока мокаем
-            "conversions": 0,      # пока мокаем
-            "cost": 0,             # пока мокаем
-            "revenue": 0,          # пока мокаем
-            "roi": 0               # пока мокаем
+            "clicks": 0,  # пока мокаем
+            "conversions": 0,  # пока мокаем
+            "cost": 0,  # пока мокаем
+            "revenue": 0,  # пока мокаем
+            "roi": 0  # пока мокаем
         }
         for landing in landings
     ]
+
 
 @router.get("/landing/{landing_id}")
 def get_landing(landing_id: int, db: Session = Depends(get_db)):
@@ -157,16 +170,17 @@ def get_landing(landing_id: int, db: Session = Depends(get_db)):
         "created_at": landing.created_at
     }
 
+
 @router.put("/landing/{landing_id}")
 async def update_landing(
-    landing_id: int,
-    name: Optional[str] = Form(None),
-    site_folder: Optional[str] = Form(None),
-    tags: Optional[str] = Form(None),
-    link: Optional[str] = Form(None),
-    type: Optional[int] = Form(None),
-    file: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db)
+        landing_id: int,
+        name: Optional[str] = Form(None),
+        site_folder: Optional[str] = Form(None),
+        tags: Optional[str] = Form(None),
+        link: Optional[str] = Form(None),
+        type: Optional[int] = Form(None),
+        file: Optional[UploadFile] = File(None),
+        db: Session = Depends(get_db)
 ):
     type_mapping = {0: 'link', 1: 'mirror', 2: 'local_file'}
 
@@ -255,3 +269,107 @@ def delete_landing(landing_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"status": "deleted", "id": landing_id}
+
+
+def get_landing_folder(db: Session, landing_id: int) -> str:
+    landing = db.query(Landing).filter(Landing.id == landing_id).first()
+    if not landing or not landing.folder:
+        raise HTTPException(status_code=404, detail="Landing folder not found")
+
+    base_dir = "/app/landings"
+    folder_path = os.path.abspath(os.path.join(base_dir, landing.folder))
+
+    # Защита: путь должен быть внутри base_dir
+    if not folder_path.startswith(base_dir):
+        raise HTTPException(status_code=400, detail="Invalid folder path")
+
+    return folder_path
+
+
+
+from pathlib import Path
+
+
+
+def build_tree(base: Path, current: Path):
+    children = []
+    for item in sorted(current.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+        rel_path = item.relative_to(base).as_posix()
+        if item.is_dir():
+            children.append({
+                "name": item.name,
+                "path": rel_path,
+                "type": "folder",
+                "children": build_tree(base, item)
+            })
+        else:
+            children.append({
+                "name": item.name,
+                "path": rel_path,
+                "type": "file"
+            })
+    return children
+
+
+@router.get("/landings_editor/{landing_id}/tree")
+def get_file_tree(landing_id: int, db: Session = Depends(get_db)):
+    base = Path(get_landing_folder(db, landing_id))
+    if not base.exists():
+        raise HTTPException(404, "Landing folder not found")
+
+    tree = build_tree(base, base)
+    return JSONResponse(tree)
+
+
+@router.get("/landings_editor/{landing_id}/files")
+def list_all_files(landing_id: int, db: Session = Depends(get_db)):
+    base = Path(get_landing_folder(db, landing_id))
+    tree = {
+        "name": base.name,
+        "path": "",
+        "type": "folder",
+        "children": build_tree(base, base)
+    }
+    return JSONResponse(tree)
+
+
+
+@router.get("/landings_editor/{landing_id}/file")
+def get_file(landing_id: int, filename: str, db: Session = Depends(get_db)):
+    base = Path(get_landing_folder(db, landing_id))
+    safe_rel_path = Path(filename).as_posix().lstrip("/")
+    full_path = base.joinpath(safe_rel_path).resolve()
+
+    # защита от выхода за пределы папки
+    if not str(full_path).startswith(str(base.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+
+    if not full_path.exists() or not full_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return {"content": full_path.read_text(encoding="utf-8")}
+
+
+class FileSaveRequest(BaseModel):
+    filename: str
+    content: str
+
+
+@router.post("/landings_editor/{landing_id}/file")
+def save_file(landing_id: int, payload: FileSaveRequest, db: Session = Depends(get_db)):
+    base = Path(get_landing_folder(db, landing_id))
+    safe_rel_path = Path(payload.filename).as_posix().lstrip("/")
+
+    full_path = base.joinpath(safe_rel_path).resolve()
+
+    # Безопасность — путь должен быть внутри base
+    if not str(full_path).startswith(str(base.resolve())):
+        raise HTTPException(400, "Invalid file path")
+
+    # Убедимся, что директория существует
+    full_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(full_path, "w", encoding="utf-8") as f:
+        f.write(payload.content)
+
+    return {"status": "ok"}

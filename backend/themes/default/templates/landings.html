@@ -114,14 +114,14 @@
                             >
                                 Edit
                             </v-btn>
+                            <a :href="'/backend/editor?landing='+item.id" target="_blank">
                             <v-btn
-                                    color="brown"
+                                    color="blue"
                                     small
                                     outlined
-                                    @click="openEditCode(item)"
                             >
                                 Code Editor
-                            </v-btn>
+                            </v-btn></a>
                             <v-btn
                                     color="red"
                                     small
@@ -345,10 +345,6 @@
             confirmDeleteLanding(item) {
                 if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
                     this.deleteLanding(item);
-                }
-            },
-            openEditCode(item) {
-                if (confirm(`Sorry will work later`)) {
                 }
             },
             deleteLanding(item) {

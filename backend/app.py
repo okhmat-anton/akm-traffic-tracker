@@ -46,7 +46,7 @@ async def favicon():
 ###############################################
 
 
-ALLOWED_PAGES = {"auth", "profile", "dashboard", "feed"}
+ALLOWED_PAGES = {"auth", "dashboard", "editor"}
 
 
 from typing import Optional
