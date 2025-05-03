@@ -11,7 +11,7 @@ import enum
 # === ENUM TYPES ===
 class CampaignType(str, enum.Enum):
     campaign = 'campaign'
-    tracking_only = 'tracking-only'
+    tracking_only = 'tracking_only'
 
 class CampaignStatus(str, enum.Enum):
     active = 'active'

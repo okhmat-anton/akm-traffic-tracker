@@ -13,7 +13,7 @@ router = APIRouter()
 class CampaignIn(BaseModel):
     name: str
     alias: str
-    type: Literal['campaign', 'tracking-only'] = 'campaign'
+    type: Literal['campaign', 'tracking_only'] = 'campaign'
     status: Literal['active', 'paused', 'archived'] = 'active'
     redirect_mode: Literal['position', 'weight'] = 'position'
     traffic_source_id: Optional[int] = None

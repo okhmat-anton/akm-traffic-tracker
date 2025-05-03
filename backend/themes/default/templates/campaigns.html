@@ -361,7 +361,7 @@
 
 
                             <!-- RIGHT: Flow Configuration -->
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6"  v-if="form.type=='campaign'" >
                                 <h3 class="mb-2 mt-2">Flow Configuration</h3>
 
                                 <v-row>
@@ -437,7 +437,7 @@
             </v-card>
         </v-dialog>
 
-        <v-dialog v-model="flowDialog" max-width="700px" persistent>
+        <v-dialog v-if="form.type=='campaign'" v-model="flowDialog" max-width="700px" persistent>
             <v-card dark>
                 <v-card-title>
                     <span class="text-h6">{{ isEditingFlow ? 'Edit Flow' : 'New Flow' }}</span>
@@ -700,7 +700,7 @@
                     flowScheme:
                         'position',
                     type:
-                        'campaign',                  // 'campaign' | 'tracking-only'
+                        'campaign',                  // 'campaign' | 'tracking_only'
                     status:
                         'active',                 // 'active' | 'paused' | 'archived'
 
@@ -772,7 +772,7 @@
                 statuses:
                     ['active', 'paused'],
                 types:
-                    ['campaign', 'tracking-only'],
+                    ['campaign', 'tracking_only'],
                 costModels:
                     ['cpc', 'cpuc', 'cpm', 'cpa', 'cps', 'revshare', 'auto'],
                 uniquenessMethods:
@@ -1058,7 +1058,6 @@
                 }
             },
             save() {
-                console.log(this.form.domain_id)
                 const payload = {
                     name: this.form.name,
                     alias: this.form.alias,

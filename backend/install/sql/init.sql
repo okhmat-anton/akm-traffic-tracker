@@ -1,10 +1,9 @@
 CREATE TYPE landing_mood AS ENUM ('link', 'mirror', 'local_file');
 CREATE TYPE status_mood AS ENUM ('pending', 'success', 'error');
 CREATE TYPE domain_error_handle_mood AS ENUM ('handle', 'error');
-CREATE TYPE campaign_type AS ENUM ('campaign', 'tracking-only');
+CREATE TYPE campaign_type AS ENUM ('campaign', 'tracking_only');
 CREATE TYPE campaign_status AS ENUM ('active', 'paused');
 CREATE TYPE redirect_mode AS ENUM ('position', 'weight');
-
 
 -- Создание таблицы пользователей
 CREATE TABLE users (
