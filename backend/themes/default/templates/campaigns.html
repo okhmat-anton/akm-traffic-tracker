@@ -16,7 +16,18 @@
                 <v-row>
                     <v-col cols="12" class="ma-4">
 
-                        <h3>{{ isEdit ? 'Edit Campaign' : 'New Campaign' }}</h3>
+                        <v-row dense class="mt-2">
+                            <v-col cols="12" md="6">
+                                <h3>{{ isEdit ? 'Edit Campaign' : 'New Campaign' }}</h3>
+                            </v-col>
+                            <v-col cols="12" md="6" class="align-end">
+                                <v-card-actions>
+                                    <v-spacer></v-spacer>
+                                    <v-btn text color="grey" @click="confirmCancel">Cancel</v-btn>
+                                    <v-btn text color="success" @click="save"  class="mr-5">Save</v-btn>
+                                </v-card-actions>
+                            </v-col>
+                        </v-row>
                         <v-row dense class="mt-2">
                             <v-col cols="12" md="4">
                                 <v-text-field label="Name" v-model="form.name" outlined
@@ -212,21 +223,26 @@
                                     </v-tab-item>
 
                                     <!-- PARAMETERS -->
+                                    <!-- PARAMETERS -->
                                     <v-tab-item>
                                         <v-card flat>
                                             <v-container>
+                                                <v-row class="mb-4">
+                                                    <v-col cols="12" class="text-right">
+                                                        <v-btn small color="primary" @click="addParameter">Add</v-btn>
+                                                    </v-col>
+                                                </v-row>
+
                                                 <v-row dense v-for="(mapping, index) in form.paramsIdMapping"
-                                                       :key="index"
-                                                       align="center">
+                                                       :key="index" align="center">
                                                     <v-col cols="3">
                                                         <template v-if="!mapping.editable_name">
-                                                            {{mapping.name}}
+                                                            {{ mapping.name }}
                                                         </template>
-                                                        <template v-if="mapping.editable_name">
+                                                        <template v-else>
                                                             <v-text-field
                                                                     :label="mapping.name"
                                                                     v-model="mapping.name"
-                                                                    :readonly="!mapping.editable_name"
                                                                     outlined
                                                                     dense
                                                             ></v-text-field>
@@ -236,18 +252,22 @@
                                                         <v-text-field
                                                                 :label="mapping.parameter"
                                                                 v-model="mapping.parameter"
-                                                                :readonly="!mapping.editable_name"
                                                                 outlined
                                                                 dense
                                                         ></v-text-field>
                                                     </v-col>
-                                                    <v-col cols="6">
+                                                    <v-col cols="5">
                                                         <v-text-field
                                                                 label="Variable Name"
                                                                 v-model="mapping.token"
                                                                 outlined
                                                                 dense
                                                         ></v-text-field>
+                                                    </v-col>
+                                                    <v-col cols="1">
+                                                        <v-btn icon small color="red" @click="removeParameter(index)">
+                                                            <v-icon>mdi-delete</v-icon>
+                                                        </v-btn>
                                                     </v-col>
                                                 </v-row>
                                             </v-container>
@@ -361,7 +381,7 @@
 
 
                             <!-- RIGHT: Flow Configuration -->
-                            <v-col cols="12" md="6"  v-if="form.type=='campaign'" >
+                            <v-col cols="12" md="6" v-if="form.type=='campaign'">
                                 <h3 class="mb-2 mt-2">Flow Configuration</h3>
 
                                 <v-row>
@@ -910,6 +930,17 @@
             this.$root.$on('load-campaigns', this.loadCampaigns);
         },
         methods: {
+            addParameter() {
+                this.form.paramsIdMapping.push({
+                    name: '',
+                    parameter: '',
+                    token: '',
+                    editable_name: true
+                });
+            },
+            removeParameter(index) {
+                this.form.paramsIdMapping.splice(index, 1);
+            },
             generateTrackingScript() {
                 switch (this.form.integration_method.toString()) {
                     case 'js':

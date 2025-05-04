@@ -16,6 +16,9 @@
             <v-card dark>
                 <v-card-title>
                     <span class="text-h6">{{ isEdit ? 'Edit Offer' : 'Add Offer' }}</span>
+                    <v-spacer></v-spacer>
+                    <v-btn text color="grey" @click="close">Cancel</v-btn>
+                    <v-btn text color="success" @click="save">Save</v-btn>
                 </v-card-title>
 
                 <v-card-text>

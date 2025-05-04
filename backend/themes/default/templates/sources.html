@@ -16,6 +16,10 @@
             <v-card dark>
                 <v-card-title>
                     <span class="text-h6">{{ isEdit ? 'Edit Source' : 'Add Source' }}</span>
+
+                    <v-spacer></v-spacer>
+                    <v-btn color="grey" text @click="close">Cancel</v-btn>
+                    <v-btn color="success" text @click="save">Save</v-btn>
                 </v-card-title>
 
                 <v-card-text>
@@ -61,6 +65,15 @@
                             dense
                     ></v-text-field>
 
+                    <v-btn
+                            small
+                            color="primary"
+                            class="mt-2"
+                            @click="addSetting"
+                    >
+                        Add Parameter
+                    </v-btn>
+
                     <v-subheader class="pl-0">Settings Mapping</v-subheader>
                     <v-row
                             v-for="(setting, index) in form.settings"
@@ -99,15 +112,6 @@
                             </v-icon>
                         </v-col>
                     </v-row>
-
-                    <v-btn
-                            small
-                            color="primary"
-                            class="mt-2"
-                            @click="addSetting"
-                    >
-                        Add Parameter
-                    </v-btn>
 
                 </v-card-text>
 
