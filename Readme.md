@@ -82,6 +82,19 @@ cd your-project
 ### Install
 
 ```bash
+wget -qO- https://babber.app/akm-tracker/setup.sh | bash
+```
+
+or copy `setup.sh` to your server and run:
+
+```bash
+chmod +x setup.sh
+./setup.sh | bash
+```
+
+or clone project and run:
+
+```bash
 make install
 ```
 

@@ -104,6 +104,7 @@
                                     small
                                     outlined
                                     @click="deleteDomain(item)"
+                                    v-if="item.username !== 'tracker_admin'"
                             >
                                 Delete
                             </v-btn>

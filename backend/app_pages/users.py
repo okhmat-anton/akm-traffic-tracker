@@ -80,9 +80,6 @@ def update_user(user_id: int, user: UserCreateUpdate, db: Session = Depends(get_
     if not user_obj:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user_obj.username.lower() == "tracker_admin":
-        raise HTTPException(status_code=403, detail="tracker_admin cannot be edited")
-
     if user.email is not None:
         user_obj.email = user.email
     if user.is_admin is not None:
