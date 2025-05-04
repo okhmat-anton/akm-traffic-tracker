@@ -95,7 +95,7 @@
                             {{ $formatDate(item.created_at) }}
                         </template>
                         <template v-slot:item.folder="{ item }">
-                            <a v-if="item.folder"  :href="'/l/' + item.folder" target="_blank">
+                            <a v-if="item.folder" :href="'/l/' + item.folder" target="_blank">
                                 {{ item.folder }}
                             </a>
                         </template>
@@ -114,14 +114,16 @@
                             >
                                 Edit
                             </v-btn>
-                            <a :href="'/backend/editor?landing='+item.id" target="_blank">
-                            <v-btn
-                                    color="blue"
-                                    small
-                                    outlined
-                            >
-                                Code Editor
-                            </v-btn></a>
+                            <a :href="'/backend/editor?landing='+item.id" target="_blank"
+                               v-if="item.type === 'local_file'">
+                                <v-btn
+                                        color="blue"
+                                        small
+                                        outlined
+                                >
+                                    Code Editor
+                                </v-btn>
+                            </a>
                             <v-btn
                                     color="red"
                                     small

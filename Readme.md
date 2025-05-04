@@ -4,6 +4,12 @@
 ![Vue.js](https://img.shields.io/badge/Vue-2.x-green)
 ![Vuetify](https://img.shields.io/badge/Vuetify-Material--UI-purple)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![Docker](https://img.shields.io/badge/Docker-Container--orchestration-blue)
+![Nginx](https://img.shields.io/badge/Nginx-Web--server-green)
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![ClickHouse](https://img.shields.io/badge/ClickHouse-Analytics-blue)
+![codemirror](https://img.shields.io/badge/codemirror-Editor-blue)
+
 
 # 📚 AKM Tracker (Keitaro Clone + tracker functions)
 

@@ -14,6 +14,16 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: tracker_clickhouse
+    restart: always
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native client
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
   frontend:
     build:
       context: ./frontend
@@ -92,3 +102,4 @@ services:
 
 volumes:
   postgres_data:
+  clickhouse_data:
