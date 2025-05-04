@@ -112,8 +112,8 @@
                                     color="red"
                                     small
                                     outlined
-                                    @click="deleteCampaign(item)"
-                            >
+                                    @click="deleteDomain(item)"
+                            > 
                                 Delete
                             </v-btn>
                         </template>
@@ -186,6 +186,7 @@
                         throw new Error(message);
                     }
                     this.campaigns = JSON.parse(text);
+                    this.campaigns.unshift({ id: '', name: '— No Campaign —' });
                 } catch (error) {
                     console.error('Error loading campaigns:', error);
                     this.$root.$emit('show-message', {
@@ -237,7 +238,7 @@
                     domain: this.form.domain,
                     redirect_https: this.form.redirect_https,
                     handle_404: this.form.handle_404,
-                    default_campaign_id: this.form.default_campaign_id || '',
+                    default_campaign_id: this.form.default_campaign_id || null,
                     group_name: this.form.group_name || ''
                 };
 

@@ -21,6 +21,10 @@ services:
     ports:
       - "8123:8123"  # HTTP interface
       - "9000:9000"  # Native client
+    environment:
+      CLICKHOUSE_USER: user
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: default
     volumes:
       - clickhouse_data:/var/lib/clickhouse
 

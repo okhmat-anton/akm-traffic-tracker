@@ -24,7 +24,7 @@
                                 <v-card-actions>
                                     <v-spacer></v-spacer>
                                     <v-btn text color="grey" @click="confirmCancel">Cancel</v-btn>
-                                    <v-btn text color="success" @click="save"  class="mr-5">Save</v-btn>
+                                    <v-btn text color="success" @click="save" class="mr-5">Save</v-btn>
                                 </v-card-actions>
                             </v-col>
                         </v-row>
@@ -96,19 +96,6 @@
                                                                   :items="sources" item-text="name" item-value="id"
                                                                   outlined
                                                                   dense></v-select>
-                                                    </v-col>
-                                                    <v-col cols="12">
-                                                        <v-select
-                                                                label="Uniqueness Bind Method"
-                                                                v-model="form.bind_method"
-                                                                :items="[
-                                                                    { text: 'IP with user-agent and Cookies', value: 'full' },
-                                                                    { text: 'IP with user-agent', value: 'ip_and_useragent' },
-                                                                    { text: 'IP only', value: 'ip_only' },
-                                                                ]"
-                                                                outlined
-                                                                dense
-                                                        ></v-select>
                                                     </v-col>
 
                                                     <v-col cols="12">
@@ -200,7 +187,7 @@
                                                         <v-select
                                                                 label="Tracking Script Method"
                                                                 v-model="form.integration_method"
-                                                                :items="Object.keys(integrationMethods)"
+                                                                :items="Object.entries(integrationMethods).map(([key, value]) => ({ key, value }))"
                                                                 item-text="value"
                                                                 item-value="key"
                                                                 outlined
@@ -723,9 +710,6 @@
                         'campaign',                  // 'campaign' | 'tracking_only'
                     status:
                         'active',                 // 'active' | 'paused' | 'archived'
-
-                    bind_method:
-                        'full',             // 'full' | 'ip_and_useragent' | 'ip_only'
                     bind_ttl_hours:
                         24,
 
@@ -944,7 +928,64 @@
             generateTrackingScript() {
                 switch (this.form.integration_method.toString()) {
                     case 'js':
-                        return `<script src="https://cdn.example.com/tracking.js"><\/script>`;
+                        const url = this.campaignUrl || '';
+                        const safeUrl = url.replace(/"/g, '\\"');
+
+    return `<script async>
+(async () => {
+  const TRACKING_URL = "${safeUrl}";
+  const COOKIE_NAME = 'visitor_id';
+  const COOKIE_EXP_DAYS = 365;
+
+  function setCookie(name, value, days) {
+    const date = new Date();
+    date.setTime(date.getTime() + days * 86400000);
+    document.cookie = \`\${name}=\${value}; expires=\${date.toUTCString()}; path=/\`;
+  }
+
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+  }
+
+  function generateShortID() {
+      return Math.random().toString(16).slice(2, 12);
+  }
+
+  async function trackEvent(type, data = {}) {
+    const payload = {
+      type,
+      timestamp: new Date().toISOString(),
+      visitor_id: visitorId,
+      user_agent: navigator.userAgent,
+      ...data
+    };
+    try {
+      await fetch(TRACKING_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.warn('Tracking failed', e);
+    }
+  }
+
+  let visitorId = getCookie(COOKIE_NAME);
+  if (!visitorId) {
+    visitorId = generateShortID();
+    setCookie(COOKIE_NAME, visitorId, COOKIE_EXP_DAYS);
+  }
+
+  await trackEvent('visit');
+
+  window.trackConversion = async (eventType, cost = 0) => {
+    if (!['lead', 'sale', 'reject', 'upsale', 'pending'].includes(eventType)) return;
+    await trackEvent(eventType, { cost: parseFloat(cost) });
+  };
+})();
+<\/script>
+`;
                     case 'php':
                         return `<?php include('https://cdn.example.com/tracking.php'); ?>`;
                     case 'forced_php':
@@ -1103,7 +1144,6 @@
                         send_se_referrer: this.form.send_se_referrer,
                         use_title_as_keyword: this.form.use_title_as_keyword,
                         send_query_params: this.form.send_query_params,
-                        bind_method: this.form.bind_method,
                         bind_ttl_hours: this.form.bind_ttl_hours,
                         cost_model: this.form.cost_model,
                         traffic_loss_percent: this.form.traffic_loss_percent,
@@ -1189,7 +1229,6 @@
                     send_se_referrer: item.config?.send_se_referrer ?? true,
                     use_title_as_keyword: item.config?.use_title_as_keyword ?? true,
                     send_query_params: item.config?.send_query_params ?? true,
-                    bind_method: item.config?.bind_method || 'full',
                     bind_ttl_hours: item.config?.bind_ttl_hours ?? 24,
                     cost_model: item.config?.cost_model || 'cpc',
                     traffic_loss_percent: item.config?.traffic_loss_percent ?? 0,
@@ -1350,7 +1389,6 @@
                     send_se_referrer: true,
                     use_title_as_keyword: true,
                     send_query_params: true,
-                    bind_method: 'full',
                     bind_ttl_hours: 24,
                     cost_model: 'cpc',
                     traffic_loss_percent: 0,

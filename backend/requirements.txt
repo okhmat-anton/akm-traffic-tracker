@@ -6,3 +6,4 @@ python-jose
 sqlalchemy
 python-multipart
 pydantic[email]
+clickhouse_connect
