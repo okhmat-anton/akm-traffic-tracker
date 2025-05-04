@@ -2,10 +2,16 @@ install-db:
 	docker exec tracker_backend pip install --no-cache-dir -r /app/install/requirements.txt
 	docker exec tracker_backend python3 /app/install/install.py
 
-install:
+install-prod-domain:
 	cp nginx/nginx.prod.conf nginx/default.conf
 	docker-compose up --build -d
 	make certificate
+	make install-db
+
+install:
+	cp nginx/nginx.dev.conf nginx/default.conf
+	make generate-local-cert
+	docker-compose up --build -d
 	make install-db
 
 install-local:
