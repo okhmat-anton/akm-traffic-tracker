@@ -4,6 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from fastapi.responses import FileResponse
+from clickHouse import get_clickhouse_client
+from types import SimpleNamespace
 
 app = FastAPI(
     title="APP API",
@@ -14,6 +16,12 @@ app = FastAPI(
     openapi_url="/api_openapi.json",  # Схема OpenAPI)
     root_path="/backend"  # если сервер за прокси на пути /backend
 )
+app.state = SimpleNamespace()
+
+
+@app.on_event("startup")
+async def startup():
+    app.state.ch = get_clickhouse_client()
 
 # app = FastAPI() # for production
 
@@ -58,7 +66,9 @@ from app_pages.sources import router as sources_router
 from app_pages.affiliates import router as affiliate_router
 from app_pages.offers import router as offers_router
 from app_pages.campaigns import router as campaign_router
+from app_pages.dashboard import router as dashboard_router
 
+app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(offers_router, prefix="/api/offers", tags=["Offers"])
 
 
