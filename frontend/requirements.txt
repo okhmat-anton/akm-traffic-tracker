@@ -6,3 +6,4 @@ python-multipart
 clickhouse_connect
 httpagentparser
 asyncpg
+user_agents

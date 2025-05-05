@@ -865,7 +865,7 @@
                         'device_model', 'visitor_id', 'token', 'tid', 'subid', 'sub_id_1', 'sub_id_2', 'sub_id_3',
                         'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10', 'visitor_code',
                         'user_agent', 'ts_id', 'traffic_source_name', 'x_requested_with', 'stream_id', 'status', 'source',
-                        'search_engine', 'sample', 'revenue', 'parent_campaign_id', 'previous_status', 'profit', 'random',
+                        'search_engine', 'sample', 'revenue', 'parent_campaign_id', 'previous_status', 'profit',
                         'referrer', 'region', 'os_version', 'os', 'original_status', 'operator', 'offer_value', 'keyword',
                         'landing_id', 'language', 'offer', 'offer_id', 'offer_name', 'isp', 'is_using_proxy', 'ip',
                         'is_bot', 'from_file', 'external_id', 'device_type', 'current_domain', 'date', 'debug', 'destination',
@@ -995,6 +995,8 @@
                               collectedParams['visitor_id'] = visitorId;
                               collectedParams['user_agent'] = navigator.userAgent;
                               collectedParams['timestamp'] = new Date().toISOString();
+                              collectedParams['referrer'] = document.referrer;
+                              collectedParams['url'] = location.href;
 
                               // 4. Отправка визита
                               try {

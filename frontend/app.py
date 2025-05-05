@@ -10,6 +10,9 @@ from datetime import datetime
 import asyncpg
 from types import SimpleNamespace
 import json
+from fastapi.middleware.cors import CORSMiddleware
+from user_agents import parse as parse_ua
+import re
 
 from clickhouse_connect import get_client
 
@@ -17,6 +20,14 @@ from clickhouse_connect import get_client
 app = FastAPI()
 app.state = SimpleNamespace()
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # ⛔ или укажи конкретный домен, например: ["https://your-site.com"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 🚀 Startup
 @app.on_event("startup")
@@ -49,10 +60,10 @@ VALID_PARAMS = {
     'visitor_id', 'token', 'tid', 'subid', 'sub_id_1', 'sub_id_2', 'sub_id_3', 'sub_id_4', 'sub_id_5',
     'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10', 'visitor_code', 'user_agent', 'ts_id',
     'traffic_source_name', 'x_requested_with', 'stream_id', 'status', 'source', 'search_engine',
-    'sample', 'revenue', 'parent_campaign_id', 'previous_status', 'profit', 'random', 'referrer',
+    'sample', 'revenue', 'parent_campaign_id', 'previous_status', 'profit','url', 'referrer',
     'region', 'os_version', 'os', 'original_status', 'operator', 'offer_value', 'keyword', 'landing_id',
     'language', 'offer', 'offer_id', 'offer_name', 'isp', 'is_using_proxy', 'ip', 'is_bot', 'from_file',
-    'external_id', 'device_type', 'current_domain', 'date', 'debug', 'destination', 'device_brand'
+    'external_id', 'device_type', 'current_domain', 'date', 'debug', 'destination', 'device_brand','state'
 }
 
 # Конфиг подключения к БД из переменных окружения
@@ -91,25 +102,37 @@ def log_track(message: str):
     if len(TRACK_LOG) > 50:
         TRACK_LOG.pop(0)
 
+
 # Обогащение мета-данными
 def enrich_meta(request: Request) -> dict:
-    ua = request.headers.get('user-agent', '')
-    parsed = httpagentparser.detect(ua)
+    ua_string = request.headers.get('user-agent', '') or ''
+    parsed = httpagentparser.detect(ua_string)
+    ua = parse_ua(ua_string)
+
+    language = request.headers.get('accept-language', '')
+    country_code = None
+    if language:
+        # Пример: 'en-US,en;q=0.9' → 'US'
+        match = re.search(r'-([A-Z]{2})', language)
+        if match:
+            country_code = match.group(1)
 
     return {
         'ip': request.client.host,
-        'user_agent': ua,
-        'referrer': request.headers.get('referer'),
+        'user_agent': ua_string,
         'x_requested_with': request.headers.get('x-requested-with'),
-        'date': datetime.utcnow().date(),               # ← Fix here
-        'received_at': datetime.utcnow(),               # ← And here
+        'referrer': request.headers.get('referer'),
+        'date': datetime.utcnow().date(),
+        'received_at': datetime.utcnow(),
         'current_domain': request.headers.get('host'),
         'language': request.headers.get('accept-language'),
+        'country': country_code,
         'browser': parsed.get('browser', {}).get('name'),
         'browser_version': parsed.get('browser', {}).get('version'),
         'os': parsed.get('os', {}).get('name'),
         'os_version': parsed.get('os', {}).get('version'),
-        'device_type': 'mobile' if 'Mobile' in ua else 'desktop',
+        'device_type': 'mobile' if 'Mobile' in ua_string else 'desktop',
+        'is_bot': ua.is_bot or 'bot' in ua_string.lower(),
     }
 
 

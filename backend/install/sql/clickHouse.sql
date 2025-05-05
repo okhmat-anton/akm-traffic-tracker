@@ -45,7 +45,7 @@ CREATE TABLE clicks (
     parent_campaign_id String,
     previous_status String,
     profit Nullable(Float64),
-    random String,
+    url String,
     referrer String,
     region LowCardinality(String),
     os_version String,
