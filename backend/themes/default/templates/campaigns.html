@@ -200,7 +200,7 @@
                                                                 readonly
                                                                 outlined
                                                                 dense
-                                                                v-model="generateTrackingScript()"
+                                                                v-model="trackingScript"
                                                         >
                                                         </v-textarea>
                                                     </v-col>
@@ -648,6 +648,7 @@
         template: '#campaigns-template',
         data() {
             return {
+                trackingScript: '',
                 headers: [
                     {text: 'Name', value: 'name'},
                     {text: 'Domain', value: 'domain'},
@@ -909,9 +910,16 @@
                 }
             }
         },
+        watch: {
+          form: {
+            handler: 'generateTrackingScript',
+            deep: true,
+          }
+        },
         mounted() {
             this.loadCampaigns();
             this.$root.$on('load-campaigns', this.loadCampaigns);
+            this.generateTrackingScript();
         },
         methods: {
             addParameter() {
@@ -925,77 +933,117 @@
             removeParameter(index) {
                 this.form.paramsIdMapping.splice(index, 1);
             },
-            generateTrackingScript() {
+            async generateTrackingScript() {
+                if (this.form.integration_method === null) {
+                    this.trackingScript = 'none';
+                    return;
+                }
                 switch (this.form.integration_method.toString()) {
                     case 'js':
                         const url = this.campaignUrl || '';
                         const safeUrl = url.replace(/"/g, '\\"');
 
-    return `<script async>
-(async () => {
-  const TRACKING_URL = "${safeUrl}";
-  const COOKIE_NAME = 'visitor_id';
-  const COOKIE_EXP_DAYS = 365;
+                        let raw_script_result = `
+                            (async () => {
+                              const TRACKING_URL = "${safeUrl}";
+                              const COOKIE_EXP_DAYS = 365;
 
-  function setCookie(name, value, days) {
-    const date = new Date();
-    date.setTime(date.getTime() + days * 86400000);
-    document.cookie = \`\${name}=\${value}; expires=\${date.toUTCString()}; path=/\`;
-  }
+                              function setCookie(name, value, days) {
+                                const date = new Date();
+                                date.setTime(date.getTime() + days * 86400000);
+                                document.cookie = \`\${name}=\${encodeURIComponent(value)}; expires=\${date.toUTCString()}; path=/\`;
+                              }
 
-  function getCookie(name) {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? match[2] : null;
-  }
+                              function getCookie(name) {
+                                const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+                                return match ? decodeURIComponent(match[2]) : null;
+                              }
 
-  function generateShortID() {
-      return Math.random().toString(16).slice(2, 12);
-  }
+                              function generateShortID() {
+                                return Math.random().toString(16).slice(2, 12);
+                              }
 
-  async function trackEvent(type, data = {}) {
-    const payload = {
-      type,
-      timestamp: new Date().toISOString(),
-      visitor_id: visitorId,
-      user_agent: navigator.userAgent,
-      ...data
-    };
-    try {
-      await fetch(TRACKING_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (e) {
-      console.warn('Tracking failed', e);
-    }
-  }
+                              function getAllUrlParams() {
+                                const params = {};
+                                new URLSearchParams(window.location.search).forEach((value, key) => {
+                                  params[key] = value;
+                                });
+                                return params;
+                              }
 
-  let visitorId = getCookie(COOKIE_NAME);
-  if (!visitorId) {
-    visitorId = generateShortID();
-    setCookie(COOKIE_NAME, visitorId, COOKIE_EXP_DAYS);
-  }
+                              // 1. Собрать все GET-параметры и сохранить в cookies
+                              const urlParams = getAllUrlParams();
+                              for (const [key, value] of Object.entries(urlParams)) {
+                                if (value) setCookie(key, value, COOKIE_EXP_DAYS);
+                              }
 
-  await trackEvent('visit');
+                              // 2. Собрать из cookies все известные параметры
+                              const allKeys = new Set([...Object.keys(urlParams), ...document.cookie.split('; ').map(c => c.split('=')[0])]);
+                              const collectedParams = {};
+                              allKeys.forEach(key => {
+                                const val = getCookie(key);
+                                if (val) collectedParams[key] = val;
+                              });
 
-  window.trackConversion = async (eventType, cost = 0) => {
-    if (!['lead', 'sale', 'reject', 'upsale', 'pending'].includes(eventType)) return;
-    await trackEvent(eventType, { cost: parseFloat(cost) });
-  };
-})();
-<\/script>
-`;
+                              // 3. visitor_id
+                              let visitorId = getCookie('visitor_id');
+                              if (!visitorId) {
+                                visitorId = generateShortID();
+                                setCookie('visitor_id', visitorId, COOKIE_EXP_DAYS);
+                              }
+
+                              collectedParams['visitor_id'] = visitorId;
+                              collectedParams['user_agent'] = navigator.userAgent;
+                              collectedParams['timestamp'] = new Date().toISOString();
+
+                              // 4. Отправка визита
+                              try {
+                                await fetch(TRACKING_URL, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify(collectedParams)
+                                });
+                              } catch (e) {
+                                console.warn('Tracking failed', e);
+                              }
+
+                              // 5. Метод для конверсий
+                              window.trackConversion = async (eventType, cost = 0) => {
+                                if (!['lead', 'sale', 'reject', 'upsale', 'pending'].includes(eventType)) return;
+                                try {
+                                  await fetch(TRACKING_URL, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      event: eventType,
+                                      cost: parseFloat(cost),
+                                      visitor_id,
+                                      timestamp: new Date().toISOString()
+                                    })
+                                  });
+                                } catch (e) {
+                                  console.warn('Conversion tracking failed', e);
+                                }
+                              };
+                            })();`
+                        let result_script = await minifyScript(raw_script_result);
+                        this.trackingScript = `<script async>`+result_script+`<\/script>`;
+                        break;
                     case 'php':
-                        return `<?php include('https://cdn.example.com/tracking.php'); ?>`;
+                        this.trackingScript =  `<?php include('https://cdn.example.com/tracking.php'); ?>`;
+                        break;
                     case 'forced_php':
-                        return `<?php header('Location: https://example.com/redirect.php'); ?>`;
+                        this.trackingScript =  `<?php header('Location: https://example.com/redirect.php'); ?>`;
+                        break;
                     case 'qr':
-                        return `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${this.campaignUrl}" alt="QR Code">`;
+                        this.trackingScript =  `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${this.campaignUrl}" alt="QR Code">`;
+                        break;
                     case 'pixel_email':
-                        return `<img src="${this.campaignUrl}" alt="Tracking Pixel" style="display:none;">`;
+                        this.trackingScript =  `<img src="${this.campaignUrl}" alt="Tracking Pixel" style="display:none;">`;
+                        break;
                     default:
-                        return 'none';
+                        this.trackingScript =  'none';
+                        break;
                 }
             },
             copyCampaignUrl() {

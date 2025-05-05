@@ -24,11 +24,21 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-apexcharts"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/terser@5.30.2/dist/bundle.min.js"></script>
 
     <link href="/backend/backend/css/style.css" rel="stylesheet">
 </head>
 <body>
 {% raw %}
+    <script type="application/javascript">
+        async function minifyScript(code) {
+              const result = await Terser.minify(code, {
+                compress: true,
+                mangle: true,
+              });
+              return result.code;
+            }
+    </script>
 <script type="application/javascript">
     Vue.prototype.$formatDate = function(dateStr, locale = 'en-US') {
       if (!dateStr) return '';
