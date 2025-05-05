@@ -4,3 +4,5 @@ psycopg2-binary
 sqlalchemy
 python-multipart
 clickhouse_connect
+httpagentparser
+asyncpg

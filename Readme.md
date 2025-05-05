@@ -81,6 +81,8 @@ cd your-project
 
 ### Install
 
+Don't forget to open ports 433 and 80 for nginx.
+
 ```bash
 wget -qO- https://babber.app/akm-tracker/setup.sh | bash
 ```

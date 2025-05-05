@@ -2,6 +2,7 @@ import psycopg2
 import os
 import shutil
 import sys
+from clickhouse_connect import get_client
 
 DB_HOST = "tracker_postgres"
 DB_PORT = "5432"
@@ -32,10 +33,10 @@ def check_and_reset_database():
 
         # Проверка наличия таблиц
         cur.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema='public';
-        """)
+                    SELECT table_name
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public';
+                    """)
         tables = cur.fetchall()
 
         if tables:
@@ -86,13 +87,45 @@ def run_install():
         # Выполнение всех команд
         cursor.execute(sql_commands)
 
-        print("✅ База данных успешно инициализирована.")
+        print("✅ Postgres база данных успешно инициализирована.")
 
         cursor.close()
         conn.close()
 
+        run_clickhouse_install()
+
+        print('\n✅ Установка завершена. Clickhouse База данных инициализирована.')
+
     except Exception as e:
         print(f"❌ Ошибка установки: {e}")
+
+
+def run_clickhouse_install():
+    print("Connecting to ClickHouse...")
+
+    client = get_client(
+        host=os.getenv("CLICKHOUSE_HOST", "localhost"),
+        username=os.getenv("CLICKHOUSE_USER", "user"),
+        password=os.getenv("CLICKHOUSE_PASSWORD", "password"),
+        port=int(os.getenv("CLICKHOUSE_PORT", 8123)),
+        secure=False
+    )
+
+    sql_file_path = os.path.join(os.path.dirname(__file__), 'clickHouse.sql')
+    if not os.path.exists(sql_file_path):
+        raise FileNotFoundError(f"SQL file not found: {sql_file_path}")
+
+    with open(sql_file_path, 'r', encoding='utf-8') as f:
+        raw_sql = f.read()
+
+    # Разбиваем по ; и удаляем пустые
+    statements = [s.strip() for s in raw_sql.split(';') if s.strip()]
+
+    for statement in statements:
+        print(f"\nExecuting:\n{statement}")
+        client.command(statement)
+
+    print("\n✅ ClickHouse install complete.")
 
 
 if __name__ == "__main__":
