@@ -18,13 +18,12 @@ import re
 import socket
 import subprocess
 from pydantic import BaseModel
+from pathlib import Path
 
 from clickhouse_connect import get_client
 
-
 app = FastAPI()
 app.state = SimpleNamespace()
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,6 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # 🚀 Startup
 @app.on_event("startup")
@@ -51,6 +51,7 @@ async def startup():
         password='password_password_password',
         database='default'
     )
+
 
 # 🛑 Shutdown
 @app.on_event("shutdown")
@@ -111,6 +112,7 @@ app.include_router(landings_router, tags=["Landings"])
 # Простой in-memory лог (замени на DB в бою)
 TRACK_LOG = []
 
+
 def log_track(message: str):
     TRACK_LOG.append(message)
     if len(TRACK_LOG) > 50:
@@ -145,7 +147,6 @@ def enrich_meta(request: Request) -> dict:
         'device_type': 'mobile' if 'Mobile' in ua_string else 'desktop',
         'is_bot': ua.is_bot or 'bot' in ua_string.lower(),
     }
-
 
 
 @app.post("/{campaign_alias}")
@@ -222,15 +223,56 @@ async def track_event(campaign_alias: str, request: Request):
     return {"status": "ok", "campaign": campaign_alias}
 
 
-
 @app.get("/_akm_tracker_debug")
 def show_logs():
     return TRACK_LOG[-50:]  # последние 50 событий
 
 
+################ DOMAINS API ####################
 
 @app.get("/domain_ping", response_class=PlainTextResponse)
 def ping():
     return "OK"
 
 
+@app.post("/domain_update_nginx_and_ssl")
+async def create_nginx(request: Request, domain_id: int):
+    pg = request.app.state.pg
+
+    async with pg.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT domain
+            FROM domains
+            WHERE id = $1
+        """, domain_id)
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Domain not found")
+
+    domain = row["domain"]
+    path = generate_nginx_conf(domain, domain_id)
+    return {"status": "ok", "file": str(path)}
+
+
+def generate_nginx_conf(domain: str, domain_id: int) -> Path:
+    template_path = Path("../nginx/nginx.prod.conf")
+    output_dir = Path("../nginx/domains")
+
+    if not template_path.exists():
+        raise FileNotFoundError(f"Template file not found: {template_path}")
+
+    # Читаем шаблон
+    content = template_path.read_text()
+
+    # Заменяем плейсхолдер
+    updated = content.replace("yourdomain.com", domain)
+
+    # Создаём целевой путь
+    output_dir.mkdir(parents=True, exist_ok=True)
+    target_path = output_dir / f"{domain}_{domain_id}.conf"
+
+    # Записываем результат
+    target_path.write_text(updated)
+    print(f"✅ Сконфигурирован: {target_path}")
+
+    return target_path
