@@ -8,6 +8,10 @@
                 <v-btn color="primary" dark @click="openCreate">
                     Add Domain
                 </v-btn>
+
+                <v-btn color="secondary" dark @click="checkDomains">
+                    Check Domains Statuses
+                </v-btn>
             </v-col>
         </v-row>
 
@@ -90,6 +94,15 @@
                                 https://{{ item.domain }}
                             </a>
                         </template>
+                        <template v-slot:item.status="{ item }">
+                            <v-chip
+                                    :color="statusColor(item.status)"
+                                    dark
+                                    small
+                            >
+                                {{ item.status }}
+                            </v-chip>
+                        </template>
                         <template v-slot:item.default_campaign_id="{ item }">
                             {{ campaignName(item.default_campaign_id) }}
                         </template>
@@ -113,7 +126,7 @@
                                     small
                                     outlined
                                     @click="deleteDomain(item)"
-                            > 
+                            >
                                 Delete
                             </v-btn>
                         </template>
@@ -164,9 +177,29 @@
             this.$root.$on('load-domains', this.loadDomains);
         },
         methods: {
+            statusColor(status) {
+                switch (status) {
+                    case 'success':
+                        return 'green';
+                    case 'pending':
+                        return 'grey';
+                    case 'error':
+                        return 'red';
+                    default:
+                        return 'blue';
+                }
+            },
             campaignName(id) {
                 const campaign = this.campaigns.find(c => String(c.id) === String(id));
                 return campaign ? campaign.name : '-';
+            },
+            async checkDomains() {
+                await fetch("/backend/api/domains/check-domains");
+                await this.loadDomains();
+                    this.$root.$emit('show-message', {
+                        type: 'success',
+                        text: 'Domains statuses checked successfully!'
+                    });
             },
             async loadCampaigns() {
                 try {
@@ -186,9 +219,8 @@
                         throw new Error(message);
                     }
                     this.campaigns = JSON.parse(text);
-                    this.campaigns.unshift({ id: '', name: '— No Campaign —' });
+                    this.campaigns.unshift({id: '', name: '— No Campaign —'});
                 } catch (error) {
-                    console.error('Error loading campaigns:', error);
                     this.$root.$emit('show-message', {
                         type: 'error',
                         text: error.message

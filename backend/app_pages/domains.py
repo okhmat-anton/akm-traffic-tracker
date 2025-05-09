@@ -4,21 +4,27 @@ from pydantic import BaseModel
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.future import select
 
 from db import get_db
 from models.domain import DomainORM
+import httpx
+from datetime import datetime
 
 router = APIRouter()
+
 
 # Pydantic модель для API
 class Handle404Enum(str, Enum):
     handle = 'handle'
     error = 'error'
 
+
 class StatusEnum(str, Enum):
     pending = 'pending'
     success = 'success'
     error = 'error'
+
 
 class DomainCreateUpdate(BaseModel):
     domain: str
@@ -26,6 +32,7 @@ class DomainCreateUpdate(BaseModel):
     handle_404: Handle404Enum = Handle404Enum.error
     default_campaign_id: Optional[int] = None
     group_name: Optional[str] = None
+
 
 # ====== GET /domains ======
 @router.get("/", response_model=List[dict])
@@ -45,6 +52,7 @@ async def get_domains(db: Session = Depends(get_db)):
         }
         for domain in domains
     ]
+
 
 # ====== POST /domains ======
 @router.post("/")
@@ -97,3 +105,36 @@ async def delete_domain(domain_id: int, db: Session = Depends(get_db)):
     db.delete(domain_obj)
     db.commit()
     return {"message": f"Domain {domain_id} deleted"}
+
+
+#################### DOMAINS CHECK STATUS #########################
+
+async def check_domain_http(domain: str) -> bool:
+    try:
+        url = f"http://{domain}/domain_ping"  # или "/" или кастомный endpoint
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(url, follow_redirects=True)
+            return response.status_code == 200
+    except Exception:
+        return False
+
+
+@router.get("/check-domains")
+async def check_domains(db: Session = Depends(get_db)):
+    domains = db.execute(select(DomainORM)).scalars().all()
+    results = []
+
+    for domain_obj in domains:
+        domain = domain_obj.domain
+        ok = await check_domain_http(domain)
+
+        domain_obj.status = 'success' if ok else 'error'
+        domain_obj.updated_at = datetime.utcnow()
+
+        results.append({
+            "domain": domain,
+            "status": "✅ reachable" if ok else "❌ unreachable"
+        })
+
+    db.commit()
+    return {"results": results}

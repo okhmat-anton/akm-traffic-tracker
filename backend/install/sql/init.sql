@@ -28,7 +28,7 @@ CREATE TABLE domains (
     handle_404 domain_error_handle_mood,                -- 'error' или 'redirect_to_company'
     default_campaign_id INTEGER,                         -- компания по умолчанию
     group_name VARCHAR(255),                               -- группа домена
-    status status_mood,                  -- статус ('pending', 'ok', 'error')
+    status status_mood,                  -- статус ('pending', 'success', 'error')
     created_at TIMESTAMP DEFAULT NOW(),                    -- дата создания
     updated_at TIMESTAMP DEFAULT NOW()                     -- дата обновления
 );

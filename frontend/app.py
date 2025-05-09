@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import PlainTextResponse
+from typing import Optional
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from datetime import datetime
@@ -13,6 +15,9 @@ import json
 from fastapi.middleware.cors import CORSMiddleware
 from user_agents import parse as parse_ua
 import re
+import socket
+import subprocess
+from pydantic import BaseModel
 
 from clickhouse_connect import get_client
 
@@ -32,14 +37,14 @@ app.add_middleware(
 # 🚀 Startup
 @app.on_event("startup")
 async def startup():
-    app.state.postgres_pool = await asyncpg.create_pool(
+    app.state.pg = await asyncpg.create_pool(
         user="user",
         password="password",
         database="db",
         host="postgres",
         port=5432
     )
-    app.state.clickhouse_client = get_client(
+    app.state.ch = get_client(
         host='tracker_clickhouse',
         port=8123,
         username='user',
@@ -50,7 +55,7 @@ async def startup():
 # 🛑 Shutdown
 @app.on_event("shutdown")
 async def shutdown():
-    await app.state.postgres_pool.close()
+    await app.state.pg.close()
 
 
 # VALID_PARAMS = {
@@ -147,8 +152,8 @@ def enrich_meta(request: Request) -> dict:
 async def track_event(campaign_alias: str, request: Request):
     log_track(f"🔁 New request for '{campaign_alias}'")
 
-    pg = request.app.state.postgres_pool
-    ch = request.app.state.clickhouse_client
+    pg = request.app.state.pg
+    ch = request.app.state.ch
 
     # Получаем данные из формы или JSON
     content_type = request.headers.get('content-type', '')
@@ -221,3 +226,11 @@ async def track_event(campaign_alias: str, request: Request):
 @app.get("/_akm_tracker_debug")
 def show_logs():
     return TRACK_LOG[-50:]  # последние 50 событий
+
+
+
+@app.get("/domain_ping", response_class=PlainTextResponse)
+def ping():
+    return "OK"
+
+
