@@ -1,16 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException, Query
 from clickHouse import get_recent_visits, get_metrics_series
-from typing import Optional, List
-from pydantic import BaseModel
+from schemas import Filters
 
 router = APIRouter()
-
-
-class Filters(BaseModel):
-    date_from: Optional[str] = None
-    date_to: Optional[str] = None
-    campaigns: Optional[List[int]] = None
-    detail_level: Optional[str] = None
 
 
 @router.post("/visits")

@@ -130,10 +130,13 @@
                 date_menu2: false,
                 filters: {
                     campaigns: [],
-                    date_range: ['2019-09-10', '2019-09-20'],
+                    date_range: [
+                        new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+                        new Date().toISOString().split('T')[0]
+                    ],
                     detailLevel: 'Days',
                 },
-                campaigns:[],
+                campaigns: [],
                 metrics: [
                     {title: 'Clicks', value: 0, color: 'blue darken-2'},
                     {title: 'Unique Clicks', value: 0, color: 'indigo darken-2'},
@@ -180,8 +183,15 @@
                             mode: 'dark'
                         },
                         xaxis: {
-                            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+                            categories: [],
                             // type: 'datetime'
+                            type: 'category',
+                            labels: {
+                                rotate: -45,
+                                style: {
+                                    colors: '#ffffff'
+                                }
+                            }
                         },
                         yaxis: {
                             labels: {
@@ -197,17 +207,17 @@
                     }
                 },
                 headers: [
-                    { text: 'IP', value: 'ip' },
-                    { text: 'Country', value: 'country' },
-                    { text: 'Url', value: 'url' },
-                    { text: 'Referrer', value: 'referrer' },
-                    { text: 'Time', value: 'received_at' },
+                    {text: 'IP', value: 'ip'},
+                    {text: 'Country', value: 'country'},
+                    {text: 'Url', value: 'url'},
+                    {text: 'Referrer', value: 'referrer'},
+                    {text: 'Time', value: 'received_at'},
                 ],
                 headers2: [
-                    { text: 'IP', value: 'ip' },
-                    { text: 'Country', value: 'country' },
-                    { text: 'Referrer', value: 'referrer' },
-                    { text: 'Time', value: 'received_at' },
+                    {text: 'IP', value: 'ip'},
+                    {text: 'Country', value: 'country'},
+                    {text: 'Referrer', value: 'referrer'},
+                    {text: 'Time', value: 'received_at'},
                 ],
                 visits: [],
 
@@ -225,63 +235,78 @@
         },
 
         methods:
-        {
-            loadFiltersData(){
-                // load campaigns
-                fetch('/backend/api/campaigns/')
-                    .then(res => res.json())
-                    .then(data => {
-                        this.campaigns = data;
-                    });
-            },
-            loadData(date) {
-                this.loadFiltersData();
+            {
+                loadFiltersData() {
+                    // load campaigns
+                    fetch('/backend/api/campaigns/')
+                        .then(res => res.json())
+                        .then(data => {
+                            this.campaigns = data;
+                        });
+                },
+                loadData(date) {
+                    this.loadFiltersData();
 
-                const payload = {
-                    campaigns: this.filters.campaigns,
-                    date_from: this.filters.date_range[0],
-                    date_to: this.filters.date_range[1],
-                    detail_level: this.filters.detailLevel
-                };
+                    const payload = {
+                        campaigns: this.filters.campaigns,
+                        date_from: this.filters.date_range[0],
+                        date_to: this.filters.date_range[1],
+                        detail_level: this.filters.detailLevel
+                    };
 
-                fetch('/backend/api/dashboard/visits', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log('Visits:', data);
-                        this.visits = data;
-                    });
+                    fetch('/backend/api/dashboard/visits', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.visits = data;
+                        });
 
-                fetch('/backend/api/dashboard/metrics', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                })
-                  .then(res => res.json())
-                  .then(data => {
-                    this.metrics = [
-                      { title: 'Clicks', value: data.metrics.clicks, color: 'blue darken-2' },
-                      { title: 'Unique Clicks', value: data.metrics.unique_clicks, color: 'indigo darken-2' },
-                      { title: 'Conversions', value: data.metrics.conversions, color: 'deep-purple darken-2' },
-                      { title: 'Cost', value: `$${data.metrics.cost}`, color: 'red darken-2' },
-                      { title: 'Revenue', value: `$${data.metrics.revenue}`, color: 'green darken-2' },
-                      { title: 'ROI', value: data.metrics.roi, color: 'teal darken-2' }
-                    ];
+                    fetch('/backend/api/dashboard/metrics', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.metrics = [
+                                {title: 'Clicks', value: data.metrics.clicks, color: 'blue darken-2'},
+                                {title: 'Unique Clicks', value: data.metrics.unique_clicks, color: 'indigo darken-2'},
+                                {title: 'Conversions', value: data.metrics.conversions, color: 'deep-purple darken-2'},
+                                {title: 'Cost', value: `$${data.metrics.cost}`, color: 'red darken-2'},
+                                {title: 'Revenue', value: `$${data.metrics.revenue}`, color: 'green darken-2'},
+                                {title: 'ROI', value: data.metrics.roi, color: 'teal darken-2'}
+                            ];
 
-                    this.mainChart.chartOptions.xaxis.categories = data.chart.labels;
-                    this.mainChart.series = [
-                      { name: 'Clicks', data: data.chart.clicks },
-                      { name: 'Conversions', data: data.chart.conversions },
-                      { name: 'Unique Clicks', data: data.chart.unique_clicks }
-                    ];
-                  });
+                            const categories = data.chart.labels;
 
-            },
+                            this.mainChart.series = [
+                                {
+                                    name: 'Clicks',
+                                    data: categories.map((label, i) => ({x: label, y: data.chart.clicks[i] || 0}))
+                                },
+                                {
+                                    name: 'Conversions',
+                                    data: categories.map((label, i) => ({x: label, y: data.chart.conversions[i] || 0}))
+                                },
+                                {
+                                    name: 'Unique Clicks',
+                                    data: categories.map((label, i) => ({
+                                        x: label,
+                                        y: data.chart.unique_clicks[i] || 0
+                                    }))
+                                }
+                            ];
 
-        }
+                            this.mainChart.chartOptions.xaxis.type = 'category';
+                            delete this.mainChart.chartOptions.xaxis.categories;
+                        });
+
+                },
+
+            }
     });
 </script>
 {% endraw %}

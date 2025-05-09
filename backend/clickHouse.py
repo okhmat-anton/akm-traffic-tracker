@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, date
 from clickhouse_connect import get_client
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Tuple, Dict, Union
+
+from schemas import Filters
 
 
 def get_clickhouse_client():
@@ -11,33 +14,42 @@ def get_clickhouse_client():
         database='default'
     )
 
-def build_filters(
-    filters: Optional[Any] = None,
-    extra_clause: Optional[str] = None
-) -> str:
+
+def build_filters(filters: Union[dict, object]) -> Tuple[str, dict]:
+    def get(val, default=None):
+        if isinstance(filters, dict):
+            return filters.get(val, default)
+        return getattr(filters, val, default)
+
     conditions = []
+    params = {}
 
-    if filters:
-        if getattr(filters, 'date_from', None) and getattr(filters, 'date_to', None):
-            conditions.append(
-                f"received_at BETWEEN toDateTime('{filters.date_from}') AND toDateTime('{filters.date_to}')"
-            )
+    # Фильтр по дате
+    date_from = get("date_from")
+    date_to = get("date_to")
+    if date_from and date_to:
+        conditions.append("toDate(received_at) BETWEEN toDate(%(date_from)s) AND toDate(%(date_to)s)")
+        params["date_from"] = date_from
+        params["date_to"] = date_to
 
-        if getattr(filters, 'campaigns', None):
-            ids = ','.join(map(str, filters.campaigns))
-            conditions.append(f"campaign_id IN ({ids})")
+    # Фильтр по кампаниям
+    campaigns = get("campaigns")
+    if campaigns:
+        conditions.append("campaign_id IN %(campaigns)s")
+        params["campaigns"] = tuple(campaigns)
 
-    if extra_clause:
-        clause = extra_clause.replace("WHERE", "").strip()
-        if clause:
-            conditions.append(clause)
+    # Дополнительные фильтры можно добавить здесь:
+    # detail_level = get("detail_level")
+    # if detail_level == "SomeLevel":
+    #     conditions.append("...")
 
-    return f"WHERE {' AND '.join(conditions)}" if conditions else ""
-
+    where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    return where_clause, params
 
 
 def get_recent_visits(client, filters, limit: int = 100):
-    where_clause = build_filters(filters)
+    where_clause, params = build_filters(filters)
+    params['limit'] = limit
 
     query = f"""
         SELECT ip, country, url, referrer, received_at
@@ -47,14 +59,35 @@ def get_recent_visits(client, filters, limit: int = 100):
         LIMIT %(limit)s
     """
 
-    print(query)
-    result = client.query(query, parameters={'limit': limit})
+    result = client.query(query, parameters=params)
     columns = result.column_names
     return [dict(zip(columns, row)) for row in result.result_rows]
 
 
-def get_metrics_series(client, filters, limit: int = 30):
-    where_clause = build_filters(filters)
+def generate_date_range(start: str, end: str) -> List[str]:
+    date_from = datetime.strptime(start, "%Y-%m-%d")
+    date_to = datetime.strptime(end, "%Y-%m-%d")
+    return [(date_from + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range((date_to - date_from).days + 1)]
+
+
+def get_metrics_series(client, filters: Filters, limit: int = 30) -> List[Dict[str, Any]]:
+    from datetime import date, timedelta
+
+    print(filters)
+    filters_dict = filters.dict()
+
+    if not filters_dict.get("date_from") or not filters_dict.get("date_to"):
+        end_date = date.today()
+        start_date = end_date - timedelta(days=limit - 1)
+        filters_dict["date_from"] = str(start_date)
+        filters_dict["date_to"] = str(end_date)
+    else:
+        start_date = date.fromisoformat(filters_dict["date_from"])
+        end_date = date.fromisoformat(filters_dict["date_to"])
+
+    where_clause, params = build_filters(filters_dict)
+    params["limit"] = limit
 
     query = f"""
         SELECT
@@ -67,10 +100,37 @@ def get_metrics_series(client, filters, limit: int = 30):
         FROM clicks
         {where_clause}
         GROUP BY day
-        ORDER BY day DESC
-        LIMIT %(limit)s
+        ORDER BY day
     """
-    result = client.query(query, parameters={'limit': limit})
+
+    print("QUERY:", query)
+
+    try:
+        result = client.query(query, parameters=params)
+    except Exception as e:
+        print("ClickHouse QUERY ERROR:", str(e))
+        print("QUERY:", query)
+        print("PARAMS:", params)
+        raise
+
+    # преобразуем результат в dict по дате
     columns = result.column_names
-    rows = [dict(zip(columns, row)) for row in result.result_rows]
-    return list(reversed(rows))
+    raw_rows = [dict(zip(columns, row)) for row in result.result_rows]
+    data_by_day = {row["day"]: row for row in raw_rows}
+
+    # собираем все дни от start_date до end_date
+    output = []
+    current = start_date
+    while current <= end_date:
+        row = data_by_day.get(current, {
+            "day": current,
+            "clicks": 0,
+            "unique_clicks": 0,
+            "conversions": 0,
+            "cost": 0.0,
+            "revenue": 0.0
+        })
+        output.append(row)
+        current += timedelta(days=1)
+
+    return output
