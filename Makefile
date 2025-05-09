@@ -41,3 +41,6 @@ logs:
 
 reload-nginx:
 	docker exec tracker_nginx nginx -s reload
+
+seed-demo-data:
+	docker exec -it tracker_frontend python3 /app/scripts/seed_demo.py
