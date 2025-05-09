@@ -10,7 +10,7 @@ def get_clickhouse_client():
         host='tracker_clickhouse',
         port=8123,
         username='user',
-        password='password',
+        password='password_password_password',
         database='default'
     )
 
@@ -53,7 +53,7 @@ def get_recent_visits(client, filters, limit: int = 100):
 
     query = f"""
         SELECT ip, country, url, referrer, received_at
-        FROM clicks
+        FROM clicks_data
         {where_clause}
         ORDER BY received_at DESC
         LIMIT %(limit)s
@@ -97,7 +97,7 @@ def get_metrics_series(client, filters: Filters, limit: int = 30) -> List[Dict[s
             countIf(status = 'conversion') AS conversions,
             sumOrNull(toFloat64(cost)) AS cost,
             sumOrNull(toFloat64(revenue)) AS revenue
-        FROM clicks
+        FROM clicks_data
         {where_clause}
         GROUP BY day
         ORDER BY day
