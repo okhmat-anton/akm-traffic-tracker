@@ -16,7 +16,7 @@
                 >
                     <v-card-text class="text-center">
                         <div class="text-h5">{{ metric.title }}</div>
-                        <div class="text-h3 font-weight-bold mt-2">{{ metric.value }}</div>
+                        <div class="text-h4 font-weight-bold mt-2">{{ metric.value }}</div>
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -47,7 +47,7 @@
                         ></v-text-field>
                     </template>
                     <v-date-picker
-                            v-model="date_range"
+                            v-model="filters.date_range"
                             @input="menu2 = false"
                             range
                     ></v-date-picker>
@@ -57,10 +57,32 @@
                 <v-select
                         :items="['Hours', 'Days', 'Weeks', 'Months']"
                         label="Detalization"
-                        v-model="detailLevel"
+                        v-model="filters.detailLevel"
                         outlined
                         dense
                 ></v-select>
+            </v-col>
+            <v-col cols="2">
+                <v-select
+                        :items="campaigns"
+                        v-model="filters.campaigns"
+                        label="Select Campaigns"
+                        item-text="name"
+                        item-value="id"
+                        outlined
+                        dense
+                        multiple
+                        chips
+                ></v-select>
+            </v-col>
+            <v-col cols="2">
+                <v-btn
+                        color="primary"
+                        @click="loadData()"
+                        dense
+                >
+                    Apply Filters
+                </v-btn>
             </v-col>
         </v-row>
         <v-row>
@@ -106,7 +128,12 @@
         data() {
             return {
                 date_menu2: false,
-                date_range: ['2019-09-10', '2019-09-20'],
+                filters: {
+                    campaigns: [],
+                    date_range: ['2019-09-10', '2019-09-20'],
+                    detailLevel: 'Days',
+                },
+                campaigns:[],
                 metrics: [
                     {title: 'Clicks', value: 12345, color: 'blue darken-2'},
                     {title: 'Unique Clicks', value: 6789, color: 'indigo darken-2'},
@@ -115,20 +142,19 @@
                     {title: 'Revenue', value: '$5678', color: 'green darken-2'},
                     {title: 'ROI', value: '120%', color: 'teal darken-2'}
                 ],
-                detailLevel: 'Days',
                 mainChart: {
                     series: [
                         {
                             name: 'Clicks',
-                            data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
+                            data: []
                         },
                         {
                             name: 'Conversions',
-                            data: [2, 10, 8, 15, 12, 18, 20, 25, 30]
+                            data: []
                         },
                         {
                             name: 'Unique Clicks',
-                            data: [5, 20, 15, 30, 25, 35, 45, 60, 90]
+                            data: []
                         },
 
                     ],
@@ -171,18 +197,18 @@
                     }
                 },
                 headers: [
-    { text: 'IP', value: 'ip' },
-    { text: 'Country', value: 'country' },
-    { text: 'Url', value: 'url' },
-    { text: 'Referrer', value: 'referrer' },
-    { text: 'Time', value: 'received_at' },
-],
+                    { text: 'IP', value: 'ip' },
+                    { text: 'Country', value: 'country' },
+                    { text: 'Url', value: 'url' },
+                    { text: 'Referrer', value: 'referrer' },
+                    { text: 'Time', value: 'received_at' },
+                ],
                 headers2: [
-    { text: 'IP', value: 'ip' },
-    { text: 'Country', value: 'country' },
-    { text: 'Referrer', value: 'referrer' },
-    { text: 'Time', value: 'received_at' },
-],
+                    { text: 'IP', value: 'ip' },
+                    { text: 'Country', value: 'country' },
+                    { text: 'Referrer', value: 'referrer' },
+                    { text: 'Time', value: 'received_at' },
+                ],
                 visits: [],
 
             }
@@ -194,20 +220,46 @@
 
         computed: {
             dateRangeText() {
-                return this.date_range.join(' ~ ')
+                return this.filters.date_range.join(' ~ ')
             },
         },
 
         methods:
         {
-            loadData(date) {
-                fetch('/backend/api/dashboard/visits')
+            loadFiltersData(){
+                // load campaigns
+                fetch('/backend/api/campaigns/')
                     .then(res => res.json())
                     .then(data => {
+                        this.campaigns = data;
+                    });
+            },
+            loadData(date) {
+                this.loadFiltersData();
+
+                const payload = {
+                    campaigns: this.filters.campaigns,
+                    date_from: this.filters.date_range[0],
+                    date_to: this.filters.date_range[1],
+                    detail_level: this.filters.detailLevel
+                };
+
+                fetch('/backend/api/dashboard/visits', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log('Visits:', data);
                         this.visits = data;
                     });
 
-                fetch('/backend/api/dashboard/metrics')
+                fetch('/backend/api/dashboard/metrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
                   .then(res => res.json())
                   .then(data => {
                     this.metrics = [

@@ -1,24 +1,36 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Query
 from clickHouse import get_recent_visits, get_metrics_series
+from typing import Optional, List
+from pydantic import BaseModel
 
 router = APIRouter()
 
-@router.get("/visits")
-async def get_visits(request: Request):
+
+class Filters(BaseModel):
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    campaigns: Optional[List[int]] = None
+    detail_level: Optional[str] = None
+
+
+@router.post("/visits")
+async def get_visits(
+        request: Request,
+        filters: Filters
+):
     try:
-        ch = request.app.state.ch  # клиент был создан в app.py
-        rows = get_recent_visits(ch)
+        ch = request.app.state.ch
+        rows = get_recent_visits(ch, filters)
         return rows
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/metrics")
-async def get_metrics(request: Request):
+@router.post("/metrics")
+async def get_metrics(request: Request, filters: Filters):
     ch = request.app.state.ch
-    series = get_metrics_series(ch)
+    series = get_metrics_series(ch, filters)
 
-    # Общие метрики по последним N дням
     total_clicks = sum(row['clicks'] for row in series)
     total_unique = sum(row['unique_clicks'] for row in series)
     total_conversions = sum(row['conversions'] for row in series)
