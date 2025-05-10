@@ -136,7 +136,7 @@
                                     outlined
                                     @click="setupSSL(item)"
                             >
-                                Update SSL
+                                Update SSL for 90 days
                             </v-btn>
                             <v-btn
                                     color="red"
@@ -214,12 +214,11 @@
                     return;
                 }
 
-                fetch(`/domain_update_nginx_and_ssl`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    payload: {
-                        domain_id: item.id
-                    }
+                this.$root.$emit('show-overlay');
+
+                fetch(`/domain_update_nginx_and_ssl?domain_id=`+item.id, {
+                    method: 'GET',
+                    credentials: 'include'
                 })
                     .then(async (response) => {
                         const text = await response.text();
@@ -238,14 +237,17 @@
                             throw new Error(message);
                         }
 
+                        await this.loadDomains();
+                        this.$root.$emit('hide-overlay');
+
                         this.$root.$emit('show-message', {
                             type: 'success',
                             text: 'SSL setup successfully!'
                         });
-                        this.loadDomains();
                     })
                     .catch((error) => {
                         console.error('Error setting up SSL:', error);
+                        this.$root.$emit('hide-overlay');
                         this.$root.$emit('show-message', {
                             type: 'error',
                             text: error.message
@@ -257,12 +259,14 @@
                 return campaign ? campaign.name : '-';
             },
             async checkDomains() {
+                this.$root.$emit('show-overlay');
                 await fetch("/backend/api/domains/check-domains");
                 await this.loadDomains();
-                    this.$root.$emit('show-message', {
-                        type: 'success',
-                        text: 'Domains statuses checked successfully!'
-                    });
+                this.$root.$emit('hide-overlay');
+                this.$root.$emit('show-message', {
+                    type: 'success',
+                    text: 'Domains statuses checked successfully!'
+                });
             },
             async loadCampaigns() {
                 try {

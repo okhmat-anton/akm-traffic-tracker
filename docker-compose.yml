@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      test: ["CMD-SHELL", "pg_isready -U user -d db"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -56,7 +56,11 @@ services:
       - DB_USER=user
       - DB_PASSWORD=password_password_password
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./frontend:/app
+      - ./certbot-var:/var/www/certbot
+      - ./letsencrypt:/etc/letsencrypt
+      - ./nginx:/var/www/nginx
     command: [
       "uvicorn",
       "app:app",
@@ -84,6 +88,9 @@ services:
       - DB_PASSWORD=password_password_password
     volumes:
       - ./backend:/app
+      - ./certbot-var:/var/www/certbot
+      - ./letsencrypt:/etc/letsencrypt
+      - ./nginx:/var/www/nginx
     command: [
       "uvicorn",
       "app:app",
@@ -112,10 +119,10 @@ services:
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./ssl:/etc/nginx/ssl
-      - ./certbot-etc:/etc/letsencrypt
       - ./certbot-var:/var/www/certbot
+      - ./letsencrypt:/etc/letsencrypt
       - ./frontend/landings:/var/www/landings
-      - ./frontend/nginx/domains:/var/www/domains
+      - ./nginx:/var/www/nginx
     depends_on:
       - frontend
       - backend

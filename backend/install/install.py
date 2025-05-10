@@ -8,7 +8,7 @@ DB_HOST = "tracker_postgres"
 DB_PORT = "5432"
 DB_NAME = "db"
 DB_USER = "user"
-DB_PASSWORD = "password"
+DB_PASSWORD = "password_password_password"
 
 INIT_SQL_FILE = "/app/install/sql/init.sql"
 
@@ -106,7 +106,7 @@ def run_clickhouse_install():
     client = get_client(
         host=os.getenv("CLICKHOUSE_HOST", "localhost"),
         username=os.getenv("CLICKHOUSE_USER", "user"),
-        password=os.getenv("CLICKHOUSE_PASSWORD", "password"),
+        password=os.getenv("CLICKHOUSE_PASSWORD", "password_password_password"),
         port=int(os.getenv("CLICKHOUSE_PORT", 8123)),
         secure=False
     )

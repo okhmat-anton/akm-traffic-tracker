@@ -39,6 +39,10 @@
               return result.code;
             }
     </script>
+
+<div id="overlay">
+  <div class="spinner"></div>
+</div>
 <script type="application/javascript">
     Vue.prototype.$formatDate = function(dateStr, locale = 'en-US') {
       if (!dateStr) return '';
@@ -76,6 +80,9 @@
                     },
                 }).showToast();
             });
+
+            this.$root.$on('show-overlay', this.showOverlay);
+            this.$root.$on('hide-overlay', this.hideOverlay);
         },
         methods: {
             getColor(type) {
@@ -86,6 +93,12 @@
                     warning: 'linear-gradient(to right, #FF9800, #FF5722)',
                 }[type] || 'linear-gradient(to right, #00c6ff, #0072ff)';
             },
+            showOverlay() {
+              document.getElementById('overlay').style.display = 'block';
+            },
+            hideOverlay() {
+              document.getElementById('overlay').style.display = 'none';
+            }
         }
     });
 </script>
