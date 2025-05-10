@@ -13,6 +13,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
@@ -27,6 +32,11 @@ services:
       CLICKHOUSE_DB: default
     volumes:
       - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
 
   frontend:
     build:
@@ -36,7 +46,10 @@ services:
     expose:
       - "8000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     environment:
       - DB_HOST=postgres
       - DB_NAME=db
@@ -60,7 +73,10 @@ services:
     expose:
       - "8501"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
     environment:
       - DB_HOST=postgres
       - DB_NAME=db
@@ -99,6 +115,7 @@ services:
       - ./certbot-etc:/etc/letsencrypt
       - ./certbot-var:/var/www/certbot
       - ./frontend/landings:/var/www/landings
+      - ./frontend/nginx/domains:/var/www/domains
     depends_on:
       - frontend
       - backend
