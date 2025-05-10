@@ -39,7 +39,7 @@ app.add_middleware(
 async def startup():
     app.state.pg = await asyncpg.create_pool(
         user="user",
-        password="password",
+        password="password_password_password",
         database="db",
         host="postgres",
         port=5432

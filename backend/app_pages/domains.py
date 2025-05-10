@@ -47,6 +47,7 @@ async def get_domains(db: Session = Depends(get_db)):
             "default_campaign_id": domain.default_campaign_id,
             "group_name": domain.group_name,
             "status": domain.status,
+            "ssl_status": domain.ssl_status,
             "created_at": domain.created_at.isoformat() if domain.created_at else None,
             "updated_at": domain.updated_at.isoformat() if domain.updated_at else None,
         }

@@ -14,6 +14,7 @@ class DomainORM(Base):
     default_campaign_id = Column(Integer, nullable=True)
     group_name = Column(String(255), nullable=True)
     status = Column(String(50), nullable=False, server_default="pending")
+    ssl_status = Column(String(50), nullable=False, server_default="not_started")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

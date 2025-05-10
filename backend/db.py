@@ -8,7 +8,7 @@ from models.user import UserORM
 
 Base = declarative_base()
 
-DATABASE_URL = "postgresql+psycopg2://user:password@tracker_postgres/db"
+DATABASE_URL = "postgresql+psycopg2://user:password_password_password@tracker_postgres/db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

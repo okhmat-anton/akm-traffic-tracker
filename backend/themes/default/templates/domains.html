@@ -103,6 +103,15 @@
                                 {{ item.status }}
                             </v-chip>
                         </template>
+                        <template v-slot:item.ssl_status="{ item }">
+                            <v-chip
+                                    :color="statusColor(item.ssl_status)"
+                                    dark
+                                    small
+                            >
+                                {{ item.ssl_status }}
+                            </v-chip>
+                        </template>
                         <template v-slot:item.default_campaign_id="{ item }">
                             {{ campaignName(item.default_campaign_id) }}
                         </template>
@@ -127,7 +136,7 @@
                                     outlined
                                     @click="setupSSL(item)"
                             >
-                                Delete
+                                Update SSL
                             </v-btn>
                             <v-btn
                                     color="red"
@@ -173,6 +182,7 @@
                     {text: 'Handle 404', value: 'handle_404'},
                     {text: 'Default Campaign', value: 'default_campaign_id'},
                     {text: 'Group Name', value: 'group_name'},
+                    {text: 'SSL Status', value: 'ssl_status'},
                     {text: 'Status', value: 'status'},
                     {text: 'Created At', value: 'created_at'},
                     {text: 'Updated At', value: 'updated_at'},
@@ -187,6 +197,8 @@
         methods: {
             statusColor(status) {
                 switch (status) {
+                    case 'not_started':
+                        return 'grey';
                     case 'success':
                         return 'green';
                     case 'pending':
@@ -198,13 +210,16 @@
                 }
             },
             setupSSL(item) {
-                if (!confirm(`Are you sure you want to delete domain "${item.domain}"?`)) {
+                if (!confirm(`Are you sure you want to update domain ssl for "${item.domain}"? You can use domain without SSL with cloudflare SSL`)) {
                     return;
                 }
 
-                fetch(`/backend/api/domains/${item.id}/setup-ssl`, {
+                fetch(`/domain_update_nginx_and_ssl`, {
                     method: 'POST',
-                    credentials: 'include'
+                    credentials: 'include',
+                    payload: {
+                        domain_id: item.id
+                    }
                 })
                     .then(async (response) => {
                         const text = await response.text();

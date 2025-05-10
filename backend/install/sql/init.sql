@@ -4,6 +4,7 @@ CREATE TYPE domain_error_handle_mood AS ENUM ('handle', 'error');
 CREATE TYPE campaign_type AS ENUM ('campaign', 'tracking_only');
 CREATE TYPE campaign_status AS ENUM ('active', 'paused');
 CREATE TYPE redirect_mode AS ENUM ('position', 'weight');
+CREATE TYPE ssl_status_mood AS ENUM ('not_started', 'pending', 'success', 'error');
 
 -- Создание таблицы пользователей
 CREATE TABLE users (
@@ -28,7 +29,8 @@ CREATE TABLE domains (
     handle_404 domain_error_handle_mood,                -- 'error' или 'redirect_to_company'
     default_campaign_id INTEGER,                         -- компания по умолчанию
     group_name VARCHAR(255),                               -- группа домена
-    status status_mood,                  -- статус ('pending', 'success', 'error')
+    status status_mood default 'pending',                  -- статус ('pending', 'success', 'error')
+    ssl_status ssl_status_mood default 'not_started',                  -- статус ('not_started','pending', 'success', 'error')
     created_at TIMESTAMP DEFAULT NOW(),                    -- дата создания
     updated_at TIMESTAMP DEFAULT NOW()                     -- дата обновления
 );
