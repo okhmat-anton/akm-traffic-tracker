@@ -4,20 +4,20 @@ install-db:
 
 install-prod-domain:
 	cp nginx/nginx.prod.conf nginx/default.conf
-	docker-compose up --build -d
+	docker-compose --compatibility up --build -d
 	make certificate
 	make install-db
 
 install:
 	cp nginx/nginx.dev.conf nginx/default.conf
 	make generate-local-cert
-	docker-compose up --build -d
+	docker-compose --compatibility up --build -d
 	make install-db
 
 install-local:
 	cp nginx/nginx.dev.conf nginx/default.conf
 	make generate-local-cert
-	docker-compose up --build -d
+	docker-compose --compatibility up --build -d
 	make install-db
 
 generate-local-cert:
@@ -34,7 +34,7 @@ stop:
 	docker-compose down
 
 restart:
-	docker-compose down && docker-compose up --build -d
+	docker-compose down && docker-compose --compatibility up --build -d
 
 logs:
 	docker-compose logs -f

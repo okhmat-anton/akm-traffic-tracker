@@ -210,11 +210,11 @@
                 }
             },
             setupSSL(item) {
-                if (!confirm(`Are you sure you want to update domain ssl for "${item.domain}"? You can use domain without SSL with cloudflare SSL`)) {
+                if (!confirm(`Are you sure you want to update domain ssl for "${item.domain}"? You can use domain without SSL with cloudflare SSL. DONT RELOAD PAGE. Can take up to 10 minute per domain... And restart nginx...`)) {
                     return;
                 }
 
-                this.$root.$emit('show-overlay');
+                this.$root.$emit('show-overlay', 'DONT RELOAD PAGE. Updating domains SSL... Can take up to 10 minute per domain... And restart nginx...');
 
                 fetch(`/domain_update_nginx_and_ssl?domain_id=`+item.id, {
                     method: 'GET',
@@ -259,7 +259,7 @@
                 return campaign ? campaign.name : '-';
             },
             async checkDomains() {
-                this.$root.$emit('show-overlay');
+                this.$root.$emit('show-overlay', 'Checking domains statuses... Can take up to 20 seconds per domain...');
                 await fetch("/backend/api/domains/check-domains");
                 await this.loadDomains();
                 this.$root.$emit('hide-overlay');

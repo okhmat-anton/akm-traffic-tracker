@@ -253,9 +253,14 @@ async def request_ssl_letsencrypt(domain: str) -> bool:
             "--non-interactive"
         ], check=True)
 
-        await asyncio.sleep(20)
-
         cert_path = Path(f"/etc/letsencrypt/live/{domain}/fullchain.pem")
+
+        for _ in range(300):  # 10 minutes
+            if cert_path.exists():
+                print(f"✅ Сертификат найден: {cert_path}")
+                return True
+            await asyncio.sleep(2)
+
         return cert_path.exists()
 
     except subprocess.CalledProcessError as e:
@@ -272,7 +277,7 @@ def reload_nginx():
 
 
 async def generate_nginx_conf(domain: str, domain_id: int) -> Path:
-    template_path = Path("/var/www/nginx/nginx.prod.conf")
+    template_path = Path("/var/www/nginx/_domain_nginx.prod.conf")
     output_dir = Path("/var/www/nginx/domains")
 
     if not template_path.exists():

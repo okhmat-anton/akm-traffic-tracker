@@ -127,6 +127,10 @@ services:
       - frontend
       - backend
       - php
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
 volumes:
   postgres_data:

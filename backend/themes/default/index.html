@@ -42,6 +42,7 @@
 
 <div id="overlay">
   <div class="spinner"></div>
+    <div class="overlay_message" id="overlay_message">Loading...</div>
 </div>
 <script type="application/javascript">
     Vue.prototype.$formatDate = function(dateStr, locale = 'en-US') {
@@ -81,7 +82,7 @@
                 }).showToast();
             });
 
-            this.$root.$on('show-overlay', this.showOverlay);
+            this.$root.$on('show-overlay', (message) => { this.showOverlay(message)});
             this.$root.$on('hide-overlay', this.hideOverlay);
         },
         methods: {
@@ -93,8 +94,9 @@
                     warning: 'linear-gradient(to right, #FF9800, #FF5722)',
                 }[type] || 'linear-gradient(to right, #00c6ff, #0072ff)';
             },
-            showOverlay() {
+            showOverlay(message) {
               document.getElementById('overlay').style.display = 'block';
+              document.getElementById('overlay_message').innerText = message || 'Loading...';
             },
             hideOverlay() {
               document.getElementById('overlay').style.display = 'none';
