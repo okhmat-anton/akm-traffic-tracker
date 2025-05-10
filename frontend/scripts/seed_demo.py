@@ -43,7 +43,7 @@ column_names = [
         'country',
         'region',
         'city',
-        'creative_id',
+        'utm_creative','utm_source',
         'visitor_id',
         'sub_id_1',
         'sub_id_2',
@@ -97,7 +97,7 @@ def generate_click_row(day):
         random.choice(COUNTRIES),  # country
         "RegionName",  # region
         "CityName",  # city
-        f"cr_{random.randint(1, 100)}",  # creative_id
+        f"cr_{random.randint(1, 100)}",  # utm_creative
         f"visitor_{random.randint(100000, 999999)}",  # visitor_id
         *[f"sub{i}_{random.randint(1, 100)}" for i in range(1, 11)],  # sub_id_1 to sub_id_10
         "Mozilla/5.0",  # user_agent

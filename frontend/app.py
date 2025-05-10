@@ -62,7 +62,7 @@ async def shutdown():
 # VALID_PARAMS = {
 #     'ad_campaign_id', 'affiliate_network_name', 'browser', 'browser_version', 'connection_type',
 #     'city', 'campaign_name', 'campaign_id', 'campaign_alias', 'conversion_cost', 'conversion_profit',
-#     'conversion_revenue', 'conversion_sale_time', 'conversion_time', 'cost', 'country', 'creative_id',
+#     'conversion_revenue', 'conversion_sale_time', 'conversion_time', 'cost', 'country', 'utm_creative',
 #     'visitor_id', 'token', 'tid', 'subid', 'sub_id_1', 'sub_id_2', 'sub_id_3', 'sub_id_4', 'sub_id_5',
 #     'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10', 'visitor_code', 'user_agent', 'ts_id',
 #     'traffic_source_name', 'x_requested_with', 'stream_id', 'status', 'source', 'search_engine',
@@ -73,8 +73,8 @@ async def shutdown():
 # }
 
 VALID_PARAMS = [
-    'ad_campaign_id', 'browser', 'browser_version', 'campaign_id', 'city', 'connection_type',
-    'cost', 'country', 'creative_id', 'device_brand', 'device_type', 'external_id', 'ip',
+    'ad_campaign_id', 'browser', 'browser_version', 'campaign_id', 'city', 'connection_type', 'currency',
+    'cost', 'country', 'utm_creative', 'utm_campaign', 'utm_source', 'device_brand', 'device_type', 'external_id', 'ip',
     'is_bot', 'is_using_proxy', 'isp', 'keyword', 'landing_id', 'language', 'offer_id',
     'os', 'profit', 'referrer', 'region', 'revenue', 'status', 'sub_id_1', 'sub_id_2', 'sub_id_3',
     'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10',

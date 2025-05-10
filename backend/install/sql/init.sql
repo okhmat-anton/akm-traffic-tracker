@@ -161,7 +161,6 @@ INSERT INTO settings (name, value) VALUES
 
 INSERT INTO settings (name, value) VALUES
 ('subIdMapping', '[
-  {"name":"Keyword","parameter":"keyword","token":"","editable_name":false},
   {"name":"Cost","parameter":"cost","token":"","editable_name":false},
   {"name":"Currency","parameter":"currency","token":"","editable_name":false},
   {"name":"External ID","parameter":"external_id","token":"","editable_name":false},

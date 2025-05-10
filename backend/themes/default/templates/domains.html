@@ -122,6 +122,14 @@
                                 Edit
                             </v-btn>
                             <v-btn
+                                    color="blue"
+                                    small
+                                    outlined
+                                    @click="setupSSL(item)"
+                            >
+                                Delete
+                            </v-btn>
+                            <v-btn
                                     color="red"
                                     small
                                     outlined
@@ -188,6 +196,46 @@
                     default:
                         return 'blue';
                 }
+            },
+            setupSSL(item) {
+                if (!confirm(`Are you sure you want to delete domain "${item.domain}"?`)) {
+                    return;
+                }
+
+                fetch(`/backend/api/domains/${item.id}/setup-ssl`, {
+                    method: 'POST',
+                    credentials: 'include'
+                })
+                    .then(async (response) => {
+                        const text = await response.text();
+                        if (!response.ok) {
+                            let message = 'Unknown error setting up SSL';
+                            try {
+                                const errorData = JSON.parse(text);
+                                if (Array.isArray(errorData.detail)) {
+                                    message = errorData.detail.map(d => d.msg).join('; ');
+                                } else if (typeof errorData.detail === 'string') {
+                                    message = errorData.detail;
+                                }
+                            } catch (e) {
+                                message = text;
+                            }
+                            throw new Error(message);
+                        }
+
+                        this.$root.$emit('show-message', {
+                            type: 'success',
+                            text: 'SSL setup successfully!'
+                        });
+                        this.loadDomains();
+                    })
+                    .catch((error) => {
+                        console.error('Error setting up SSL:', error);
+                        this.$root.$emit('show-message', {
+                            type: 'error',
+                            text: error.message
+                        });
+                    });
             },
             campaignName(id) {
                 const campaign = this.campaigns.find(c => String(c.id) === String(id));
@@ -278,7 +326,6 @@
                     ? `/backend/api/domains/${this.form.id}`
                     : `/backend/api/domains/`;
 
-                console.log(url)
                 const method = this.isEdit ? 'PUT' : 'POST';
 
                 fetch(url, {

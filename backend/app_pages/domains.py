@@ -87,9 +87,6 @@ async def update_domain(domain_id: int, domain: DomainCreateUpdate, db: Session 
     for key, value in domain.dict(exclude_unset=True).items():
         setattr(domain_obj, key, value)
 
-    # И снова, после редактирования всегда ставим статус 'pending'
-    domain_obj.status = 'pending'
-
     db.commit()
     db.refresh(domain_obj)
     return {"message": f"Domain {domain_id} updated"}
