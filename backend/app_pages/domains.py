@@ -10,6 +10,7 @@ from db import get_db
 from models.domain import DomainORM
 import httpx
 from datetime import datetime
+from pathlib import Path
 
 router = APIRouter()
 
@@ -102,6 +103,13 @@ async def delete_domain(domain_id: int, db: Session = Depends(get_db)):
 
     db.delete(domain_obj)
     db.commit()
+
+    # delete from nginx
+    # /var/www/nginx/domains/domain_id_ file
+    # nginx_config_path = f"/var/www/nginx/domains/{domain_id}_*.conf"
+    for file in Path("/var/www/nginx/domains").glob(f"{domain_id}_*.conf"):
+        file.unlink()
+
     return {"message": f"Domain {domain_id} deleted"}
 
 
