@@ -35,15 +35,17 @@ column_names = [
         'url',
         'referrer',
         'browser',
-        'browser_version',
         'connection_type',
+        'currency',
         'cost',
         'profit',
         'revenue',
         'country',
         'region',
         'city',
-        'utm_creative','utm_source',
+        'utm_campaign',
+        'utm_creative',
+        'utm_source',
         'visitor_id',
         'sub_id_1',
         'sub_id_2',
@@ -55,7 +57,6 @@ column_names = [
         'sub_id_8',
         'sub_id_9',
         'sub_id_10',
-        'user_agent',
         'traffic_source_name',
         'os',
         'isp',
@@ -89,18 +90,19 @@ def generate_click_row(day):
         f"https://{random.choice(DOMAINS)}",  # url
         "https://referrer.com",  # referrer
         random.choice(BROWSERS),  # browser
-        str(random.randint(80, 120)),  # browser_version
         random.choice(["wifi", "4g", "ethernet"]),  # connection_type
+        'USD',  # currency
         cost,  # cost
         round(cost * random.uniform(0.2, 0.5), 3) if revenue else None,  # profit
         revenue,  # revenue
         random.choice(COUNTRIES),  # country
         "RegionName",  # region
         "CityName",  # city
+        f"ca_{random.randint(1, 100)}",  # utm_campaign
         f"cr_{random.randint(1, 100)}",  # utm_creative
+        f"source_{random.randint(1, 100)}",  # utm_source
         f"visitor_{random.randint(100000, 999999)}",  # visitor_id
         *[f"sub{i}_{random.randint(1, 100)}" for i in range(1, 11)],  # sub_id_1 to sub_id_10
-        "Mozilla/5.0",  # user_agent
         "Google",  # traffic_source_name
         random.choice(OS),  # os
         random.choice(ISPS),  # isp

@@ -27,7 +27,7 @@ app.state = SimpleNamespace()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ⛔ или укажи конкретный домен, например: ["https://your-site.com"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,47 +59,15 @@ async def shutdown():
     await app.state.pg.close()
 
 
-# VALID_PARAMS = {
-#     'ad_campaign_id', 'affiliate_network_name', 'browser', 'browser_version', 'connection_type',
-#     'city', 'campaign_name', 'campaign_id', 'campaign_alias', 'conversion_cost', 'conversion_profit',
-#     'conversion_revenue', 'conversion_sale_time', 'conversion_time', 'cost', 'country', 'utm_creative',
-#     'visitor_id', 'token', 'tid', 'subid', 'sub_id_1', 'sub_id_2', 'sub_id_3', 'sub_id_4', 'sub_id_5',
-#     'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10', 'visitor_code', 'user_agent', 'ts_id',
-#     'traffic_source_name', 'x_requested_with', 'stream_id', 'status', 'source', 'search_engine',
-#     'sample', 'revenue', 'parent_campaign_id', 'previous_status', 'profit','url', 'referrer',
-#     'region', 'os_version', 'os', 'original_status', 'operator', 'offer_value', 'keyword', 'landing_id',
-#     'language', 'offer', 'offer_id', 'offer_name', 'isp', 'is_using_proxy', 'ip', 'is_bot', 'from_file',
-#     'external_id', 'device_type', 'current_domain', 'date', 'debug', 'destination', 'device_brand','state'
-# }
-
 VALID_PARAMS = [
-    'ad_campaign_id', 'browser', 'browser_version', 'campaign_id', 'city', 'connection_type', 'currency',
+    'ad_campaign_id', 'browser', 'campaign_id', 'city', 'connection_type', 'currency',
     'cost', 'country', 'utm_creative', 'utm_campaign', 'utm_source', 'device_brand', 'device_type', 'external_id', 'ip',
     'is_bot', 'is_using_proxy', 'isp', 'keyword', 'landing_id', 'language', 'offer_id',
     'os', 'profit', 'referrer', 'region', 'revenue', 'status', 'sub_id_1', 'sub_id_2', 'sub_id_3',
     'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10',
-    'traffic_source_name', 'url', 'user_agent', 'visitor_id'
+    'traffic_source_name', 'url', 'visitor_id'
 ]
 
-# Конфиг подключения к БД из переменных окружения
-DB_CONFIG = {
-    'dbname': os.getenv('DB_NAME', 'db'),
-    'user': os.getenv('DB_USER', 'user'),
-    'password': os.getenv('DB_PASSWORD', 'password'),
-    'host': os.getenv('DB_HOST', 'localhost')
-}
-
-# мок кампаний — замени на SELECT из БД при необходимости
-CAMPAIGNS = {
-    "d6Fwgd7S": {
-        "id": 123,
-        "alias": "my-offer-1",
-        "paramsIdMapping": {
-            "sub_id_1": "sub1",
-            "campaign_id": "cid"
-        }
-    }
-}
 
 from landings import router as landings_router
 
@@ -109,7 +77,7 @@ app.include_router(landings_router, tags=["Landings"])
 ##### main tracker app #####
 
 
-# Простой in-memory лог (замени на DB в бою)
+# in-memory log
 TRACK_LOG = []
 
 
@@ -119,7 +87,6 @@ def log_track(message: str):
         TRACK_LOG.pop(0)
 
 
-# Обогащение мета-данными
 def enrich_meta(request: Request) -> dict:
     ua_string = request.headers.get('user-agent', '') or ''
     parsed = httpagentparser.detect(ua_string)
@@ -136,13 +103,11 @@ def enrich_meta(request: Request) -> dict:
     return {
         'received_at': datetime.utcnow(),
         'ip': request.client.host,
-        'user_agent': ua_string,
         'referrer': request.headers.get('referer'),
         'current_domain': request.headers.get('host'),
         'language': request.headers.get('accept-language'),
         'country': country_code,
         'browser': parsed.get('browser', {}).get('name'),
-        'browser_version': parsed.get('browser', {}).get('version'),
         'os': parsed.get('os', {}).get('name'),
         'device_type': 'mobile' if 'Mobile' in ua_string else 'desktop',
         'is_bot': ua.is_bot or 'bot' in ua_string.lower(),
@@ -156,7 +121,6 @@ async def track_event(campaign_alias: str, request: Request):
     pg = request.app.state.pg
     ch = request.app.state.ch
 
-    # Получаем данные из формы или JSON
     content_type = request.headers.get('content-type', '')
     if content_type.startswith('application/x-www-form-urlencoded'):
         query = dict(await request.form())
