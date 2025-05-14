@@ -8,3 +8,4 @@ httpagentparser
 asyncpg
 user_agents
 httpx
+requests
