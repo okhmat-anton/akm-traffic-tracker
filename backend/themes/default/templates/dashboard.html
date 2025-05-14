@@ -245,6 +245,7 @@
                         });
                 },
                 loadData(date) {
+                    this.$root.$emit('show-overlay', 'Can take a while, 1+ minute');
                     this.loadFiltersData();
 
                     const payload = {
@@ -302,6 +303,8 @@
 
                             this.mainChart.chartOptions.xaxis.type = 'category';
                             delete this.mainChart.chartOptions.xaxis.categories;
+
+                            this.$root.$emit('hide-overlay');
                         });
 
                 },

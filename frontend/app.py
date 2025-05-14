@@ -1,12 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import PlainTextResponse
-from typing import Optional
-from contextlib import asynccontextmanager
-from fastapi.responses import JSONResponse
-from datetime import datetime
-import uvicorn
-import psycopg2
-import os
 import httpagentparser
 from datetime import datetime
 import asyncpg
@@ -15,9 +8,7 @@ import json
 from fastapi.middleware.cors import CORSMiddleware
 from user_agents import parse as parse_ua
 import re
-import socket
 import subprocess
-from pydantic import BaseModel
 from pathlib import Path
 
 import asyncio
@@ -43,7 +34,7 @@ async def startup():
         user="user",
         password="password_password_password",
         database="db",
-        host="postgres",
+        host="tracker_postgres",
         port=5432
     )
     app.state.ch = get_client(
@@ -53,7 +44,6 @@ async def startup():
         password='password_password_password',
         database='default'
     )
-
 
 # 🛑 Shutdown
 @app.on_event("shutdown")
