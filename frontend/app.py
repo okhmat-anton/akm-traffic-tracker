@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException, Response
+from fastapi.responses import RedirectResponse
 import httpagentparser
 from datetime import datetime
 import asyncpg
@@ -118,6 +119,10 @@ def show_landing(folder: str) -> Response:
         return Response(content="404 Not Found", status_code=404, media_type="text/html")
 
 
+def do_redirect(url: str) -> RedirectResponse:
+    return RedirectResponse(url=url, status_code=302)
+
+
 async def get_default_campaign_from_db(domain: str):
     query = """
             select *
@@ -142,8 +147,8 @@ async def domain_page_default_campaign(request: Request) -> Response:
     if campaign is None:
         return Response(content="404 Not Found", media_type="text/html")
 
-    print('Requested campaign:', campaign)
-    print('Requested domain:', host)
+    # print('Requested campaign:', campaign)
+    # print('Requested domain:', host)
     await track_event(campaign, request)
     return await do_campaign_execution(campaign, request)
     # return None
@@ -152,15 +157,22 @@ async def domain_page_default_campaign(request: Request) -> Response:
 async def do_campaign_execution(campaign, request: Request) -> Response:
     log_track(f"🔁 New campaign execution call for '{campaign}'")
 
+    # read campaign flow
+    config = json.loads(campaign["config"])
+    flow = config.get("flows", [])
+    log_track(flow)
+
+    return do_redirect('https://babber.app')
+
     return  show_landing('test')
 
 
 async def track_event(campaign, request: Request):
     """ track events to ClickHouse """
-    log_track(f"🔁 New track data call for '{campaign['alias']}'")
 
     try:
         campaign_alias = campaign["alias"]
+        log_track(f"🔁 New track data call for '{campaign_alias}'")
     except KeyError:
         msg = "❌ Campaign alias not found in track_event"
         log_track(msg)
