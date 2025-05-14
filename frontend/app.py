@@ -42,6 +42,7 @@ async def startup():
         database='default'
     )
 
+
 # 🛑 Shutdown
 @app.on_event("shutdown")
 async def shutdown():
@@ -56,7 +57,6 @@ VALID_PARAMS = [
     'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10',
     'traffic_source_name', 'url', 'visitor_id'
 ]
-
 
 from landings import router as landings_router
 from domains import router as domains_router
@@ -105,48 +105,67 @@ def enrich_meta(request: Request) -> dict:
     }
 
 
-def do_default_campaign():
-    # select default campaign for domain
-    # if no campaign found, return None
-    # else do campaign rules
-
-    return show_landing('test')
-
-
-def do_campaign_rules(campaign_id: int):
-    # select all rules for campaign
-    # if no rules found, return None
-    # else do campaign rules
-
-    return show_landing('test')
-
-
-def show_landing(folder: str) -> str:
-
+def show_landing(folder: str) -> Response:
     index_php = os.path.join("landings", folder, "index.php")
     index_html = os.path.join("landings", folder, "index.html")
 
     print(index_php, os.path.exists(index_php))
     if os.path.exists(index_php) or os.path.exists(index_html):
         url = f"https://tracker_nginx/l/{folder}"
-        print(url)
-        r = requests.get(url, verify=False) #, data={"name": "Anton"})
-        print(r.text)
-        return r.text
+        r = requests.get(url, verify=False)  # , data={"name": "Anton"})
+        return Response(content=r.text, media_type="text/html")
     else:
-        return "404 Not Found"
+        return Response(content="404 Not Found", status_code=404, media_type="text/html")
+
+
+async def get_default_campaign_from_db(domain: str):
+    query = """
+            select *
+            from campaigns
+            where id in (SELECT default_campaign_id
+                         FROM domains
+                         WHERE domain = $1
+                         LIMIT 1); \
+            """
+    async with app.state.pg.acquire() as conn:
+        row = await conn.fetchrow(query, domain)
+        if row:
+            return row
+        return None
+
 
 @app.get("/")
-def domain_page_default_campaign() -> Response:
-    html = do_default_campaign()
-    return Response(content=html, media_type="text/html")
+async def domain_page_default_campaign(request: Request) -> Response:
+    host = request.headers.get("host")
+    campaign = await get_default_campaign_from_db(host)
+
+    if campaign is None:
+        return Response(content="404 Not Found", media_type="text/html")
+
+    print('Requested campaign:', campaign)
+    print('Requested domain:', host)
+    await track_event(campaign, request)
+    return await do_campaign_execution(campaign, request)
+    # return None
 
 
-@app.post("/{campaign_alias}")
-async def track_event(campaign_alias: str, request: Request):
-    log_track(f"🔁 New request for '{campaign_alias}'")
+async def do_campaign_execution(campaign, request: Request) -> Response:
+    log_track(f"🔁 New campaign execution call for '{campaign}'")
 
-    pg = request.app.state.pg
+    return  show_landing('test')
+
+
+async def track_event(campaign, request: Request):
+    """ track events to ClickHouse """
+    log_track(f"🔁 New track data call for '{campaign['alias']}'")
+
+    try:
+        campaign_alias = campaign["alias"]
+    except KeyError:
+        msg = "❌ Campaign alias not found in track_event"
+        log_track(msg)
+        raise HTTPException(status_code=400, detail=msg)
+
     ch = request.app.state.ch
 
     content_type = request.headers.get('content-type', '')
@@ -158,21 +177,7 @@ async def track_event(campaign_alias: str, request: Request):
         except:
             query = {}
 
-    # Получаем кампанию
-    async with pg.acquire() as conn:
-        row = await conn.fetchrow("""
-            SELECT *
-            FROM campaigns
-            WHERE alias = $1
-        """, campaign_alias)
-
-    if not row:
-        msg = f"❌ Campaign '{campaign_alias}' not found"
-        log_track(msg)
-        raise HTTPException(status_code=404, detail=msg)
-
-    campaign_id = row["id"]
-    config = json.loads(row["config"])
+    config = json.loads(campaign["config"])
 
     # Извлекаем mapping из config.paramsIdMapping
     mapping = {}
@@ -183,8 +188,7 @@ async def track_event(campaign_alias: str, request: Request):
 
     # Стартовая запись
     result_row = {
-        "campaign_id": str(campaign_id),
-        # "campaign_alias": campaign_alias
+        "campaign_id": str(campaign["id"])
     }
 
     # Добавляем обогащённые поля
@@ -202,7 +206,6 @@ async def track_event(campaign_alias: str, request: Request):
     # ❗ Удаляем все поля со значением None
     result_row = {k: v for k, v in result_row.items() if v is not None}
 
-    # Вставка в ClickHouse
     try:
         columns = list(result_row.keys())
         values = [list(result_row.values())]
@@ -212,15 +215,35 @@ async def track_event(campaign_alias: str, request: Request):
         log_track(f"❌ ClickHouse insert failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ClickHouse error: {e}")
 
+
+# track and do campaign rules
+@app.post("/{campaign_alias}")
+async def post_with_campaign_alias(campaign_alias: str, request: Request):
+    log_track(f"🔁 New post track request for '{campaign_alias}'")
+
+    pg = request.app.state.pg
+
+    # get campaign from db
+    async with pg.acquire() as conn:
+        campaign = await conn.fetchrow("""
+                                       SELECT *
+                                       FROM campaigns
+                                       WHERE alias = $1
+                                       """, campaign_alias)
+
+    if not campaign:
+        msg = f"❌ Campaign '{campaign_alias}' not found"
+        log_track(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+    # tracking
+    await track_event(campaign, request)
+
+    await do_campaign_execution(campaign, request)
+
     return {"status": "ok", "campaign": campaign_alias}
 
 
 @app.get("/_akm_tracker_debug")
 def show_logs():
     return TRACK_LOG[-50:]  # последние 50 событий
-
-
-@app.get("/_reload_nginx")
-def show_logs():
-    reload_nginx()
-

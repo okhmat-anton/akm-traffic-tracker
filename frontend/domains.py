@@ -20,20 +20,21 @@ async def create_nginx(request: Request, domain_id: int):
 
     async with pg.acquire() as conn:
         row = await conn.fetchrow("""
-            SELECT domain
-            FROM domains
-            WHERE id = $1
-        """, domain_id)
+                                  SELECT domain
+                                  FROM domains
+                                  WHERE id = $1
+                                  """, domain_id)
 
     if not row:
         raise HTTPException(status_code=404, detail="Domain not found")
 
     async with pg.acquire() as conn:
         await conn.fetchrow("""
-            UPDATE domains
-            SET updated_at = NOW(), ssl_status= 'pending'
-            WHERE id = $1
-        """, domain_id)
+                            UPDATE domains
+                            SET updated_at = NOW(),
+                                ssl_status= 'pending'
+                            WHERE id = $1
+                            """, domain_id)
 
     domain = row["domain"]
     path = await generate_nginx_conf(domain, domain_id)
@@ -41,12 +42,14 @@ async def create_nginx(request: Request, domain_id: int):
     if path:
         async with pg.acquire() as conn:
             await conn.fetchrow("""
-                UPDATE domains
-                SET updated_at = NOW(), ssl_status= 'success'
-                WHERE id = $1
-            """, domain_id)
+                                UPDATE domains
+                                SET updated_at = NOW(),
+                                    ssl_status= 'success'
+                                WHERE id = $1
+                                """, domain_id)
 
     return {"status": "ok", "file": str(path)}
+
 
 async def request_ssl_letsencrypt(domain: str) -> bool:
     try:
@@ -82,6 +85,11 @@ def reload_nginx():
     subprocess.run([
         "docker", "exec", "tracker_nginx", "nginx", "-s", "reload"
     ])
+
+
+@router.get("/_reload_nginx")
+def show_logs():
+    reload_nginx()
 
 
 async def generate_nginx_conf(domain: str, domain_id: int) -> Path:
