@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Response
 import httpagentparser
 from datetime import datetime
 import asyncpg
@@ -7,6 +7,8 @@ import json
 from fastapi.middleware.cors import CORSMiddleware
 from user_agents import parse as parse_ua
 import re
+import os
+import requests
 
 from clickhouse_connect import get_client
 
@@ -101,6 +103,43 @@ def enrich_meta(request: Request) -> dict:
         'device_type': 'mobile' if 'Mobile' in ua_string else 'desktop',
         'is_bot': ua.is_bot or 'bot' in ua_string.lower(),
     }
+
+
+def do_default_campaign():
+    # select default campaign for domain
+    # if no campaign found, return None
+    # else do campaign rules
+
+    return show_landing('test')
+
+
+def do_campaign_rules(campaign_id: int):
+    # select all rules for campaign
+    # if no rules found, return None
+    # else do campaign rules
+
+    return show_landing('test')
+
+
+def show_landing(folder: str) -> str:
+
+    index_php = os.path.join("landings", folder, "index.php")
+    index_html = os.path.join("landings", folder, "index.html")
+
+    print(index_php, os.path.exists(index_php))
+    if os.path.exists(index_php) or os.path.exists(index_html):
+        url = f"https://tracker_nginx/l/{folder}"
+        print(url)
+        r = requests.get(url, verify=False) #, data={"name": "Anton"})
+        print(r.text)
+        return r.text
+    else:
+        return "404 Not Found"
+
+@app.get("/")
+def domain_page_default_campaign() -> Response:
+    html = do_default_campaign()
+    return Response(content=html, media_type="text/html")
 
 
 @app.post("/{campaign_alias}")
