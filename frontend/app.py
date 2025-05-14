@@ -218,6 +218,7 @@ async def track_event(campaign, request: Request):
     # ❗ Удаляем все поля со значением None
     result_row = {k: v for k, v in result_row.items() if v is not None}
 
+    # TODO: POSTBACK SENDING ASYNC WITHOUT AWAIT
     try:
         columns = list(result_row.keys())
         values = [list(result_row.values())]
@@ -226,6 +227,11 @@ async def track_event(campaign, request: Request):
     except Exception as e:
         log_track(f"❌ ClickHouse insert failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ClickHouse error: {e}")
+
+
+@app.post("/pb")
+def postback_receive():
+    return {"status": "ok"}
 
 
 # track and do campaign rules
