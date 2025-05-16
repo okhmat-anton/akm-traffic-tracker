@@ -258,8 +258,16 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
 
     # SCHEMA: redirect_campaign ++++
     elif schema == "redirect_campaign":
+        campaign_id = flow.get("redirect_campaign")
+
+        if campaign_id:
+            async with pg.acquire() as conn:
+                campaign = await conn.fetchrow("SELECT * FROM campaigns WHERE id = $1", campaign_id)
+                log_track(f"🔁 campaign for redirect - '{campaign}'")
+                if campaign:
+                    return await do_campaign_execution(campaign, request)
         return render_404_html()
-        # return RedirectResponse(flow.get("redirect_campaign_url"))
+        # return RedirectResponse(flow.get("redirect_campaign"))
 
     # SCHEMA: return_404 +++
     elif schema == "return_404":

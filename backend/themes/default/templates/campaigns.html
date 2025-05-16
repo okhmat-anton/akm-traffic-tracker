@@ -661,19 +661,23 @@
                                     </v-col>
 
                                     <v-col cols="12" v-if="flowForm.schema === 'redirect_campaign'">
-                                        <v-text-field
-                                                v-model="flowForm.redirect_campaign_url"
-                                                label="Target Campaign URL"
-                                                placeholder="https://yourdomain.com/click/campaign2?sub1={sub1}"
+                                        <v-select
+                                                v-model="flowForm.redirect_campaign"
+                                                :items="campaigns"
+                                                item-text="name"
+                                                item-value="id"
+                                                label="Target Campaign"
                                                 outlined
                                                 dense
                                                 required
-                                        ></v-text-field>
+                                        ></v-select>
+
                                         <v-alert type="info" text dense>
                                             This flow will redirect the visitor to another campaign. Make sure tracking
                                             parameters are preserved.
                                         </v-alert>
                                     </v-col>
+
                                 </v-row>
                             </v-container>
                         </v-tab-item>
