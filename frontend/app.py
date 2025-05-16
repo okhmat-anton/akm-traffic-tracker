@@ -1,3 +1,5 @@
+import random
+
 from fastapi import FastAPI, Request, HTTPException, Response
 from fastapi.responses import RedirectResponse
 import httpagentparser
@@ -10,6 +12,7 @@ from user_agents import parse as parse_ua
 import re
 import os
 import requests
+from pathlib import Path
 
 from clickhouse_connect import get_client
 
@@ -106,7 +109,7 @@ def enrich_meta(request: Request) -> dict:
     }
 
 
-def show_landing(folder: str) -> Response:
+async def show_landing(folder: str, offer_id: str = None) -> Response:
     index_php = os.path.join("landings", folder, "index.php")
     index_html = os.path.join("landings", folder, "index.html")
 
@@ -114,7 +117,14 @@ def show_landing(folder: str) -> Response:
     if os.path.exists(index_php) or os.path.exists(index_html):
         url = f"https://tracker_nginx/l/{folder}"
         r = requests.get(url, verify=False)  # , data={"name": "Anton"})
-        return Response(content=r.text, media_type="text/html")
+        html = r.text
+        # if offer_id:
+        #     offer_url = get_offer_url(offer_id)
+        #     html += f"<script>setTimeout(() => window.location.href='{offer_url}', 1000);</script>"
+        if offer_id:
+            offer_url = get_offer_url(offer_id)
+            html = html.replace("{offer_url}", offer_url)
+        return Response(content=html, media_type="text/html")
     else:
         return Response(content="404 Not Found", status_code=404, media_type="text/html")
 
@@ -139,6 +149,15 @@ async def get_default_campaign_from_db(domain: str):
         return None
 
 
+def render_404_html() -> Response:
+    path = Path("static/404.html")
+    if path.exists():
+        html = path.read_text(encoding="utf-8")
+    else:
+        html = "<h1>404 Not Found</h1>"
+    return Response(content=html, status_code=404, media_type="text/html")
+
+
 @app.get("/")
 async def domain_page_default_campaign(request: Request) -> Response:
     host = request.headers.get("host")
@@ -157,14 +176,56 @@ async def domain_page_default_campaign(request: Request) -> Response:
 async def do_campaign_execution(campaign, request: Request) -> Response:
     log_track(f"🔁 New campaign execution call for '{campaign}'")
 
-    # read campaign flow
     config = json.loads(campaign["config"])
-    flow = config.get("flows", [])
-    log_track(flow)
+    flows = config.get("flows", [])
+    log_track(flows)
 
-    return do_redirect('https://babber.app')
+    # Найти включённый поток (пример: первый enabled)
+    flow = next((f for f in flows if f.get("enabled")), None)
+    if not flow:
+        raise HTTPException(status_code=404, detail="No active flow")
 
-    return  show_landing('test')
+    schema = flow.get("schema")
+
+    # SCHEMA: direct
+    if schema == "direct":
+        offer_url = get_offer_url(flow.get("offer"))
+        return RedirectResponse(offer_url)
+
+    # SCHEMA: landing → offer
+    elif schema == "landing_offer":
+        return await show_landing(flow.get("landing"), offer_id=flow.get("offer"))
+
+    # SCHEMA: landing only
+    elif schema == "landing_only":
+        return await show_landing(flow.get("landing"))
+
+    # SCHEMA: multi
+    elif schema == "multi":
+        # Pick random landing and offer
+        landing_id = random.choice(flow.get("landings", []))
+        offer_id = random.choice(flow.get("offers", []))
+        return await show_landing(landing_id, offer_id)
+
+    # SCHEMA: redirect
+    elif schema == "redirect":
+        return RedirectResponse(flow.get("redirect_url"))
+
+    # SCHEMA: redirect_campaign ++++
+    elif schema == "redirect_campaign":
+        return RedirectResponse(flow.get("redirect_campaign_url"))
+
+    # SCHEMA: return_404 +++
+    elif schema == "return_404":
+        return render_404_html()
+
+    # Default fallback
+    return render_404_html()
+
+
+def get_offer_url(offer_id: str) -> str:
+    # Пример: подставить ID в реальный URL
+    return f"https://offers.yourdomain.com/offer/{offer_id}"
 
 
 async def track_event(campaign, request: Request):
