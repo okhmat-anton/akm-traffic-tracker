@@ -243,7 +243,14 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
         # Pick random landing and offer
         landing_id = random.choice(flow.get("landings", []))
         offer_id = random.choice(flow.get("offers", []))
-        return await show_landing(landing_id, offer_id)
+
+        if landing_id:
+            async with pg.acquire() as conn:
+                row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing_id)
+                if row:
+                    landing_folder = row["folder"]
+                    return await show_landing(landing_folder, offer_id=offer_id)
+        return render_404_html()
 
     # SCHEMA: redirect
     elif schema == "redirect":
@@ -251,7 +258,8 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
 
     # SCHEMA: redirect_campaign ++++
     elif schema == "redirect_campaign":
-        return RedirectResponse(flow.get("redirect_campaign_url"))
+        return render_404_html()
+        # return RedirectResponse(flow.get("redirect_campaign_url"))
 
     # SCHEMA: return_404 +++
     elif schema == "return_404":
