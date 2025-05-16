@@ -202,6 +202,8 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
     flows = config.get("flows", [])
     log_track(flows)
 
+    pg = app.state.pg
+
     # Найти включённый поток (пример: первый enabled)
     flow = next((f for f in flows if f.get("enabled")), None)
     if not flow:
@@ -216,11 +218,25 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
 
     # SCHEMA: landing → offer
     elif schema == "landing_offer":
-        return await show_landing(flow.get("landing"), offer_id=flow.get("offer"))
+        landing = flow.get("landing")
+        if landing:
+            async with pg.acquire() as conn:
+                row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing)
+                if row:
+                    landing_folder = row["folder"]
+                    return await show_landing(landing_folder, offer_id=flow.get("offer"))
+        return render_404_html()
 
     # SCHEMA: landing only
     elif schema == "landing_only":
-        return await show_landing(flow.get("landing"))
+        landing = flow.get("landing")
+        if landing:
+            async with pg.acquire() as conn:
+                row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing)
+                if row:
+                    landing_folder = row["folder"]
+                    return await show_landing(landing_folder)
+        return render_404_html()
 
     # SCHEMA: multi
     elif schema == "multi":
