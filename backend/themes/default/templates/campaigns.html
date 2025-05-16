@@ -24,6 +24,7 @@
                                 <v-card-actions>
                                     <v-spacer></v-spacer>
                                     <v-btn text color="grey" @click="confirmCancel">Cancel</v-btn>
+                                    <v-btn text color="blue" @click="update">Update</v-btn>
                                     <v-btn text color="success" @click="save" class="mr-5">Save</v-btn>
                                 </v-card-actions>
                             </v-col>
@@ -425,6 +426,12 @@
                                                         <b>{{ offerMap[flow.offer] || '—' }}</b>
                                                       </span>
                                                 </div>
+                                                <div v-if="flow.notes">
+                                                  <span class="mr-3">
+                                                    Notes:
+                                                    <b>{{ flow.notes || '—' }}</b>
+                                                  </span>
+                                                </div>
                                             </v-card-text>
                                         </v-card>
                                     </v-col>
@@ -439,6 +446,7 @@
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text color="grey" @click="confirmCancel">Cancel</v-btn>
+                    <v-btn text color="blue" @click="update">Update</v-btn>
                     <v-btn text color="success" @click="save">Save</v-btn>
                 </v-card-actions>
             </v-card>
@@ -452,39 +460,80 @@
 
                 <v-card-text>
                     <v-tabs v-model="activeFlowTab" dark>
-                        <v-tab>Main</v-tab>
-                        <v-tab>Schema</v-tab>
+                        <v-tab>Flow Settings</v-tab>
                         <v-tab>Filters</v-tab>
+                        <v-tab>Schema</v-tab>
                         <v-tab>Notes</v-tab>
                     </v-tabs>
 
                     <v-tabs-items v-model="activeFlowTab">
                         <!-- MAIN TAB -->
                         <v-tab-item>
+                      <v-container>
+                        <v-row dense>
+                          <!-- Название потока -->
+                          <v-col cols="12">
+                            <v-text-field
+                              v-model="flowForm.name"
+                              label="Flow Name"
+                              outlined
+                              dense
+                              required
+                            ></v-text-field>
+                          </v-col>
+
+                          <!-- Тип потока -->
+                          <v-col cols="12">
+                            <v-select
+                              v-model="flowForm.type"
+                              :items="['regular', 'forced', 'default']"
+                              label="Flow Type"
+                              outlined
+                              dense
+                            ></v-select>
+                          </v-col>
+
+                          <!-- Позиция и Вес (только если не default) -->
+                          <v-col cols="6" v-if="flowForm.type !== 'default'">
+                            <v-text-field
+                              v-model.number="flowForm.position"
+                              label="Position"
+                              type="number"
+                              outlined
+                              dense
+                            ></v-text-field>
+                          </v-col>
+
+                          <v-col cols="6" v-if="flowForm.type !== 'default'">
+                            <v-text-field
+                              v-model.number="flowForm.weight"
+                              label="Weight (%)"
+                              type="number"
+                              outlined
+                              dense
+                            ></v-text-field>
+                          </v-col>
+
+                          <!-- Включение и сбор кликов -->
+                          <v-col cols="6">
+                            <v-switch
+                              v-model="flowForm.enabled"
+                              label="Enabled"
+                              inset
+                              dense
+                            ></v-switch>
+                          </v-col>
+                        </v-row>
+                      </v-container>
+                    </v-tab-item>
+
+                        <!-- FILTERS TAB -->
+                        <v-tab-item>
                             <v-container>
                                 <v-row dense>
                                     <v-col cols="12">
-                                        <v-text-field label="Flow Name" v-model="flowForm.name" outlined dense
-                                                      required></v-text-field>
-                                    </v-col>
-                                    <v-col cols="12">
-                                        <v-select v-model="flowForm.type" :items="['regular','forced', 'default']"
-                                                  label="Flow Type" outlined dense></v-select>
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <v-text-field label="Position" v-model="flowForm.position" type="number"
-                                                      outlined dense></v-text-field>
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <v-text-field label="Weight (%)" v-model="flowForm.weight" type="number"
-                                                      outlined dense></v-text-field>
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <v-switch label="Enabled" v-model="flowForm.enabled" inset dense></v-switch>
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <v-switch label="Collect Clicks" v-model="flowForm.collect_clicks" inset
-                                                  dense></v-switch>
+                                        <v-textarea label="Filters JSON" v-model="flowForm.filters" outlined auto-grow
+                                                    dense></v-textarea>
                                     </v-col>
                                 </v-row>
                             </v-container>
@@ -495,28 +544,135 @@
                             <v-container>
                                 <v-row dense>
                                     <v-col cols="12">
-                                        <v-select v-model="flowForm.schema" :items="['split', 'direct', 'action']"
-                                                  label="Flow Schema" outlined dense></v-select>
+                                        <v-select
+                                                v-model="flowForm.schema"
+                                                :items="[
+                                                    { text: 'Direct redirect to Offer', value: 'direct' },
+                                                    { text: 'Landing → Offer', value: 'landing_offer' },
+                                                    { text: 'Landing Only', value: 'landing_only' },
+                                                    { text: 'Multi Landing/Offer', value: 'multi' },
+                                                    { text: 'Redirect to URL', value: 'redirect' },
+                                                    { text: 'Return 404 (Not Found)', value: 'return_404' },
+                                                    { text: 'Redirect to Another Campaign', value: 'redirect_campaign' }
+                                                  ]"
+                                                label="Flow Schema"
+                                                outlined
+                                                dense
+                                        ></v-select>
                                     </v-col>
-                                    <v-col cols="12">
-                                        <v-select v-model="flowForm.landing" :items="landings" item-text="name"
-                                                  item-value="id" label="Landing Pages" outlined dense></v-select>
-                                    </v-col>
-                                    <v-col cols="12">
-                                        <v-select v-model="flowForm.offer" :items="offers" item-text="name"
-                                                  item-value="id" label="Offers" outlined dense></v-select>
-                                    </v-col>
-                                </v-row>
-                            </v-container>
-                        </v-tab-item>
 
-                        <!-- FILTERS TAB -->
-                        <v-tab-item>
-                            <v-container>
-                                <v-row dense>
-                                    <v-col cols="12">
-                                        <v-textarea label="Filters JSON" v-model="flowForm.filters" outlined auto-grow
-                                                    dense></v-textarea>
+                                    <!-- Direct to Offer -->
+                                    <v-col cols="12" v-if="flowForm.schema === 'direct'">
+                                        <v-select
+                                                v-model="flowForm.offer"
+                                                :items="offers"
+                                                item-text="name"
+                                                item-value="id"
+                                                label="Offer"
+                                                outlined
+                                                dense
+                                        ></v-select>
+                                    </v-col>
+
+                                    <!-- Landing → Offer -->
+                                    <template v-if="flowForm.schema === 'landing_offer'">
+                                        <v-col cols="12">
+                                            <v-select
+                                                    v-model="flowForm.landing"
+                                                    :items="landings"
+                                                    item-text="name"
+                                                    item-value="id"
+                                                    label="Landing Page"
+                                                    outlined
+                                                    dense
+                                            ></v-select>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-select
+                                                    v-model="flowForm.offer"
+                                                    :items="offers"
+                                                    item-text="name"
+                                                    item-value="id"
+                                                    label="Offer"
+                                                    outlined
+                                                    dense
+                                            ></v-select>
+                                        </v-col>
+                                    </template>
+
+                                    <!-- Landing Only -->
+                                    <v-col cols="12" v-if="flowForm.schema === 'landing_only'">
+                                        <v-select
+                                                v-model="flowForm.landing"
+                                                :items="landings"
+                                                item-text="name"
+                                                item-value="id"
+                                                label="Landing Page"
+                                                outlined
+                                                dense
+                                        ></v-select>
+                                    </v-col>
+
+                                    <!-- Multi landing/offer -->
+                                    <template v-if="flowForm.schema === 'multi'">
+                                        <v-col cols="12">
+                                            <v-select
+                                                    v-model="flowForm.landings"
+                                                    :items="landings"
+                                                    item-text="name"
+                                                    item-value="id"
+                                                    label="Landing Pages (multi)"
+                                                    multiple
+                                                    chips
+                                                    outlined
+                                                    dense
+                                            ></v-select>
+                                        </v-col>
+                                        <v-col cols="12">
+                                            <v-select
+                                                    v-model="flowForm.offers"
+                                                    :items="offers"
+                                                    item-text="name"
+                                                    item-value="id"
+                                                    label="Offers (multi)"
+                                                    multiple
+                                                    chips
+                                                    outlined
+                                                    dense
+                                            ></v-select>
+                                        </v-col>
+                                    </template>
+
+                                    <v-col cols="12" v-if="flowForm.schema === 'redirect'">
+                                        <v-text-field
+                                          v-model="flowForm.redirect_url"
+                                          label="Redirect URL"
+                                          placeholder="https://your-redirect-target.com/?param=value"
+                                          outlined
+                                          dense
+                                          required
+                                        ></v-text-field>
+                                      </v-col>
+
+                                    <v-col cols="12" v-if="flowForm.schema === 'return_404'">
+                                      <v-alert type="info" text dense>
+                                        This flow will return HTTP 404 Not Found when triggered. No redirects or offers.
+                                      </v-alert>
+                                    </v-col>
+
+                                    <v-col cols="12" v-if="flowForm.schema === 'redirect_campaign'">
+                                        <v-text-field
+                                                v-model="flowForm.redirect_campaign_url"
+                                                label="Target Campaign URL"
+                                                placeholder="https://yourdomain.com/click/campaign2?sub1={sub1}"
+                                                outlined
+                                                dense
+                                                required
+                                        ></v-text-field>
+                                        <v-alert type="info" text dense>
+                                            This flow will redirect the visitor to another campaign. Make sure tracking
+                                            parameters are preserved.
+                                        </v-alert>
                                     </v-col>
                                 </v-row>
                             </v-container>
@@ -791,72 +947,48 @@
                 },
                 utmParams:
                     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'],
-                flowRules:
-                    [],
-                trafficSources:
-                    [],
-                domains:
-                    [],
-                flowDialog:
-                    false,
-                isEditingFlow:
-                    false,
-
-                activeFlowTab:
-                    0,
+                flowRules: [],
+                trafficSources: [],
+                domains: [],
+                flowDialog: false,
+                isEditingFlow: false,
+                activeFlowTab: 0,
                 flowForm:
                     {
                         name: '',
-                        type:
-                            'regular',
-                        position:
-                            0,
-                        weight:
-                            100,
-                        schema:
-                            '',
-                        enabled:
-                            true,
-                        collect_clicks:
-                            true,
-                        landing:
-                            null,
-                        offer:
-                            null,
-                        filters:
-                            '',
-                        notes:
-                            ''
+                        type: 'regular',
+                        position: 0,
+                        weight: 100,
+                        schema: 'landing_offer',
+                        enabled: true,
+                        landing: null,
+                        offer: null,
+                        offers: [],
+                        filters: '',
+                        notes: '',
+                        redirect_url: '',
+                        redirect_campaign_url: ''
                     }
                 ,
                 editedFlowIndex: null,
-
-                postbackStatusKeys:
-                    ['lead', 'sale', 'rejected', 'upsale', 'pending'],
+                postbackStatusKeys: ['lead', 'sale', 'rejected', 'upsale', 'pending'],
                 newPostback:
                     {
                         url: '',
-                        method:
-                            'GET',
+                        method: 'GET',
                         status:
                             {
                                 lead: true,
-                                sale:
-                                    true,
-                                rejected:
-                                    false,
-                                upsale:
-                                    false,
-                                pending:
-                                    false
+                                sale: true,
+                                rejected: false,
+                                upsale: false,
+                                pending: false
                             }
                     }
                 ,
                 postbackEditorDialog: false,
-                postbackEditorIndex:
-                    null,
-                postbackUrlDraft:
-                    '',
+                postbackEditorIndex: null,
+                postbackUrlDraft: '',
                 postbackMacros:
                     [
                         'ad_campaign_id', 'affiliate_network_name', 'browser', 'browser_version', 'connection_type',
@@ -911,10 +1043,10 @@
             }
         },
         watch: {
-          form: {
-            handler: 'generateTrackingScript',
-            deep: true,
-          }
+            form: {
+                handler: 'generateTrackingScript',
+                deep: true,
+            }
         },
         mounted() {
             this.loadCampaigns();
@@ -1029,22 +1161,22 @@
                               };
                             })();`
                         let result_script = await minifyScript(raw_script_result);
-                        this.trackingScript = `<script async>`+result_script+`<\/script>`;
+                        this.trackingScript = `<script async>` + result_script + `<\/script>`;
                         break;
                     case 'php':
-                        this.trackingScript =  `<?php include('https://cdn.example.com/tracking.php'); ?>`;
+                        this.trackingScript = `<?php include('https://cdn.example.com/tracking.php'); ?>`;
                         break;
                     case 'forced_php':
-                        this.trackingScript =  `<?php header('Location: https://example.com/redirect.php'); ?>`;
+                        this.trackingScript = `<?php header('Location: https://example.com/redirect.php'); ?>`;
                         break;
                     case 'qr':
-                        this.trackingScript =  `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${this.campaignUrl}" alt="QR Code">`;
+                        this.trackingScript = `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${this.campaignUrl}" alt="QR Code">`;
                         break;
                     case 'pixel_email':
-                        this.trackingScript =  `<img src="${this.campaignUrl}" alt="Tracking Pixel" style="display:none;">`;
+                        this.trackingScript = `<img src="${this.campaignUrl}" alt="Tracking Pixel" style="display:none;">`;
                         break;
                     default:
-                        this.trackingScript =  'none';
+                        this.trackingScript = 'none';
                         break;
                 }
             },
@@ -1179,7 +1311,10 @@
                     this.flowDialog = false;
                 }
             },
-            save() {
+            update() {
+                this.save(false);
+            },
+            save(closeDialog = true) {
                 const payload = {
                     name: this.form.name,
                     alias: this.form.alias,
@@ -1237,8 +1372,10 @@
                             text: `Campaign ${this.isEdit ? 'updated' : 'created'} successfully!`
                         });
 
-                        this.dialog = false;
-                        this.resetForm();
+                        if (closeDialog) {
+                            this.dialog = false;
+                            this.resetForm();
+                        }
                         this.loadCampaigns();
                     })
                     .catch(err => {
