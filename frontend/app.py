@@ -12,6 +12,10 @@ from user_agents import parse as parse_ua
 import re
 import os
 import requests
+
+
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from pathlib import Path
 
 from clickhouse_connect import get_client
@@ -171,6 +175,24 @@ async def domain_page_default_campaign(request: Request) -> Response:
     await track_event(campaign, request)
     return await do_campaign_execution(campaign, request)
     # return None
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code in (404, 405):
+        host = request.headers.get("host", "").lower().strip()
+        if host:
+            pg = app.state.pg
+            async with pg.acquire() as conn:
+                row = await conn.fetchrow("SELECT * FROM domains WHERE domain = $1", host)
+                log_track(f"🔁 domain '{row}'")
+                if row['handle_404']=='handle':
+                    log_track('HANDLE 404')
+                    return await domain_page_default_campaign(request)
+
+        return render_404_html()
+    # other errors by default
+    return Response(content=str(exc.detail), status_code=exc.status_code)
 
 
 async def do_campaign_execution(campaign, request: Request) -> Response:
