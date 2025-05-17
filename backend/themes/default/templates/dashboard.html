@@ -148,6 +148,14 @@
                 mainChart: {
                     series: [
                         {
+                            name: 'Visits',
+                            data: []
+                        },
+                        {
+                            name: 'Unique Visits',
+                            data: []
+                        },
+                        {
                             name: 'Clicks',
                             data: []
                         },
@@ -284,6 +292,14 @@
                             const categories = data.chart.labels;
 
                             this.mainChart.series = [
+                                {
+                                    name: 'Visits',
+                                    data: categories.map((label, i) => ({x: label, y: data.chart.visits[i] || 0}))
+                                },
+                                {
+                                    name: 'Unique Visits',
+                                    data: categories.map((label, i) => ({x: label, y: data.chart.unique_visits[i] || 0}))
+                                },
                                 {
                                     name: 'Clicks',
                                     data: categories.map((label, i) => ({x: label, y: data.chart.clicks[i] || 0}))

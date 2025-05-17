@@ -92,9 +92,11 @@ def get_metrics_series(client, filters: Filters, limit: int = 30) -> List[Dict[s
     query = f"""
         SELECT
             toDate(received_at) AS day,
-            count(*) AS clicks,
-            uniq(visitor_id) AS unique_clicks,
-            countIf(status = 'conversion') AS conversions,
+            count(*) AS visits,
+            uniqIf(visitor_id, click IS NULL) AS unique_visits,
+            countIf(click = true) AS clicks,
+            uniqIf(visitor_id, click = true) AS unique_clicks,
+            countIf(status IN ('sale', 'upsale')) AS conversions,
             sumOrNull(toFloat64(cost)) AS cost,
             sumOrNull(toFloat64(revenue)) AS revenue
         FROM clicks_data
@@ -124,6 +126,8 @@ def get_metrics_series(client, filters: Filters, limit: int = 30) -> List[Dict[s
     while current <= end_date:
         row = data_by_day.get(current, {
             "day": current,
+            "visits": 0,
+            "unique_visits": 0,
             "clicks": 0,
             "unique_clicks": 0,
             "conversions": 0,
