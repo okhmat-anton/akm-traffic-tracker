@@ -3,6 +3,7 @@ CREATE TABLE clicks_data (
     campaign_id Nullable(Int),
     offer_id Nullable(Int),
     ad_campaign_id String,
+    click Nullable(Bool),
     status LowCardinality(String),
     external_id String,
     keyword String,
@@ -39,8 +40,7 @@ CREATE TABLE clicks_data (
     ip IPv4,
     is_using_proxy Nullable(Bool),
     is_bot Nullable(Bool),
-    device_type LowCardinality(String),
-    device_brand LowCardinality(String)
+    device_type LowCardinality(String)
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(received_at)

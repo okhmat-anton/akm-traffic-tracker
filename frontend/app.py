@@ -59,7 +59,7 @@ async def shutdown():
 
 VALID_PARAMS = [
     'ad_campaign_id', 'browser', 'campaign_id', 'city', 'connection_type', 'currency',
-    'cost', 'country', 'utm_creative', 'utm_campaign', 'utm_source', 'device_brand', 'device_type', 'external_id', 'ip',
+    'cost', 'country', 'utm_creative', 'utm_campaign', 'utm_source', 'device_type', 'external_id', 'ip',
     'is_bot', 'is_using_proxy', 'isp', 'keyword', 'landing_id', 'language', 'offer_id',
     'os', 'profit', 'referrer', 'region', 'revenue', 'status', 'sub_id_1', 'sub_id_2', 'sub_id_3',
     'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10',

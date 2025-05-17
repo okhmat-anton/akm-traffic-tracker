@@ -19,7 +19,6 @@ DOMAINS = ['example.com', 'demo.site']
 LANGUAGES = ['en-US', 'uk-UA', 'de-DE', 'fr-FR']
 ISPS = ['Comcast', 'AT&T', 'Vodafone', 'Kyivstar']
 DEVICE_TYPES = ['desktop', 'mobile', 'tablet']
-DEVICES = ['Apple', 'Samsung', 'Xiaomi', 'Lenovo']
 
 
 column_names = [
@@ -27,6 +26,7 @@ column_names = [
         'campaign_id',
         'offer_id',
         'ad_campaign_id',
+        'click',
         'status',
         'external_id',
         'keyword',
@@ -63,8 +63,7 @@ column_names = [
         'ip',
         'is_using_proxy',
         'is_bot',
-        'device_type',
-        'device_brand'
+        'device_type'
     ]
 
 def generate_timestamp(day):
@@ -82,6 +81,7 @@ def generate_click_row(day):
         4,  # campaign_id
         random.randint(1, 2),  # offer_id
         f"ad_{random.randint(1000, 9999)}",  # ad_campaign_id
+        random.choice([True, None, None, None, None, None, None, None, None]),  # click
         random.choice(STATUSES),  # status
         f"ext_{random.randint(100000, 999999)}",  # external_id
         f"keyword_{random.randint(1, 100)}",  # keyword
@@ -110,7 +110,6 @@ def generate_click_row(day):
         random.choice([True, False, None]),  # is_using_proxy
         is_bot,  # is_bot
         random.choice(DEVICE_TYPES),  # device_type
-        random.choice(DEVICES)  # device_brand
     ]
 
 

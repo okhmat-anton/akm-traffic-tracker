@@ -76,13 +76,13 @@
                     </v-card-text>
                 </v-card>
             </v-tab-item>
-            <v-tab-item>
+            <!-- v-tab-item>
                 <v-card flat>
                     <v-card-text>
                         <reports-component></reports-component>
                     </v-card-text>
                 </v-card>
-            </v-tab-item>
+            </v-tab-item -->
             {% if is_authenticated_user_type == 'admin' %}
             <v-tab-item>
                 <v-card flat>
@@ -131,7 +131,7 @@
                     "Affiliate Networks",
                     "Offers",
                     "Sources",
-                    "Reports",
+                    // "Reports",
 {% if is_authenticated_user_type == 'admin' %}
             "Domains",
                 "Settings",
@@ -163,16 +163,16 @@
                     case 5:
                         this.$root.$emit('load-sources');
                         break;
+                    // case 6:
+                    //     this.$root.$emit('load-reports');
+                    //     break;
                     case 6:
-                        this.$root.$emit('load-reports');
-                        break;
-                    case 7:
                         this.$root.$emit('load-domains');
                         break;
-                    case 8:
+                    case 7:
                         this.$root.$emit('load-settings');
                         break;
-                    case 9:
+                    case 8:
                         this.$root.$emit('load-users');
                         break;
                 }

@@ -6,6 +6,8 @@ CREATE TYPE campaign_status AS ENUM ('active', 'paused');
 CREATE TYPE redirect_mode AS ENUM ('position', 'weight');
 CREATE TYPE ssl_status_mood AS ENUM ('not_started', 'pending', 'success', 'error');
 
+CREATE TYPE conversion_status AS ENUM ('lead', 'sale', 'upsale', 'rejected', 'hold', 'trash');
+
 -- Создание таблицы пользователей
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -149,6 +151,51 @@ CREATE TABLE campaigns (
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
+
+CREATE TABLE conversions_data (
+    id SERIAL PRIMARY KEY,
+    received_at TIMESTAMP DEFAULT NOW(),
+    click_id VARCHAR(100),
+    campaign_id INTEGER,
+    offer_id INTEGER,
+    ad_campaign_id VARCHAR(100),
+    status conversion_status,
+    external_id VARCHAR(100),
+    payout REAL,
+    revenue REAL,
+    profit REAL,
+    currency VARCHAR(10),
+    transaction_id VARCHAR(100),
+    country VARCHAR(50),
+    region VARCHAR(50),
+    city VARCHAR(50),
+    ip INET,
+    visitor_id VARCHAR(50),
+    sub_id_1 VARCHAR(50),
+    sub_id_2 VARCHAR(50),
+    sub_id_3 VARCHAR(50),
+    sub_id_4 VARCHAR(50),
+    sub_id_5 VARCHAR(50),
+    sub_id_6 VARCHAR(50),
+    sub_id_7 VARCHAR(50),
+    sub_id_8 VARCHAR(50),
+    sub_id_9 VARCHAR(50),
+    sub_id_10 VARCHAR(50),
+    utm_campaign VARCHAR(50),
+    utm_creative VARCHAR(50),
+    utm_source VARCHAR(50),
+    traffic_source_name VARCHAR(100),
+    os VARCHAR(100),
+    isp VARCHAR(100),
+    is_using_proxy BOOLEAN,
+    is_bot BOOLEAN,
+    device_type VARCHAR(50)
+);
+
+CREATE INDEX idx_conversions_received_at ON conversions_data(received_at);
+CREATE INDEX idx_conversions_click_id ON conversions_data(click_id);
+CREATE INDEX idx_conversions_status ON conversions_data(status);
+
 
 -- Добавим начальные данные
 INSERT INTO settings (name, value) VALUES
