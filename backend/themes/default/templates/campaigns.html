@@ -426,6 +426,17 @@
                                                         <b>{{ offerMap[flow.offer] || '—' }}</b>
                                                       </span>
                                                 </div>
+                                                <div>
+                                                  <span v-if="Array.isArray(flow.filters) && flow.filters.length" class="d-block mt-2">
+                                                    Filters:
+                                                    <ul class="pl-4 mb-0">
+                                                      <li v-for="(f, i) in flow.filters" :key="i">
+                                                        <b>{{ f.condition ? f.condition.toUpperCase() : '' }}</b>
+                                                        <span>{{ f.key }} {{ f.operator }} <b>{{ f.value }}</b></span>
+                                                      </li>
+                                                    </ul>
+                                                  </span>
+                                                </div>
                                                 <div v-if="flow.notes">
                                                   <span class="mr-3">
                                                     Notes:
@@ -452,7 +463,7 @@
             </v-card>
         </v-dialog>
 
-        <v-dialog v-if="form.type=='campaign'" v-model="flowDialog" max-width="700px" persistent>
+        <v-dialog v-if="form.type=='campaign'" v-model="flowDialog" max-width="1200px" persistent>
             <v-card dark>
                 <v-card-title>
                     <span class="text-h6">{{ isEditingFlow ? 'Edit Flow' : 'New Flow' }}</span>
@@ -530,14 +541,54 @@
                         <!-- FILTERS TAB -->
                         <v-tab-item>
                             <v-container>
-                                <v-row dense>
-                                    <v-col cols="12">
-                                        <v-textarea label="Filters JSON" v-model="flowForm.filters" outlined auto-grow
-                                                    dense></v-textarea>
+                                <v-row v-for="(filter, index) in flowForm.filters" :key="index" dense align="center">
+                                    <v-col cols="2">
+                                        <v-select
+                                                :items="filterFields"
+                                                v-model="filter.key"
+                                                label="Field"
+                                                dense outlined
+                                        ></v-select>
+                                    </v-col>
+
+                                    <v-col cols="2">
+                                        <v-select
+                                                :items="operators"
+                                                v-model="filter.operator"
+                                                label="Operator"
+                                                dense outlined
+                                        ></v-select>
+                                    </v-col>
+
+                                    <v-col cols="3">
+                                        <v-text-field
+                                                v-model="filter.value"
+                                                label="Value"
+                                                dense outlined
+                                        ></v-text-field>
+                                    </v-col>
+
+                                    <v-col cols="2">
+                                        <v-select
+                                                :items="conditions"
+                                                v-model="filter.condition"
+                                                label="Condition"
+                                                dense outlined
+                                                :disabled="index === 0"
+                                        ></v-select>
+                                    </v-col>
+
+                                    <v-col cols="1">
+                                        <v-btn icon color="red" @click="removeFilter(index)">
+                                            <v-icon>mdi-delete</v-icon>
+                                        </v-btn>
                                     </v-col>
                                 </v-row>
+
+                                <v-btn color="primary" @click="addFilter">+ Add Filter</v-btn>
                             </v-container>
                         </v-tab-item>
+
 
                         <!-- SCHEMA TAB -->
                         <v-tab-item>
@@ -821,6 +872,10 @@
                     {text: 'Updated', value: 'updated_at'},
                     {text: 'Actions', value: 'actions', sortable: false}
                 ],
+
+                filterFields: ["country", "city", "device", "os", "browser", "ip"],
+                operators: ["equals", "not_equals", "contains", "not_contains", "starts_with", "ends_with"],
+                conditions: ["and", "or"],
                 campaigns: [],
                 dialog: false,
                 isEdit: false,
@@ -968,7 +1023,7 @@
                         landing: null,
                         offer: null,
                         offers: [],
-                        filters: '',
+                        filters: [],
                         notes: '',
                         redirect_url: '',
                         redirect_campaign_url: ''
@@ -1057,6 +1112,20 @@
             this.generateTrackingScript();
         },
         methods: {
+            addFilter() {
+                if(!Array.isArray(this.flowForm.filters)) {
+                    this.flowForm.filters = [];
+                }
+                this.flowForm.filters.push({
+                    key: "",
+                    operator: "equals",
+                    value: "",
+                    condition: this.flowForm.filters.length > 0 ? "or" : ""
+                });
+            },
+            removeFilter(index) {
+                this.flowForm.filters.splice(index, 1);
+            },
             addParameter() {
                 this.form.paramsIdMapping.push({
                     name: '',
@@ -1271,9 +1340,10 @@
                         schema: 'split',
                         enabled: true,
                         collect_clicks: true,
-                        landings: '',
-                        offers: '',
-                        filters: ''
+                        landing: null,
+                        landings: [],
+                        offers: [],
+                        filters: []
                     };
                     this.editedFlowIndex = null;
                 }
