@@ -5,8 +5,8 @@
     <profiles>
         <!-- Default settings. -->
         <default>
-                <min_os_cpu_wait_time_ratio_to_throw>10</min_os_cpu_wait_time_ratio_to_throw>
-                <max_os_cpu_wait_time_ratio_to_throw>250</max_os_cpu_wait_time_ratio_to_throw>
+                <min_os_cpu_wait_time_ratio_to_throw>100</min_os_cpu_wait_time_ratio_to_throw>
+                <max_os_cpu_wait_time_ratio_to_throw>2500</max_os_cpu_wait_time_ratio_to_throw>
         </default>
 
         <!-- Profile that allows only read queries. -->
