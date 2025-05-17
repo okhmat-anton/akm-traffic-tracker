@@ -11,7 +11,7 @@ client = get_client(
     database='default'
 )
 
-STATUSES = ['visit', 'conversion', 'rejected']
+STATUSES = ['lead','lead','lead','lead','lead','lead','lead','lead','lead','lead','lead','lead','lead','lead','lead','lead', 'sale', 'upsale', 'rejected', 'hold', 'trash']
 BROWSERS = ['Chrome', 'Firefox', 'Safari', 'Edge']
 OS = ['Windows', 'macOS', 'Linux', 'Android', 'iOS']
 COUNTRIES = ['US', 'UA', 'DE', 'PL', 'FR', 'IN']
@@ -131,7 +131,7 @@ def seed_all():
     base_day = datetime.utcnow().date() - timedelta(days=40)
     for i in range(40):
         day = base_day + timedelta(days=i)
-        count_clicks = random.randint(1000, 5000)
+        count_clicks = random.randint(50, 250)
         seed_day(day, count_clicks)
 
 
