@@ -386,8 +386,12 @@
                                 <v-row dense v-for="(flow, index) in form.flows" :key="index" class="mb-2 mr-5">
                                     <v-col cols="12">
                                         <v-card outlined
-                                                :style="flow.type === 'forced' ? 'background-color: #25191b; border-color:#fff;' : ''"
-
+                                                :style="
+                                                flow.type === 'forced'
+                                                    ? 'background-color: #25191b; border-color: #fff; color: #fff;'
+                                                    : flow.type === 'default'
+                                                    ? 'background-color: rgb(15, 34, 48); border-color: #2196f3;'
+                                                    : ''"
                                         >
                                             <v-card-title class="d-flex justify-space-between align-center">
                                                 <v-col cols="2">
@@ -399,12 +403,13 @@
                                                            :disabled="index === form.flows.length - 1">
                                                         <v-icon>mdi-arrow-down</v-icon>
                                                     </v-btn>
+                                                    {{ flow.enabled==true ? 'ON' : 'OFF' }}
                                                 </v-col>
                                                 <v-col cols="7">
                                                     <strong>{{ flow.name }}</strong>
                                                     <span class="ml-2 grey--text text--darken-1">({{ flow.type }})</span>
                                                 </v-col>
-                                                <v-col cols="3">
+                                                <v-col cols="3" class="text-right">
                                                     <v-btn text color="orange" @click="openFlowEdit(flow, index)">
                                                         Edit
                                                     </v-btn>
@@ -475,7 +480,7 @@
                 <v-card-text>
                     <v-tabs v-model="activeFlowTab" dark>
                         <v-tab>Flow Settings</v-tab>
-                        <v-tab>Filters</v-tab>
+                        <v-tab  v-if="flowForm.type !== 'default'">Filters</v-tab>
                         <v-tab>Schema</v-tab>
                         <v-tab>Notes</v-tab>
                     </v-tabs>
@@ -542,7 +547,7 @@
                     </v-tab-item>
 
                         <!-- FILTERS TAB -->
-                        <v-tab-item>
+                        <v-tab-item v-if="flowForm.type !== 'default'">
                             <v-container>
                                 <v-row v-for="(filter, index) in flowForm.filters" :key="index" dense align="center">
                                     <v-col cols="2">
@@ -876,7 +881,13 @@
                     {text: 'Actions', value: 'actions', sortable: false}
                 ],
 
-                filterFields: ["country", "city", "device", "os", "browser", "ip"],
+                filterFields: ["country", "city", "device", "os", "browser", "ip", 'ad_campaign_id', 'browser',
+                    'campaign_id', 'connection_type', 'currency',
+                    'cost', 'utm_creative', 'utm_campaign', 'utm_source', 'device_type', 'external_id',
+                    'is_bot', 'is_using_proxy', 'isp', 'keyword', 'landing_id', 'language', 'offer_id',
+                    'profit', 'referrer', 'region', 'revenue', 'status', 'sub_id_1', 'sub_id_2', 'sub_id_3',
+                    'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10',
+                    'traffic_source_name', 'url', 'visitor_id'],
                 operators: ["equals", "not_equals", "contains", "not_contains", "starts_with", "ends_with"],
                 conditions: ["and", "or"],
                 campaigns: [],
@@ -1368,6 +1379,10 @@
                     return;
                 }
 
+                if(this.flowForm.type == 'default') {
+                    this.flowForm.filters = [];
+                }
+
                 if (this.isEditingFlow && this.editedFlowIndex !== null) {
                     // Обновляем flow по индексу
                     this.form.flows.splice(this.editedFlowIndex, 1, {...this.flowForm});
@@ -1379,14 +1394,22 @@
                 this.editedFlowIndex = null;
                 // this.form.flows.sort((a, b) => a.position - b.position);
                 this.form.flows.sort((a, b) => {
-                    const aPriority = a.type === 'forced' ? 0 : 1;
-                    const bPriority = b.type === 'forced' ? 0 : 1;
+                    const getPriority = (flow) => {
+                        if (flow.type === 'forced') return 0;   // выше всех
+                        if (flow.type === 'regular') return 1;  // по позиции
+                        if (flow.type === 'default') return 2;  // в конец
+                        return 3; // неизвестный тип — ещё ниже
+                    };
 
-                    if (aPriority !== bPriority) {
-                        return aPriority - bPriority; // forced выше
+                    const priorityA = getPriority(a);
+                    const priorityB = getPriority(b);
+
+                    if (priorityA !== priorityB) {
+                        return priorityA - priorityB;
                     }
 
-                    return (a.position || 9999) - (b.position || 9999); // потом по позиции
+                    // если тип одинаковый (например, оба regular) — сортируем по позиции
+                    return (a.position || 9999) - (b.position || 9999);
                 });
                 this.updateFlowPositions();
 

@@ -87,7 +87,7 @@ def log_track(message: str):
         TRACK_LOG.pop(0)
 
 
-def enrich_meta(request: Request) -> dict:
+async def enrich_meta(request: Request) -> dict:
     ua_string = request.headers.get('user-agent', '') or ''
     parsed = httpagentparser.detect(ua_string)
     ua = parse_ua(ua_string)
@@ -95,23 +95,50 @@ def enrich_meta(request: Request) -> dict:
     language = request.headers.get('accept-language', '')
     country_code = None
     if language:
-        # Пример: 'en-US,en;q=0.9' → 'US'
         match = re.search(r'-([A-Z]{2})', language)
         if match:
             country_code = match.group(1)
 
-    return {
-        'received_at': datetime.utcnow(),
-        'ip': request.client.host,
-        'referrer': request.headers.get('referer'),
-        'current_domain': request.headers.get('host'),
-        'language': request.headers.get('accept-language'),
-        'country': country_code,
-        'browser': parsed.get('browser', {}).get('name'),
-        'os': parsed.get('os', {}).get('name'),
-        'device_type': 'mobile' if 'Mobile' in ua_string else 'desktop',
-        'is_bot': ua.is_bot or 'bot' in ua_string.lower(),
+    # Параметры GET
+    query_params = dict(request.query_params)
+
+    # Параметры POST
+    try:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            post_data = await request.json()
+        elif "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+            post_data = dict(await request.form())
+        else:
+            post_data = {}
+    except Exception:
+        post_data = {}
+
+    # Cookies
+    cookies = request.cookies
+
+    # Собираем всё в один плоский словарь
+    meta = {
+        "received_at": datetime.utcnow().isoformat(),
+        "ip": request.client.host,
+        "referrer": request.headers.get("referer"),
+        "current_domain": request.headers.get("host"),
+        "language": language,
+        "country": country_code,
+        "browser": parsed.get("browser", {}).get("name"),
+        "os": parsed.get("os", {}).get("name"),
+        "device_type": "mobile" if "Mobile" in ua_string else "desktop",
+        "is_bot": ua.is_bot or "bot" in ua_string.lower(),
+        "user_agent": ua_string,
     }
+
+    # Добавляем query, post, cookie параметры напрямую
+    for k, v in {**query_params, **post_data, **cookies}.items():
+        if k not in meta:  # не перезаписываем базовые ключи
+            meta[k] = v
+
+    return meta
+
 
 
 async def show_landing(folder: str, offer_id: str = None) -> Response:
@@ -268,7 +295,7 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
     log_track('ALL FLOWS SORTED')
     log_track(sorted_flows)
 
-    meta_data = enrich_meta(request)
+    meta_data = await enrich_meta(request)
     log_track(meta_data)
 
     for flow in sorted_flows:
@@ -392,7 +419,7 @@ async def track_event(campaign, request: Request):
     }
 
     # Добавляем обогащённые поля
-    meta = enrich_meta(request)
+    meta = await enrich_meta(request)
     for k, v in meta.items():
         if k in VALID_PARAMS:
             result_row[k] = v
