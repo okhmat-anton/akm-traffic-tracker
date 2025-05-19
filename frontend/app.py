@@ -1,7 +1,8 @@
 import random
 
 from fastapi import FastAPI, Request, HTTPException, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.encoders import jsonable_encoder
 import httpagentparser
 from datetime import datetime
 import asyncpg
@@ -195,6 +196,57 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
     return Response(content=str(exc.detail), status_code=exc.status_code)
 
 
+def check_filters(meta: dict, filters: list, request: Request) -> bool:
+    result = None
+
+    for idx, f in enumerate(filters):
+        key = f.get("key")
+        op = f.get("operator")
+        val = str(f.get("value", "")).strip()
+        condition = f.get("condition", "").lower()
+
+        ctx_val = str(meta.get(key, "")).strip()
+
+        match op:
+            case "equals":
+                passed = ctx_val == val
+            case "not_equals":
+                passed = ctx_val != val
+            case "contains":
+                passed = val in ctx_val
+            case "not_contains":
+                passed = val not in ctx_val
+            case "starts_with":
+                passed = ctx_val.startswith(val)
+            case "ends_with":
+                passed = ctx_val.endswith(val)
+            case "greater":
+                try:
+                    passed = float(ctx_val) > float(val)
+                except:
+                    passed = False
+            case "less":
+                try:
+                    passed = float(ctx_val) < float(val)
+                except:
+                    passed = False
+            case "in":
+                passed = ctx_val in val.split(",")
+            case "not_in":
+                passed = ctx_val not in val.split(",")
+            case _:
+                passed = False
+
+        if idx == 0 or condition == "":
+            result = passed
+        elif condition == "and":
+            result = result and passed
+        elif condition == "or":
+            result = result or passed
+
+    return bool(result)
+
+
 async def do_campaign_execution(campaign, request: Request) -> Response:
     log_track(f"🔁 New campaign execution call for '{campaign}'")
 
@@ -204,74 +256,95 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
 
     pg = app.state.pg
 
-    # Найти включённый поток (пример: первый enabled)
-    flow = next((f for f in flows if f.get("enabled")), None)
-    if not flow:
-        raise HTTPException(status_code=404, detail="No active flow")
+    # FORCED FLOWS FIRST
+    sorted_flows = sorted(
+        flows,
+        key=lambda f: (
+            0 if f.get("type") == "forced" else 1,  # forced сначала
+            f.get("position", 9999)  # потом по position
+        )
+    )
 
-    schema = flow.get("schema")
+    log_track('ALL FLOWS SORTED')
+    log_track(sorted_flows)
 
-    # SCHEMA: direct
-    if schema == "direct":
-        offer_url = get_offer_url(flow.get("offer"))
-        return RedirectResponse(offer_url)
+    meta_data = enrich_meta(request)
+    log_track(meta_data)
 
-    # SCHEMA: landing → offer
-    elif schema == "landing_offer":
-        landing = flow.get("landing")
-        if landing:
-            async with pg.acquire() as conn:
-                row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing)
-                if row:
-                    landing_folder = row["folder"]
-                    return await show_landing(landing_folder, offer_id=flow.get("offer"))
-        return render_404_html()
+    for flow in sorted_flows:
+        if not flow.get("enabled"):
+            continue
 
-    # SCHEMA: landing only
-    elif schema == "landing_only":
-        landing = flow.get("landing")
-        if landing:
-            async with pg.acquire() as conn:
-                row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing)
-                if row:
-                    landing_folder = row["folder"]
-                    return await show_landing(landing_folder)
-        return render_404_html()
+        if not flow:
+            raise HTTPException(status_code=404, detail="No active flow")
 
-    # SCHEMA: multi
-    elif schema == "multi":
-        # Pick random landing and offer
-        landing_id = random.choice(flow.get("landings", []))
-        offer_id = random.choice(flow.get("offers", []))
+        filters = flow.get("filters", [])
+        if not check_filters(meta_data, filters, request):
+            continue
 
-        if landing_id:
-            async with pg.acquire() as conn:
-                row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing_id)
-                if row:
-                    landing_folder = row["folder"]
-                    return await show_landing(landing_folder, offer_id=offer_id)
-        return render_404_html()
+        schema = flow.get("schema")
 
-    # SCHEMA: redirect
-    elif schema == "redirect":
-        return RedirectResponse(flow.get("redirect_url"))
+        # SCHEMA: direct
+        if schema == "direct":
+            offer_url = get_offer_url(flow.get("offer"))
+            return RedirectResponse(offer_url)
 
-    # SCHEMA: redirect_campaign ++++
-    elif schema == "redirect_campaign":
-        campaign_id = flow.get("redirect_campaign")
+        # SCHEMA: landing → offer
+        elif schema == "landing_offer":
+            landing = flow.get("landing")
+            if landing:
+                async with pg.acquire() as conn:
+                    row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing)
+                    if row:
+                        landing_folder = row["folder"]
+                        return await show_landing(landing_folder, offer_id=flow.get("offer"))
+            return render_404_html()
 
-        if campaign_id:
-            async with pg.acquire() as conn:
-                campaign = await conn.fetchrow("SELECT * FROM campaigns WHERE id = $1", campaign_id)
-                log_track(f"🔁 campaign for redirect - '{campaign}'")
-                if campaign:
-                    return await do_campaign_execution(campaign, request)
-        return render_404_html()
-        # return RedirectResponse(flow.get("redirect_campaign"))
+        # SCHEMA: landing only
+        elif schema == "landing_only":
+            landing = flow.get("landing")
+            if landing:
+                async with pg.acquire() as conn:
+                    row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing)
+                    if row:
+                        landing_folder = row["folder"]
+                        return await show_landing(landing_folder)
+            return render_404_html()
 
-    # SCHEMA: return_404 +++
-    elif schema == "return_404":
-        return render_404_html()
+        # SCHEMA: multi
+        elif schema == "multi":
+            # Pick random landing and offer
+            landing_id = random.choice(flow.get("landings", []))
+            offer_id = random.choice(flow.get("offers", []))
+
+            if landing_id:
+                async with pg.acquire() as conn:
+                    row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing_id)
+                    if row:
+                        landing_folder = row["folder"]
+                        return await show_landing(landing_folder, offer_id=offer_id)
+            return render_404_html()
+
+        # SCHEMA: redirect
+        elif schema == "redirect":
+            return RedirectResponse(flow.get("redirect_url"))
+
+        # SCHEMA: redirect_campaign ++++
+        elif schema == "redirect_campaign":
+            campaign_id = flow.get("redirect_campaign")
+
+            if campaign_id:
+                async with pg.acquire() as conn:
+                    campaign = await conn.fetchrow("SELECT * FROM campaigns WHERE id = $1", campaign_id)
+                    log_track(f"🔁 campaign for redirect - '{campaign}'")
+                    if campaign:
+                        return await do_campaign_execution(campaign, request)
+            return render_404_html()
+            # return RedirectResponse(flow.get("redirect_campaign"))
+
+        # SCHEMA: return_404 +++
+        elif schema == "return_404":
+            return render_404_html()
 
     # Default fallback
     return render_404_html()
@@ -379,4 +452,4 @@ async def post_with_campaign_alias(campaign_alias: str, request: Request):
 
 @app.get("/_akm_tracker_debug")
 def show_logs():
-    return TRACK_LOG[-50:]  # последние 50 событий
+    return JSONResponse(content=jsonable_encoder(TRACK_LOG[-50:]))
