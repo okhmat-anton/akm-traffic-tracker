@@ -87,7 +87,7 @@ def log_track(message: str):
         TRACK_LOG.pop(0)
 
 
-async def enrich_meta(request: Request) -> dict:
+async def enrich_meta(request: Request, params_id_mapping: list = None) -> dict:
     ua_string = request.headers.get('user-agent', '') or ''
     parsed = httpagentparser.detect(ua_string)
     ua = parse_ua(ua_string)
@@ -132,10 +132,32 @@ async def enrich_meta(request: Request) -> dict:
         "user_agent": ua_string,
     }
 
+    combined = {**query_params, **post_data, **cookies}
+
     # Добавляем query, post, cookie параметры напрямую
-    for k, v in {**query_params, **post_data, **cookies}.items():
+    for k, v in combined.items():
         if k not in meta:  # не перезаписываем базовые ключи
             meta[k] = v
+
+    log_track('params_id_mapping')
+    log_track(params_id_mapping)
+
+    if params_id_mapping:
+        for param in params_id_mapping:
+            param_key = param.get("parameter")  # например: sub_id_2
+            token_key = param.get("token", "").strip()  # например: var_in
+
+            if not param_key:
+                continue
+
+            # Если токен есть и он пришёл в запросе
+            if token_key and token_key in combined:
+                value = combined[token_key]
+                meta[token_key] = value
+                meta[param_key] = value
+            # Если токена нет — пробуем по параметру напрямую
+            elif param_key in combined:
+                meta[param_key] = combined[param_key]
 
     return meta
 
@@ -274,6 +296,19 @@ def check_filters(meta: dict, filters: list, request: Request) -> bool:
     return bool(result)
 
 
+def get_params_id_mapping_from_campaign(campaign: dict) -> list:
+    config_str = campaign.get("config")
+    if not config_str:
+        return []
+
+    try:
+        config = json.loads(config_str)
+        return config.get("paramsIdMapping", [])
+    except json.JSONDecodeError:
+        return []
+
+
+
 async def do_campaign_execution(campaign, request: Request) -> Response:
     log_track(f"🔁 New campaign execution call for '{campaign}'")
 
@@ -295,7 +330,9 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
     log_track('ALL FLOWS SORTED')
     log_track(sorted_flows)
 
-    meta_data = await enrich_meta(request)
+    paramsIdMapping = get_params_id_mapping_from_campaign(campaign)
+    meta_data = await enrich_meta(request, paramsIdMapping)
+    log_track('META DATA')
     log_track(meta_data)
 
     for flow in sorted_flows:
@@ -419,8 +456,8 @@ async def track_event(campaign, request: Request):
     }
 
     # Добавляем обогащённые поля
-    meta = await enrich_meta(request)
-    for k, v in meta.items():
+    meta_data = await enrich_meta(request, campaign.get("paramsIdMapping"))
+    for k, v in meta_data.items():
         if k in VALID_PARAMS:
             result_row[k] = v
 

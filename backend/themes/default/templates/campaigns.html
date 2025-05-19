@@ -211,7 +211,6 @@
                                     </v-tab-item>
 
                                     <!-- PARAMETERS -->
-                                    <!-- PARAMETERS -->
                                     <v-tab-item>
                                         <v-card flat>
                                             <v-container>
@@ -221,6 +220,19 @@
                                                     </v-col>
                                                 </v-row>
 
+                                                <v-row align="center">
+                                                    <v-col cols="3">
+                                                        Name
+                                                    </v-col>
+                                                    <v-col cols="3">
+                                                        Parameter In System
+                                                    </v-col>
+                                                    <v-col cols="5">
+                                                        Variable Input (empty if same name)
+                                                    </v-col>
+                                                    <v-col cols="1">
+                                                    </v-col>
+                                                </v-row>
                                                 <v-row dense v-for="(mapping, index) in form.paramsIdMapping"
                                                        :key="index" align="center">
                                                     <v-col cols="3">
@@ -1702,14 +1714,14 @@
                     {name: "Cost", parameter: "cost", token: "", editable_name: false},
                     {name: "Currency", parameter: "currency", token: "", editable_name: false},
                     {name: "External ID", parameter: "external_id", token: "", editable_name: false},
-                    {name: "Creative ID", parameter: "utm_creative", token: "{{ad.name}}", editable_name: false},
+                    {name: "Creative ID", parameter: "utm_creative", token: "ad.name", editable_name: false},
                     {
                         name: "AD Campaign ID",
                         parameter: "utm_campaign",
-                        token: "{{campaign.name}}",
+                        token: "campaign.name",
                         editable_name: false
                     },
-                    {name: "Site", parameter: "utm_source", token: "{{site_source_name}}", editable_name: false},
+                    {name: "Site", parameter: "utm_source", token: "site_source_name", editable_name: false},
                     {name: "Sub id 1", parameter: "sub_id_1", token: "", editable_name: true},
                     {name: "Sub id 2", parameter: "sub_id_2", token: "", editable_name: true}
                     // добавь остальные при необходимости
