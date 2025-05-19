@@ -383,11 +383,14 @@
                                     </v-col>
                                 </v-row>
 
-                                <v-row dense v-for="(flow, index) in form.flows" :key="index" class="mb-2">
+                                <v-row dense v-for="(flow, index) in form.flows" :key="index" class="mb-2 mr-5">
                                     <v-col cols="12">
-                                        <v-card outlined>
+                                        <v-card outlined
+                                                :style="flow.type === 'forced' ? 'background-color: #25191b; border-color:#fff;' : ''"
+
+                                        >
                                             <v-card-title class="d-flex justify-space-between align-center">
-                                                <div>
+                                                <v-col cols="2">
                                                     <v-btn icon small @click="moveFlowUp(index)"
                                                            :disabled="index === 0">
                                                         <v-icon>mdi-arrow-up</v-icon>
@@ -396,17 +399,17 @@
                                                            :disabled="index === form.flows.length - 1">
                                                         <v-icon>mdi-arrow-down</v-icon>
                                                     </v-btn>
-                                                </div>
-                                                <div>
+                                                </v-col>
+                                                <v-col cols="7">
                                                     <strong>{{ flow.name }}</strong>
                                                     <span class="ml-2 grey--text text--darken-1">({{ flow.type }})</span>
-                                                </div>
-                                                <div>
+                                                </v-col>
+                                                <v-col cols="3">
                                                     <v-btn text color="orange" @click="openFlowEdit(flow, index)">
                                                         Edit
                                                     </v-btn>
                                                     <v-btn text color="red" @click="removeFlow(index)">Delete</v-btn>
-                                                </div>
+                                                </v-col>
                                             </v-card-title>
 
                                             <v-card-text>
@@ -1374,7 +1377,17 @@
 
                 this.flowDialog = false;
                 this.editedFlowIndex = null;
-                this.form.flows.sort((a, b) => a.position - b.position);
+                // this.form.flows.sort((a, b) => a.position - b.position);
+                this.form.flows.sort((a, b) => {
+                    const aPriority = a.type === 'forced' ? 0 : 1;
+                    const bPriority = b.type === 'forced' ? 0 : 1;
+
+                    if (aPriority !== bPriority) {
+                        return aPriority - bPriority; // forced выше
+                    }
+
+                    return (a.position || 9999) - (b.position || 9999); // потом по позиции
+                });
                 this.updateFlowPositions();
 
             },
