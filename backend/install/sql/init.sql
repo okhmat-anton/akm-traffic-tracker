@@ -158,6 +158,7 @@ CREATE TABLE conversions_data (
     click_id VARCHAR(100),
     campaign_id INTEGER,
     offer_id INTEGER,
+    landing_id INTEGER,
     ad_campaign_id VARCHAR(100),
     status conversion_status,
     external_id VARCHAR(100),
