@@ -119,6 +119,17 @@
                 </v-col>
             </v-row>
 
+            <v-row class="ml-4 mt-2">
+                &nbsp;
+                <v-btn
+                        color="red"
+                        @click="clearData"
+                        outlined
+                >
+                    Delete Clicks & Conversion History Data
+                </v-btn>
+            </v-row>
+
         </v-container>
     </v-container>
 </script>
@@ -155,6 +166,22 @@
               }
         },
         methods: {
+            async clearData() {
+                if (!confirm("Are you sure you want to delete all tracking data?")) return;
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                if (!confirm("Are you REALLY sure you want to DELETE ALL TRACKING  HISTORY DATA?")) return;
+
+                fetch("/backend/api/settings/clear-tracking-data", {
+                    method: "POST"
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.$root.$emit("show-message", {type: "success", text: "Tracking data cleared successfully"});
+                    })
+                    .catch(err => {
+                        this.$root.$emit("show-message", {type: "error", text: "Error clearing data."});
+                    });
+            },
             loadSettings() {
                 fetch("/backend/api/settings/", {
                     credentials: "include"
