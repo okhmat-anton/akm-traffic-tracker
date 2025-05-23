@@ -13,6 +13,7 @@ from user_agents import parse as parse_ua
 import re
 import os
 import requests
+import httpx
 
 
 from fastapi.exceptions import RequestValidationError
@@ -304,7 +305,7 @@ async def save_click_to_db(meta: dict):
 
 
 @app.get("/pb/{click_id}/{status}/{payout}")
-async def postback_receive(click_id:str, status: str, payout: str, request: Request):
+async def postback_receive(click_id:str, status: str, payout: str, request: Request, background_tasks: BackgroundTasks):
     VALID_STATUSES = {"lead", "sale", "upsale", "rejected", "hold", "trash"}
 
     # update status in db but only 'lead', 'sale', 'upsale', 'rejected', 'hold', 'trash'
@@ -324,6 +325,57 @@ async def postback_receive(click_id:str, status: str, payout: str, request: Requ
                                     SET status = $1, payout = $2
                                     WHERE click_id = $3
                                     """, status, payout_value, click_id)
+
+        # try:
+        if True:
+            # запросить компанию по click_id
+            row = await conn.fetchrow("""
+                                      SELECT *
+                                      FROM conversions_data
+                                          JOIN campaigns c on conversions_data.campaign_id = c.id
+                                      WHERE click_id = $1
+                                      """, click_id)
+
+            # log_track(f'postbacks row {click_id}')
+            # log_track(row)
+            if row and row["config"]:
+                config = json.loads(row["config"])
+                # cycle of postbacks
+                postbacks = config.get("postbacks", [])
+                # log_track('postbacks')
+                # log_track(postbacks)
+
+                offer_id = row["offer_id"]
+                # get offer from db
+                offer = await conn.fetchrow("SELECT * FROM offers WHERE id = $1", offer_id)
+                if offer:
+                    we_pay__payout_value = offer["payout"]
+
+                for postback in postbacks:
+                    url = postback.get("url")
+                    if url:
+
+                        # send postback
+                        data = {
+                            "click_id": click_id,
+                            "status": status,
+                            "payout": we_pay__payout_value
+                        }
+                        # если row — asyncpg.Record → преобразуем в dict и мержим
+                        if row:
+                            data.update(dict(row))
+                        post_type = postback.get("method") == "POST"
+                        log_track(f"<UNK> Postback Type: {post_type}")
+                        # await send_postback(url, data, post_type)
+                        background_tasks.add_task(send_postback, url, data, post=True)
+
+
+
+
+        # except:
+        #     log_track(f"<UNK> CAMPAIGN NOT FOUND request {click_id}")
+        #     # log error
+        #     raise HTTPException(status_code=404, detail="Click ID not found")
 
     return JSONResponse(content={"status": "ok", "click_id": click_id, "updated_status": status})
 
@@ -636,6 +688,38 @@ async def track_event(campaign, request: Request):
         log_track(f"❌ ClickHouse insert failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ClickHouse error: {e}")
 
+
+
+async def send_postback(url: str, data: dict, post: bool = False):
+
+    VALID_PARAMS = [
+        'payout','status','click_id', 'browser', 'campaign_id', 'city', 'connection_type', 'currency',
+        'cost', 'country', 'utm_creative', 'utm_campaign', 'utm_source', 'device_type', 'external_id', 'ip',
+        'is_bot', 'is_using_proxy', 'isp', 'keyword', 'landing_id', 'language', 'offer_id',
+        'os', 'profit', 'referrer', 'region', 'revenue', 'status', 'sub_id_1', 'sub_id_2', 'sub_id_3',
+        'sub_id_4', 'sub_id_5', 'sub_id_6', 'sub_id_7', 'sub_id_8', 'sub_id_9', 'sub_id_10',
+        'traffic_source_name', 'url', 'visitor_id'
+    ]
+
+    # 🔒 Отфильтрованные параметры
+    safe_data = {k: str(v) for k, v in data.items() if k in VALID_PARAMS}
+
+    filled_url = url.format(**{k: str(v) for k, v in data.items()})
+
+    log_track(f"<UNK> Sending Postback: {filled_url}")
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            if post:
+                response = await client.post(filled_url, json=safe_data)
+            else:
+                response = await client.get(filled_url, params=safe_data)
+
+        if response.status_code != 200:
+            log_track(f"❌ Postback failed: {response.status_code} - {response.text}")
+
+    except Exception as e:
+        log_track(f"❌ Postback error: {str(e)}")
 
 # track and do campaign rules
 @app.post("/{campaign_alias}")
