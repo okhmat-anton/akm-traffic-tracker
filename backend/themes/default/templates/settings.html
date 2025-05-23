@@ -16,6 +16,17 @@
             <v-row>
                 <v-col cols="12" md="6">
                     <v-card dark flat>
+                        <v-card-title>App postback URL - GET REQUEST to:&nbsp;<code>{{ postbackUrl }}</code> </v-card-title>
+                        <v-card-title>Demo:&nbsp;<code>{{ postbackUrlDemo }}</code> </v-card-title>
+                        <v-card-text>
+                        <b>Statuses can be only: 'lead', 'sale', 'upsale', 'rejected', 'hold', 'trash'</b>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+            <v-row>
+                <v-col cols="12" md="6">
+                    <v-card dark flat>
                         <v-card-title>General Settings</v-card-title>
                         <v-card-text>
                             <v-text-field
@@ -134,6 +145,14 @@
         mounted() {
             this.loadSettings();
             this.$root.$on('load-settings', this.loadSettings);
+        },
+        computed:{
+              postbackUrl() {
+                return `${window.location.origin}/pb/{click_id}/{status}/{payout}`;
+              },
+              postbackUrlDemo() {
+                return `${window.location.origin}/pb/d8f8d388-356b-4063-90ef-6137258b59c1/sale/202.15`;
+              }
         },
         methods: {
             loadSettings() {

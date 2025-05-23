@@ -1,52 +1,59 @@
 {% raw %}
 <script type="text/x-template" id="reports-template">
-  <v-container fluid>
-    <h2>Reports</h2>
+    <v-container fluid>
+        <h2>Reports</h2>
 
-    <v-row dense class="mt-4">
-      <v-col>
-        <v-card>
-          <v-data-table
-            :headers="headers"
-            :items="conversions"
-            :items-per-page="10"
-            class="elevation-1"
-          ></v-data-table>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+        <v-row dense class="mt-4">
+            <v-col>
+                <v-card>
+                    <v-data-table
+                            :headers="headers"
+                            :items="conversions"
+                            :items-per-page="10"
+                            class="elevation-1"
+                    ></v-data-table>
+                </v-card>
+            </v-col>
+        </v-row>
+    </v-container>
 </script>
 
 <script type="application/javascript">
-Vue.component('reports-component', {
-  template: '#reports-template',
-  data() {
-    return {
-      headers: [
-        { text: 'Received At', value: 'received_at' },
-        { text: 'Click ID', value: 'click_id' },
-        { text: 'Campaign ID', value: 'campaign_id' },
-        { text: 'Offer ID', value: 'offer_id' },
-        { text: 'Status', value: 'status' },
-        { text: 'Sub ID 1', value: 'sub_id_1' },
-        { text: 'IP', value: 'ip' },
-        { text: 'Revenue', value: 'revenue' },
-        { text: 'Profit', value: 'profit' },
-      ],
-      conversions: [],
-    }
-  },
-  mounted() {
-    fetch('/backend/api/reports/')
-      .then(response => response.json())
-      .then(data => {
-        this.conversions = data
-      })
-      .catch(err => {
-        console.error("❌ Failed to load conversions:", err)
-      });
-  },
-});
+    Vue.component('reports-component', {
+        template: '#reports-template',
+        data() {
+            return {
+                headers: [
+                    {text: 'Received At', value: 'received_at'},
+                    {text: 'Click ID', value: 'click_id'},
+                    {text: 'Campaign ID', value: 'campaign_id'},
+                    {text: 'Offer ID', value: 'offer_id'},
+                    {text: 'Status', value: 'status'},
+                    {text: 'Sub ID 1', value: 'sub_id_1'},
+                    {text: 'IP', value: 'ip'},
+                    {text: 'Payout', value: 'payout'},
+                    {text: 'Profit', value: 'profit'},
+                    {text: 'Revenue', value: 'revenue'},
+                ],
+                conversions: [],
+            }
+        },
+        mounted() {
+            this.loadReports();
+            this.$root.$on('load-reports', this.loadReports);
+        },
+        methods: {
+            loadReports() {
+                fetch('/backend/api/reports/')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.conversions = data
+                    })
+                    .catch(err => {
+                        console.error("❌ Failed to load conversions:", err)
+                    });
+            }
+        },
+    });
 </script>
 {% endraw %}

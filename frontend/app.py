@@ -303,6 +303,30 @@ async def save_click_to_db(meta: dict):
         await conn.execute(query, *values)
 
 
+@app.get("/pb/{click_id}/{status}/{payout}")
+async def postback_receive(click_id:str, status: str, payout: str, request: Request):
+    VALID_STATUSES = {"lead", "sale", "upsale", "rejected", "hold", "trash"}
+
+    # update status in db but only 'lead', 'sale', 'upsale', 'rejected', 'hold', 'trash'
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    try:
+        payout_value = float(payout)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payout format")
+
+    pg = request.app.state.pg
+
+    async with pg.acquire() as conn:
+        result = await conn.execute("""
+                                    UPDATE conversions_data
+                                    SET status = $1, payout = $2
+                                    WHERE click_id = $3
+                                    """, status, payout_value, click_id)
+
+    return JSONResponse(content={"status": "ok", "click_id": click_id, "updated_status": status})
+
 
 @app.get("/")
 async def domain_page_default_campaign(request: Request) -> Response:
@@ -402,16 +426,6 @@ def get_params_id_mapping_from_campaign(campaign: dict) -> list:
 
 
 
-async def save_click_info(campaign_id: str, offer_id: str, request: Request):
-    pg = app.state.pg
-    # async with pg.acquire() as conn:
-    #     await conn.execute("""
-    #         INSERT INTO clicks (campaign_id, offer_id, ip, user_agent, created_at)
-    #         VALUES ($1, $2, $3, $4, NOW())
-    #     """, campaign_id, offer_id, request.client.host, request.headers.get("user-agent"))
-
-
-
 async def do_campaign_execution(campaign, request: Request) -> Response:
     log_track(f"🔁 New campaign execution call for '{campaign}'")
 
@@ -454,7 +468,8 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
         # SCHEMA: direct
         if schema == "direct":
             offer_url = get_real_offer_url(flow.get("offer"))
-            await save_click_info(flow.get("campaign_id"), flow.get("offer"), request)
+            # TODO: save_click_to_db
+            # await save_click_info(flow.get("campaign_id"), flow.get("offer"), request)
             return RedirectResponse(offer_url)
 
 
@@ -493,11 +508,13 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
                     row = await conn.fetchrow("SELECT * FROM landings WHERE id = $1", landing_id)
                     if row:
                         landing_folder = row["folder"]
-                        return await show_landing(landing_folder, offer_id=offer_id)
+                        offer_url = await get_offer_click_url(campaign['alias'], offer_id, row['id'], meta_data)
+                        return await show_landing(landing_folder, offer_url)
             return render_404_html()
 
         # SCHEMA: redirect
         elif schema == "redirect":
+            # TODO: save_click_to_db
             return RedirectResponse(flow.get("redirect_url"))
 
         # SCHEMA: redirect_campaign ++++
@@ -618,11 +635,6 @@ async def track_event(campaign, request: Request):
     except Exception as e:
         log_track(f"❌ ClickHouse insert failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ClickHouse error: {e}")
-
-
-@app.post("/pb")
-def postback_receive():
-    return {"status": "ok"}
 
 
 # track and do campaign rules
