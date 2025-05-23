@@ -67,6 +67,7 @@ from app_pages.affiliates import router as affiliate_router
 from app_pages.offers import router as offers_router
 from app_pages.campaigns import router as campaign_router
 from app_pages.dashboard import router as dashboard_router
+from app_pages.reports import router as reports_router  # Импортируем router
 
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(offers_router, prefix="/api/offers", tags=["Offers"])
@@ -82,6 +83,8 @@ app.include_router(sources_router, prefix="/api/sources", tags=["Sources"])
 app.include_router(affiliate_router, prefix="/api/affiliate-networks", tags=["Affiliate Networks"])
 
 app.include_router(campaign_router, prefix="/api/campaigns", tags=["Campaigns"])
+
+app.include_router(reports_router, prefix="/api/reports", tags=["Reports"])
 
 
 # Router
