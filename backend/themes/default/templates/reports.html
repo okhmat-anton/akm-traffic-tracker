@@ -2,7 +2,13 @@
 <script type="text/x-template" id="reports-template">
     <v-container fluid>
         <h2>Reports</h2>
-
+        <v-btn class="mt-3"
+                        color="success"
+                        @click="reloadReports"
+                        outlined
+                >
+                    Reload Reports
+                </v-btn>
         <v-row dense class="mt-4">
             <v-col>
                 <v-card>
@@ -43,14 +49,19 @@
             this.$root.$on('load-reports', this.loadReports);
         },
         methods: {
+            reloadReports() {
+                this.loadReports();
+                this.$root.$emit("show-message", {type: "success", text: 'Conversions reloaded successfully!'});
+            },
             loadReports() {
                 fetch('/backend/api/reports/')
                     .then(response => response.json())
                     .then(data => {
-                        this.conversions = data
+                        this.conversions = data;
                     })
                     .catch(err => {
                         console.error("❌ Failed to load conversions:", err)
+                        this.$root.$emit("show-message", {type: "error", text: err.message});
                     });
             }
         },
