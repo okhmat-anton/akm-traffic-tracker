@@ -70,28 +70,15 @@ Key features:
 
 ## 🛠️ Getting Started
 
-### Clone the Repository
-
-```bash
-git clone https://github.com/your-username/your-project.git
-cd your-project
-```
-
-## 🚀 Running the Project
-
 ### Install
 
 Don't forget to open ports 433 and 80 for nginx.
 
 ```bash
-wget -qO- https://babber.app/akm-tracker/setup.sh | bash
-```
-
-or copy `setup.sh` to your server and run:
-
-```bash
-chmod +x setup.sh
-./setup.sh | bash
+curl -O https://raw.githubusercontent.com/okhmat-anton/babber-sh/refs/heads/main/akm-tracker.sh
+chmod +x akm-tracker.sh
+./akm-tracker.sh
+rm akm-tracker.sh
 ```
 
 or clone project and run:
