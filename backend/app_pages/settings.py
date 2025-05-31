@@ -1,10 +1,40 @@
 from fastapi import APIRouter, Depends, HTTPException
 import json
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from db import get_db
 from models.settings import SettingsORM  # модель settings
 
 router = APIRouter()
+
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
+
+router = APIRouter()
+
+@router.post("/clear-tracking-data")
+async def clear_tracking_data(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+
+    try:
+        ch = request.app.state.ch
+        ch.command("TRUNCATE TABLE clicks_data")
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"ClickHouse error: {str(e)}"})
+
+    try:
+        db.execute(text("TRUNCATE TABLE conversions_data RESTART IDENTITY CASCADE"))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"error": f"PostgreSQL error: {str(e)}"})
+
+    return {"status": "ok", "message": "Tracking data cleared from ClickHouse and PostgreSQL"}
+
+
 
 @router.get("/")
 def get_settings(db: Session = Depends(get_db)):

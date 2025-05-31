@@ -483,7 +483,7 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
 
     config = json.loads(campaign["config"])
     flows = config.get("flows", [])
-    log_track(flows)
+    # log_track(flows)
 
     pg = app.state.pg
 
@@ -508,14 +508,20 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
         if not flow.get("enabled"):
             continue
 
+        # log_track('FLOW')
+        # log_track(flow)
         if not flow:
             raise HTTPException(status_code=404, detail="No active flow")
 
         filters = flow.get("filters", [])
-        if not check_filters(meta_data, filters, request):
+        if filters and not check_filters(meta_data, filters, request):
+            # log_track(f"❌ Filters not passed: {filters}")
             continue
 
         schema = flow.get("schema")
+
+        # log_track('SCHEMA')
+        # log_track(schema)
 
         # SCHEMA: direct
         if schema == "direct":
@@ -566,6 +572,7 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
 
         # SCHEMA: redirect
         elif schema == "redirect":
+            # log_track(flow.get("redirect_url"))
             # TODO: save_click_to_db
             return RedirectResponse(flow.get("redirect_url"))
 
@@ -576,7 +583,7 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
             if campaign_id:
                 async with pg.acquire() as conn:
                     campaign = await conn.fetchrow("SELECT * FROM campaigns WHERE id = $1", campaign_id)
-                    log_track(f"🔁 campaign for redirect - '{campaign}'")
+                    # log_track(f"🔁 campaign for redirect - '{campaign}'")
                     if campaign:
                         return await do_campaign_execution(campaign, request)
             return render_404_html()
@@ -612,7 +619,7 @@ async def get_real_offer_url(offer_id: str, offer_vars: list = None) -> str:
     pg = app.state.pg
     async with pg.acquire() as conn:
         offer_row = await conn.fetchrow("SELECT * FROM offers WHERE id = $1", offer_id)
-        log_track(f"🔁 offer_row - '{offer_row}'")
+        # log_track(f"🔁 offer_row - '{offer_row}'")
         try:
             if offer_row:
                 offer_url = offer_row["url"]
@@ -620,7 +627,7 @@ async def get_real_offer_url(offer_id: str, offer_vars: list = None) -> str:
                     for var in offer_vars:
                         offer_url = offer_url.replace(f"{{{var}}}", str(offer_row.get(var, "")))
 
-                log_track(f"🔁 offer_url - '{offer_url}'")
+                # log_track(f"🔁 offer_url - '{offer_url}'")
                 return offer_url
         except TypeError:
             log_track(f"❌ TypeError Offer Url Build: {offer_row}")
@@ -683,7 +690,7 @@ async def track_event(campaign, request: Request):
         columns = list(result_row.keys())
         values = [list(result_row.values())]
         ch.insert("clicks_data", values, column_names=columns)
-        log_track(f"✅ Inserted into ClickHouse: {campaign_alias}")
+        # log_track(f"✅ Inserted into ClickHouse: {campaign_alias}")
     except Exception as e:
         log_track(f"❌ ClickHouse insert failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ClickHouse error: {e}")
