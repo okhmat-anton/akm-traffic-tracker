@@ -15,7 +15,6 @@ import os
 import requests
 import httpx
 
-
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from pathlib import Path
@@ -166,7 +165,6 @@ async def enrich_meta(request: Request, params_id_mapping: list = None) -> dict:
     return meta
 
 
-
 async def show_landing(folder: str, offer_url: str = None) -> Response:
     index_php = os.path.join("landings", folder, "index.php")
     index_html = os.path.join("landings", folder, "index.html")
@@ -218,10 +216,10 @@ def generate_click_id():
 
 @app.get("/c/{campaign_alias}/{offer_id}")
 async def campaign_click(
-    campaign_alias: str,
-    offer_id: str,
-    request: Request,
-    background_tasks: BackgroundTasks
+        campaign_alias: str,
+        offer_id: str,
+        request: Request,
+        background_tasks: BackgroundTasks
 ) -> Response:
     log_track(f"🔁 New campaign click request {campaign_alias} - {offer_id}")
     pg = request.app.state.pg
@@ -270,7 +268,6 @@ async def campaign_click(
     return RedirectResponse(offer_url)
 
 
-
 async def save_click_to_db(meta: dict):
     pg = app.state.pg
 
@@ -294,7 +291,7 @@ async def save_click_to_db(meta: dict):
 
     columns = ", ".join(insert_data.keys())
     values_placeholders = ", ".join(
-        ["NOW()" if v == "now()" else f"${i+1}" for i, v in enumerate(insert_data.values())]
+        ["NOW()" if v == "now()" else f"${i + 1}" for i, v in enumerate(insert_data.values())]
     )
     values = [v for v in insert_data.values() if v != "now()"]
 
@@ -305,7 +302,8 @@ async def save_click_to_db(meta: dict):
 
 
 @app.get("/pb/{click_id}/{status}/{payout}")
-async def postback_receive(click_id:str, status: str, payout: str, request: Request, background_tasks: BackgroundTasks):
+async def postback_receive(click_id: str, status: str, payout: str, request: Request,
+                           background_tasks: BackgroundTasks):
     VALID_STATUSES = {"lead", "sale", "upsale", "rejected", "hold", "trash"}
 
     # update status in db but only 'lead', 'sale', 'upsale', 'rejected', 'hold', 'trash'
@@ -369,9 +367,6 @@ async def postback_receive(click_id:str, status: str, payout: str, request: Requ
                         # await send_postback(url, data, post_type)
                         background_tasks.add_task(send_postback, url, data, post=True)
 
-
-
-
         # except:
         #     log_track(f"<UNK> CAMPAIGN NOT FOUND request {click_id}")
         #     # log error
@@ -405,7 +400,7 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
             async with pg.acquire() as conn:
                 row = await conn.fetchrow("SELECT * FROM domains WHERE domain = $1", host)
                 log_track(f"🔁 domain '{row}'")
-                if row['handle_404']=='handle':
+                if row and row['handle_404'] == 'handle':
                     log_track('HANDLE 404')
                     return await domain_page_default_campaign(request)
 
@@ -475,7 +470,6 @@ def get_params_id_mapping_from_campaign(campaign: dict) -> list:
         return config.get("paramsIdMapping", [])
     except json.JSONDecodeError:
         return []
-
 
 
 async def do_campaign_execution(campaign, request: Request) -> Response:
@@ -597,8 +591,8 @@ async def do_campaign_execution(campaign, request: Request) -> Response:
     return render_404_html()
 
 
-
-async def get_offer_click_url(campaign_alias: str, offer_id: str, landing_id: str = None, offer_vars: dict = None) -> str:
+async def get_offer_click_url(campaign_alias: str, offer_id: str, landing_id: str = None,
+                              offer_vars: dict = None) -> str:
     base_url = f"/c/{campaign_alias}/{offer_id}"
     query_params = {}
 
@@ -612,7 +606,6 @@ async def get_offer_click_url(campaign_alias: str, offer_id: str, landing_id: st
         return f"{base_url}?" + urlencode(query_params)
 
     return base_url
-
 
 
 async def get_real_offer_url(offer_id: str, offer_vars: list = None) -> str:
@@ -696,11 +689,9 @@ async def track_event(campaign, request: Request):
         raise HTTPException(status_code=500, detail=f"ClickHouse error: {e}")
 
 
-
 async def send_postback(url: str, data: dict, post: bool = False):
-
     VALID_PARAMS = [
-        'payout','status','click_id', 'browser', 'campaign_id', 'city', 'connection_type', 'currency',
+        'payout', 'status', 'click_id', 'browser', 'campaign_id', 'city', 'connection_type', 'currency',
         'cost', 'country', 'utm_creative', 'utm_campaign', 'utm_source', 'device_type', 'external_id', 'ip',
         'is_bot', 'is_using_proxy', 'isp', 'keyword', 'landing_id', 'language', 'offer_id',
         'os', 'profit', 'referrer', 'region', 'revenue', 'status', 'sub_id_1', 'sub_id_2', 'sub_id_3',
@@ -727,6 +718,7 @@ async def send_postback(url: str, data: dict, post: bool = False):
 
     except Exception as e:
         log_track(f"❌ Postback error: {str(e)}")
+
 
 # track and do campaign rules
 @app.post("/{campaign_alias}")

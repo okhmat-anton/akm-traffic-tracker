@@ -1,3 +1,6 @@
+
+COMPOSE = docker-compose
+
 install-db:
 	docker exec tracker_backend pip install --no-cache-dir -r /app/install/requirements.txt
 	docker exec tracker_backend python3 /app/install/install.py
@@ -33,6 +36,9 @@ certificate:
 stop:
 	docker-compose down
 
+start:
+	docker-compose --compatibility up --build -d
+
 restart:
 	docker-compose down && docker-compose --compatibility up --build -d
 
@@ -44,3 +50,21 @@ reload-nginx:
 
 seed-demo-data:
 	docker exec -it tracker_frontend python3 /app/scripts/seed_demo.py
+
+
+clear-logs:
+
+	@echo "Stopping containers..."
+	$(COMPOSE) down
+	@echo "Truncating logs..."
+	sudo truncate -s 0 /var/lib/docker/containers/*/*-json.log || true
+	@echo "Logs cleared."
+
+	@echo "Clearing logs..."
+	$(COMPOSE) logs --no-color > /dev/null 2>&1 || true
+	@docker system prune -f --volumes
+	@echo "Logs cleared (via prune)."
+	rm -f logs/*.log || true
+	@echo "Log files removed"
+
+	make start
