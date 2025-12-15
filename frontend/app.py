@@ -15,6 +15,8 @@ import os
 import requests
 import httpx
 
+import asyncio
+
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from pathlib import Path
@@ -682,7 +684,8 @@ async def track_event(campaign, request: Request):
     try:
         columns = list(result_row.keys())
         values = [list(result_row.values())]
-        ch.insert("clicks_data", values, column_names=columns)
+        # ch.insert("clicks_data", values, column_names=columns)
+        await asyncio.to_thread(ch.insert, "clicks_data", values, column_names=columns)
         # log_track(f"✅ Inserted into ClickHouse: {campaign_alias}")
     except Exception as e:
         log_track(f"❌ ClickHouse insert failed: {str(e)}")
