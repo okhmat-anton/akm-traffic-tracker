@@ -721,6 +721,31 @@ async def send_postback(url: str, data: dict, post: bool = False):
 
 
 # track and do campaign rules
+@app.get("/{campaign_alias}")
+async def get_with_campaign_alias(campaign_alias: str, request: Request):
+    log_track(f"🔁 New get track or compaign request for '{campaign_alias}'")
+
+    pg = request.app.state.pg
+
+    # get campaign from db
+    async with pg.acquire() as conn:
+        campaign = await conn.fetchrow("""
+                                       SELECT *
+                                       FROM campaigns
+                                       WHERE alias = $1
+                                       """, campaign_alias)
+
+    if not campaign:
+        msg = f"❌ Campaign '{campaign_alias}' not found"
+        log_track(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+    # tracking
+    await track_event(campaign, request)
+    return await do_campaign_execution(campaign, request)
+
+
+
 @app.post("/{campaign_alias}")
 async def post_with_campaign_alias(campaign_alias: str, request: Request):
     log_track(f"🔁 New post track request for '{campaign_alias}'")
