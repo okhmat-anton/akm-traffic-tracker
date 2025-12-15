@@ -38,11 +38,14 @@ echo "[6/9] Env & permissions"
 cp -n .env.example .env || true
 sudo chown -R "$USER":"$USER" "$APP_DIR"
 
+echo "→ Set 0777 permissions"
+sudo chmod -R 0777 "$APP_DIR"
+
 echo "[7/9] Use nginx NO-SSL config"
-cp nginx.nossl.conf nginx/default.conf
+cp nginx/nginx.nossl.conf nginx/default.conf
 
 echo "[8/9] Start containers (HTTP)"
-docker compose up -d
+sudo docker-compose --compatibility up --build -d
 
 if [ -n "$DOMAIN" ]; then
   echo "[9/9] Issue SSL certificate for $DOMAIN"

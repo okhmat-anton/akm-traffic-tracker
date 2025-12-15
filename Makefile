@@ -5,6 +5,12 @@ install-db:
 	docker exec tracker_backend pip install --no-cache-dir -r /app/install/requirements.txt
 	docker exec tracker_backend python3 /app/install/install.py
 
+
+install-no-sll:
+	cp nginx/nginx.no-ssl.conf nginx/default.conf
+	docker-compose --compatibility up --build -d
+	make install-db
+
 install-prod-domain:
 	cp nginx/nginx.prod.conf nginx/default.conf
 	docker-compose --compatibility up --build -d
