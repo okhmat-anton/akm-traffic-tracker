@@ -7,7 +7,8 @@ install-db:
 
 
 install-no-sll:
-	cp nginx/nginx.no-ssl.conf nginx/default.conf
+	cp nginx/nginx.dev.conf nginx/default.conf
+	make generate-local-cert
 	docker-compose --compatibility up --build -d
 	make install-db
 
@@ -57,17 +58,11 @@ reload-nginx:
 seed-demo-data:
 	docker exec -it tracker_frontend python3 /app/scripts/seed_demo.py
 
-build:
-	COMPOSE build
-
-start:
-	COMPOSE up -d
-
 start-http:
-	COMPOSE up -d nginx backend frontend
+	docker-compose up -d nginx backend frontend
 
 restart-nginx:
-	COMPOSE restart nginx
+	docker-compose restart nginx
 
 clear-logs:
 
