@@ -1,5 +1,5 @@
 
-COMPOSE = COMPOSE
+COMPOSE = docker-compose
 
 install-db:
 	docker exec tracker_backend pip install --no-cache-dir -r /app/install/requirements.txt
