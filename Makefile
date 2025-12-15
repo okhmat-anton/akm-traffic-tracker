@@ -1,5 +1,5 @@
 
-COMPOSE = docker-compose
+COMPOSE = COMPOSE
 
 install-db:
 	docker exec tracker_backend pip install --no-cache-dir -r /app/install/requirements.txt
@@ -7,20 +7,20 @@ install-db:
 
 install-prod-domain:
 	cp nginx/nginx.prod.conf nginx/default.conf
-	docker-compose --compatibility up --build -d
+	COMPOSE --compatibility up --build -d
 	make certificate
 	make install-db
 
 install:
 	cp nginx/nginx.dev.conf nginx/default.conf
 	make generate-local-cert
-	docker-compose --compatibility up --build -d
+	COMPOSE --compatibility up --build -d
 	make install-db
 
 install-local:
 	cp nginx/nginx.dev.conf nginx/default.conf
 	make generate-local-cert
-	docker-compose --compatibility up --build -d
+	COMPOSE --compatibility up --build -d
 	make install-db
 
 generate-local-cert:
@@ -34,16 +34,16 @@ certificate:
 	docker exec tracker_nginx certbot --nginx
 
 stop:
-	docker-compose down
+	COMPOSE down
 
 start:
-	docker-compose --compatibility up --build -d
+	COMPOSE --compatibility up --build -d
 
 restart:
-	docker-compose down && docker-compose --compatibility up --build -d
+	COMPOSE down && COMPOSE --compatibility up --build -d
 
 logs:
-	docker-compose logs -f
+	COMPOSE logs -f
 
 reload-nginx:
 	docker exec tracker_nginx nginx -s reload
@@ -52,16 +52,16 @@ seed-demo-data:
 	docker exec -it tracker_frontend python3 /app/scripts/seed_demo.py
 
 build:
-	docker compose build
+	COMPOSE build
 
 start:
-	docker compose up -d
+	COMPOSE up -d
 
 start-http:
-	docker compose up -d nginx backend frontend
+	COMPOSE up -d nginx backend frontend
 
 restart-nginx:
-	docker compose restart nginx
+	COMPOSE restart nginx
 
 clear-logs:
 
