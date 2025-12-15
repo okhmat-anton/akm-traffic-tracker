@@ -27,6 +27,7 @@ conn = connect_db()
 
 
 def check_and_reset_database():
+    # return
     try:
         conn.autocommit = True
         cur = conn.cursor()
@@ -104,14 +105,14 @@ def run_clickhouse_install():
     print("Connecting to ClickHouse...")
 
     client = get_client(
-        host=os.getenv("CLICKHOUSE_HOST", "localhost"),
+        host=os.getenv("CLICKHOUSE_HOST", "tracker_clickhouse"),
         username=os.getenv("CLICKHOUSE_USER", "user"),
         password=os.getenv("CLICKHOUSE_PASSWORD", "password_password_password"),
         port=int(os.getenv("CLICKHOUSE_PORT", 8123)),
         secure=False
     )
 
-    sql_file_path = os.path.join(os.path.dirname(__file__), 'clickHouse.sql')
+    sql_file_path = os.path.join(os.path.dirname(__file__), 'sql/clickHouse.sql')
     if not os.path.exists(sql_file_path):
         raise FileNotFoundError(f"SQL file not found: {sql_file_path}")
 
