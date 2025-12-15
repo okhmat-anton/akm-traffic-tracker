@@ -52,13 +52,11 @@ seed-demo-data:
 	docker exec -it tracker_frontend python3 /app/scripts/seed_demo.py
 
 build:
-	COMPOSE build
+	COMPOSE --compatibility build
 
-start:
-	COMPOSE up -d
 
 start-http:
-	COMPOSE up -d nginx backend frontend
+	COMPOSE --compatibility  up -d nginx backend frontend
 
 restart-nginx:
 	COMPOSE restart nginx
