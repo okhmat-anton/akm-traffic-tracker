@@ -7,20 +7,20 @@ install-db:
 
 install-prod-domain:
 	cp nginx/nginx.prod.conf nginx/default.conf
-	COMPOSE --compatibility up --build -d
+	docker-compose --compatibility up --build -d
 	make certificate
 	make install-db
 
 install:
 	cp nginx/nginx.dev.conf nginx/default.conf
 	make generate-local-cert
-	COMPOSE --compatibility up --build -d
+	docker-compose --compatibility up --build -d
 	make install-db
 
 install-local:
 	cp nginx/nginx.dev.conf nginx/default.conf
 	make generate-local-cert
-	COMPOSE --compatibility up --build -d
+	docker-compose --compatibility up --build -d
 	make install-db
 
 generate-local-cert:
@@ -34,16 +34,16 @@ certificate:
 	docker exec tracker_nginx certbot --nginx
 
 stop:
-	COMPOSE down
+	docker-compose down
 
 start:
-	COMPOSE --compatibility up --build -d
+	docker-compose --compatibility up --build -d
 
 restart:
-	COMPOSE down && COMPOSE --compatibility up --build -d
+	docker-compose down && docker-compose --compatibility up --build -d
 
 logs:
-	COMPOSE logs -f
+	docker-compose logs -f
 
 reload-nginx:
 	docker exec tracker_nginx nginx -s reload
@@ -52,11 +52,13 @@ seed-demo-data:
 	docker exec -it tracker_frontend python3 /app/scripts/seed_demo.py
 
 build:
-	COMPOSE --compatibility build
+	COMPOSE build
 
+start:
+	COMPOSE up -d
 
 start-http:
-	COMPOSE --compatibility  up -d nginx backend frontend
+	COMPOSE up -d nginx backend frontend
 
 restart-nginx:
 	COMPOSE restart nginx
