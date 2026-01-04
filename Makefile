@@ -49,6 +49,10 @@ start:
 restart:
 	docker-compose down && docker-compose --compatibility up --build -d
 
+update:
+	git pull
+	make restart
+
 logs:
 	docker-compose logs -f
 
