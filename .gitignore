@@ -1,2 +1,4 @@
 /frontend/landings/
 .env
+__pycache__
+.idea
