@@ -835,7 +835,7 @@
                         </template>
 
                         <template v-slot:item.link="{ item }">
-                            {{ domainsMap[item.domain_id] }}/{{ item.alias }}
+                            <a :href="'https://' + domainsMap[item.domain_id] + '/' + item.alias" target="_blank">https://{{ domainsMap[item.domain_id] }}/{{ item.alias }}</a>
                         </template>
 
                         <template v-slot:item.status="{ item }">
