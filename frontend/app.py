@@ -723,6 +723,11 @@ async def send_postback(url: str, data: dict, post: bool = False):
         log_track(f"❌ Postback error: {str(e)}")
 
 
+@app.get("/_akm_tracker_debug")
+def show_logs():
+    return JSONResponse(content=jsonable_encoder(TRACK_LOG[-50:]))
+
+
 # track and do campaign rules
 @app.get("/{campaign_alias}")
 async def get_with_campaign_alias(campaign_alias: str, request: Request):
@@ -774,8 +779,3 @@ async def post_with_campaign_alias(campaign_alias: str, request: Request):
     await do_campaign_execution(campaign, request)
 
     return {"status": "ok", "campaign": campaign_alias}
-
-
-@app.get("/_akm_tracker_debug")
-def show_logs():
-    return JSONResponse(content=jsonable_encoder(TRACK_LOG[-50:]))
