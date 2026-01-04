@@ -834,6 +834,10 @@
                             {{ domainsMap[item.domain_id] || 'N/A' }}
                         </template>
 
+                        <template v-slot:item.link="{ item }">
+                            {{ domainsMap[item.domain_id] }}/{{ item.alias }}
+                        </template>
+
                         <template v-slot:item.status="{ item }">
                             <v-chip small color="green" v-if="item.status === 'active'">{{ item.status }}</v-chip>
                             <v-chip small color="orange" v-else-if="item.status === 'paused'">{{ item.status }}</v-chip>
@@ -886,6 +890,7 @@
                     {text: 'Name', value: 'name'},
                     {text: 'Domain', value: 'domain'},
                     {text: 'Alias', value: 'alias'},
+                    {text: 'Link', value: 'link'}, // value 'link' is domain+'/'+alias
                     {text: 'Type', value: 'type'},
                     {text: 'Flow Mode', value: 'redirect_mode'},
                     {text: 'Status', value: 'status'},
